@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinese Character Lookup</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Chinese Character Lookup</h1>
+
+        <!-- Search by Chinese character -->
+        <div>
+            <label for="search">Search by Chinese character:</label>
+            <input type="text" id="search" placeholder="Enter a Chinese character..." oninput="searchCharacter()">
+        </div>
+
+        <!-- Search by English meaning -->
+        <div>
+            <label for="englishSearch">Search by English meaning:</label>
+            <input type="text" id="englishSearch" placeholder="Enter English meaning..." oninput="searchByEnglish()">
+        </div>
+
+        <!-- Search by Powhatan meaning -->
+        <div>
+            <label for="powhatanSearch">Search by Powhatan meaning:</label>
+            <input type="text" id="powhatanSearch" placeholder="Enter Powhatan meaning..." oninput="searchByPowhatan()">
+        </div>
+
+        <!-- Display results -->
+        <div id="results"></div>
+
+        <!-- Form to update Powhatan definition -->
+        <div id="updateForm">
+            <h3>Add/Update Powhatan Definition</h3>
+            <label for="character">Character:</label>
+            <input type="text" id="character" placeholder="Enter the Chinese character">
+            
+            <label for="powhatanDefinition">Powhatan Definition:</label>
+            <input type="text" id="powhatanDefinition" placeholder="Enter the Powhatan definition">
+            
+            <button onclick="updatePowhatan()">Update Powhatan Definition</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
