@@ -1,3 +1,5 @@
+![Kinich Ahau Powhatan](https://pbs.twimg.com/media/GU-56WcWQAAQdSH?format=jpg&name=900x900)
+
 The Powhatan Confederacy waged three wars against the British Crown, each echoing the scale and fervor of the Anglo-Scottish Wars. A battle for land and sovereignty that ended with the genocide and enslavement of the Powhatan people. [36]
 
 We are the direct descendants of the Powhatan Confederacy, the tribe portrayed in the Disney movie Pocahontas, and led by Ashton James Snow Jefferson (Morris), a Software Engineer and Native American Chief.
@@ -10,7 +12,7 @@ We're petitioning the Bureau of Indian Affairs and every U.S state except Hawaii
 
 Amongst others, our sibling tribes the Pamunkey received 1,200 acres from the Commonwealth of Virginia [142]; and the Powhatan Renape have received 350 acres from the State of New Jersey. [24] Historically, the Powhatan Confederacy's reservation was 8,000 square miles. [2]
 
-America's first progressive tribe
+### America's first progressive tribe
 
 Our goal is to build a micro-nation of provinces across the United States of America, Canada, Mexico and the West Indies that will showcase the ingenuity, culture, and spirit of our people.
 
@@ -18,7 +20,7 @@ These developments will not only serve as cultural landmarks but also provide ec
 
 Powhatan wishes to invite all U.S citizens, like Latino and Black Indians, who can verify their Indigenous American ancestry with DNA testing platforms like 23andMe to join our tribe. By blending these distinct Indigenous sub-cultures, we have the opportunity to enrich the cultural tapestry of America in profound and meaningful ways.
 
-Our vision for the reservations
+### Our vision for the reservations
 
 To create a thriving and self-sustaining community, our reservations will include a comprehensive range of facilities and services:
 
@@ -36,8 +38,6 @@ Cryptocurrency: A dedicated digital currency to facilitate secure, efficient tra
 Support Education and Other Native American Tribes: Educational initiatives and collaborative projects with other Native American tribes, fostering unity and shared cultural preservation.
 COVID-19 Relief: As we build our community, we are committed to providing COVID-19 relief to our tribal members and others in need, including access to healthcare, vaccinations, food assistance, and economic support. This is crucial for protecting the health and well-being of our people as we move forward together.
 
-A beacon of hope for all Indigenous Americans
-
-Your support is crucial in making this vision a reality. By contributing to our GoFundMe campaign, you’re investing in a groundbreaking project that honors our past and paves the way for a prosperous future for both the Powhatan Confederacy and the United States of America.
+### A beacon of hope for all Indigenous Americans
 
 Help us build a vibrant, sustainable, and culturally rich community that will serve as a model and home for every Indigenous American community.
