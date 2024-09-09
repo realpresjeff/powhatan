@@ -1,0 +1,15 @@
+{
+  "name": "powhatanlang",
+  "version": "0.0.1",
+  "description": "The Powhatan language.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Ashton James Snow Jefferson",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "node-fetch": "^2.7.0"
+  }
+}
