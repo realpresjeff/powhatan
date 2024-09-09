@@ -42,6 +42,23 @@
             
             <button onclick="updatePowhatan()">Update Powhatan Definition</button>
         </div>
+
+        <!-- Form to update Maya image link -->
+        <div id="updateMayaForm">
+            <h3>Add/Update Maya Image</h3>
+            <label for="character">Character:</label>
+            <input type="text" id="mayaCharacter" placeholder="Enter the Chinese character">
+
+            <label for="mayaImageLink">Maya Image Link:</label>
+            <input type="text" id="mayaImageLink" placeholder="Enter the local path to the Maya image">
+
+            <label for="mayaImageText">Maya Image Text:</label>
+            <input type="text" id="mayaImageText" placeholder="Enter the text for the Maya image">
+        
+
+            <button onclick="updateMaya()">Update Maya Image</button>
+        </div>
+
     </div>
 
     <script src="script.js"></script>
