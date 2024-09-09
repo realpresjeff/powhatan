@@ -1,3 +1,5 @@
+// zero dependency, node v12 web scraper
+
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
