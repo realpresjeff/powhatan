@@ -221,7 +221,6 @@ function displayResult(character, result) {
     resultHTML += `<p><strong>Subcomponents:</strong> Not available</p>`;
   }
 
-  resultHTML += `</div><hr>`;
   resultsDiv.innerHTML += resultHTML;
 }
 

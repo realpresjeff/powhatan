@@ -78,9 +78,9 @@ async function getSubcomponentsFromHanziHeroAndUpdateDictionary(
       // `https://hanzihero.com/simplified/words/${encodeURIComponent(
       //   englishMeaning
       // )}`,
-      // `https://hanzihero.com/simplified/characters/${encodeURIComponent(
-      //   englishMeaning
-      // )}`,
+      `https://hanzihero.com/simplified/characters/${encodeURIComponent(
+        englishMeaning
+      )}`,
     ];
 
     function tryFetching(urlIndex) {
@@ -99,10 +99,10 @@ async function getSubcomponentsFromHanziHeroAndUpdateDictionary(
           response.on("data", (chunk) => {
             data += chunk;
 
-            if (data.includes("redirected") && urlIndex + 1 <= 2) {
-              console.log(
-                `Redirect found, trying next URL: ${urls[urlIndex + 1]}`
-              );
+            if (data.includes("redirected") && urlIndex + 1 <= 1) {
+              // console.log(
+              //   `Redirect found, trying next URL: ${urls[urlIndex + 1]}`
+              // );
               tryFetching(urlIndex + 1);
               return;
             }
@@ -228,6 +228,7 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify(cache[searchValue]));
     } else {
       const html = await searchhanzihero(searchValue);
+
       const updatedCharacter =
         await getSubcomponentsFromHanziHeroAndUpdateDictionary(searchValue);
 
