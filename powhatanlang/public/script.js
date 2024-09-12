@@ -235,9 +235,15 @@ function updatePowhatan() {
   // Check if the character exists in the dictionary
   if (dictionary[character]) {
     // Update the Powhatan fields
-    dictionary[character].powhatanDefinition = powhatanDefinition;
-    dictionary[character].powhatanOrigin = powhatanOrigin;
-    dictionary[character].powhatanSource = powhatanSource;
+    dictionary[character].powhatanDefinition = powhatanDefinition
+      ? powhatanDefinition
+      : dictionary[character].powhatanDefinition;
+    dictionary[character].powhatanOrigin = powhatanOrigin
+      ? powhatanOrigin
+      : dictionary[character].powhatanOrigin;
+    dictionary[character].powhatanSource = powhatanSource
+      ? powhatanSource
+      : dictionary[character].powhatanSource;
 
     updateDictionary(character, dictionary[character]);
 

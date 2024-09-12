@@ -40,3 +40,7 @@ input {
   padding: 10px;
   border-top: 1px solid #ddd;
 }
+
+#results p {
+  word-break: break-all;
+}
