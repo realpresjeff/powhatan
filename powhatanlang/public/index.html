@@ -1,66 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chinese Character Lookup</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <div class="container">
-        <h1>Chinese Character Lookup</h1>
+      <h1>Chinese Character Lookup</h1>
 
-        <!-- Search by Chinese character -->
-        <div>
-            <label for="search">Search by Chinese character:</label>
-            <input type="text" id="search" placeholder="Enter a Chinese character..." oninput="searchCharacter()">
-        </div>
+      <!-- Search by Chinese character -->
+      <div>
+        <label for="search">Search by Chinese character:</label>
+        <input
+          type="text"
+          id="search"
+          placeholder="Enter a Chinese character..."
+          oninput=""
+        />
+        <button onclick="searchCharacter()">Translate</button>
+      </div>
 
-        <!-- Search by English meaning -->
-        <div>
-            <label for="englishSearch">Search by English meaning:</label>
-            <input type="text" id="englishSearch" placeholder="Enter English meaning..." oninput="searchByEnglish()">
-        </div>
+      <!-- Search by English meaning -->
+      <div>
+        <label for="englishSearch">Search by English meaning:</label>
+        <input
+          type="text"
+          id="englishSearch"
+          placeholder="Enter English meaning..."
+        />
+        <button onclick="searchByEnglish()">Translate</button>
+      </div>
 
-        <!-- Search by Powhatan meaning -->
-        <div>
-            <label for="powhatanSearch">Search by Powhatan meaning:</label>
-            <input type="text" id="powhatanSearch" placeholder="Enter Powhatan meaning..." oninput="searchByPowhatan()">
-        </div>
+      <!-- Search by Powhatan meaning -->
+      <div>
+        <label for="powhatanSearch">Search by Powhatan meaning:</label>
+        <input
+          type="text"
+          id="powhatanSearch"
+          placeholder="Enter Powhatan meaning..."
+          oninput=""
+        />
+        <button onclick="searchByPowhatan()">Translate</button>
+      </div>
 
-        <!-- Display results -->
-        <div id="results"></div>
+      <!-- Display results -->
+      <h3>Local Dictionary</h3>
+      <div id="results"></div>
 
-        <!-- Form to update Powhatan definition -->
-        <div id="updateForm">
-            <h3>Add/Update Powhatan Definition</h3>
-            <label for="character">Character:</label>
-            <input type="text" id="character" placeholder="Enter the Chinese character">
-            
-            <label for="powhatanDefinition">Powhatan Definition:</label>
-            <input type="text" id="powhatanDefinition" placeholder="Enter the Powhatan definition">
-            
-            <button onclick="updatePowhatan()">Update Powhatan Definition</button>
-        </div>
+      <h3>Web Results</h3>
+      <div id="web-results"></div>
+      <hr />
 
-        <!-- Form to update Maya image link -->
-        <div id="updateMayaForm">
-            <h3>Add/Update Maya Image</h3>
-            <label for="character">Character:</label>
-            <input type="text" id="mayaCharacter" placeholder="Enter the Chinese character">
+      <!-- <div>
+            <label for="sentenceSearch">Translate sentence</label>
+            <label for="sentenceSearch">English</label>
+            <input type="text" id="sentenceSearch" placeholder="Enter an English sentence" />
+            <button onclick="searchBySentence('zh')">Translate</button>
+            <button onclick="">Clear</button>
+            <button onclick="">Copy</button>
 
-            <label for="mayaImageLink">Maya Image Link:</label>
-            <input type="text" id="mayaImageLink" placeholder="Enter the local path to the Maya image">
+            <label for="chineseSearch">Chinese</label>
+            <input type="text" id="chineseSearch" placeholder="Enter a Chinese sentence" />
+            <button onclick="searchBySentence('en')">Translate</button>
+            <button onclick="">Clear</button>
+            <button onclick="">Copy</button>
 
-            <label for="mayaImageText">Maya Image Text:</label>
-            <input type="text" id="mayaImageText" placeholder="Enter the text for the Maya image">
-        
+            <label for="powhatanSearch">Powhatan</label>
+            <input type="text" id="powhatanSearch" placeholder="Enter a Powhatan sentence" />
+            <button onclick="">Translate</button>
+            <button onclick="">Clear</button>
+            <button onclick="">Copy</button>
+        </div> -->
 
-            <button onclick="updateMaya()">Update Maya Image</button>
-        </div>
+      <!-- Loading indicator -->
+      <div id="loading" style="display: none">Loading...</div>
 
+      <!-- Form to update Powhatan definition -->
+      <div id="updateForm">
+        <h3>Add/Update Powhatan Definition</h3>
+        <label for="character">Character:</label>
+        <input
+          type="text"
+          id="character"
+          placeholder="Enter the Chinese character"
+        />
+
+        <label for="powhatanDefinition">Powhatan Definition:</label>
+        <input
+          type="text"
+          id="powhatanDefinition"
+          placeholder="Enter the Powhatan definition"
+        />
+
+        <label for="powhatanOrigin">Origin:</label>
+        <input type="text" id="powhatanOrigin" placeholder="Enter the origin" />
+
+        <label for="powhatanSource">Source:</label>
+        <input type="text" id="powhatanSource" placeholder="Enter the source" />
+
+        <button onclick="updatePowhatan()">Update Powhatan Definition</button>
+      </div>
+
+      <!-- Form to update Maya image link -->
+      <div id="updateMayaForm">
+        <h3>Add/Update Maya Image</h3>
+        <label for="character">Character:</label>
+        <input
+          type="text"
+          id="mayaCharacter"
+          placeholder="Enter the Chinese character"
+        />
+
+        <label for="mayaImageLink">Maya Image Link:</label>
+        <input
+          type="text"
+          id="mayaImageLink"
+          placeholder="Enter the local path to the Maya image"
+        />
+
+        <label for="mayaImageText">Maya Image Text:</label>
+        <input
+          type="text"
+          id="mayaImageText"
+          placeholder="Enter the text for the Maya image"
+        />
+
+        <button onclick="updateMaya()">Update Maya Image</button>
+      </div>
     </div>
 
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
