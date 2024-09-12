@@ -27,7 +27,9 @@ Powhatan wishes to invite all U.S citizens, like Latino and Black Indians, who c
 To create a thriving and self-sustaining community, our reservations will include a comprehensive range of facilities and services:
 
 Data Center: High-tech facilities for data storage and cloud services.
+
 Gas Station: Convenient fuel stations for residents and businesses.
+
 Electricity Farms: Renewable energy sources to power the reservation sustainably.
 Bank: Financial services to support economic activities and personal finance.
 Embassy: Diplomatic representation to manage relations and advocacy.
