@@ -10,6 +10,48 @@
     <div class="container">
       <h1>Powhatan Language</h1>
 
+      <div id="sentenceCarousel">
+        <h3>Sentence Viewer</h3>
+        <div
+          id="carousel"
+          style="
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            overflow-x: scroll;
+          "
+        >
+          <!-- Full sentence goes here -->
+        </div>
+        <button onclick="prevCharacter()">Previous</button>
+        <button onclick="nextCharacter()">Next</button>
+      </div>
+
+      <!-- Loading indicator -->
+      <div id="loading" style="display: none">Loading...</div>
+
+      <h3>Web Results</h3>
+      <div id="web-results"></div>
+      <hr />
+
+      <!-- Display results -->
+      <h3>Local Dictionary</h3>
+      <div id="results"></div>
+      <hr />
+
+      <div id="web-results-subcomponents"></div>
+      <hr />
+
+      <div id="sentenceInputForm">
+        <h3>Search by Chinese Sentence</h3>
+        <input
+          type="text"
+          id="chineseSentence"
+          placeholder="Paste your Chinese sentence here"
+        />
+        <button onclick="processSentence()">View Sentence</button>
+      </div>
+
       <!-- Search by Chinese character -->
       <div>
         <label for="search">Search by Chinese character:</label>
@@ -44,39 +86,6 @@
         />
         <button onclick="searchByPowhatan()">Translate</button>
       </div>
-
-      <!-- Display results -->
-      <h3>Local Dictionary</h3>
-      <div id="results"></div>
-      <hr />
-
-      <h3>Web Results</h3>
-      <div id="web-results"></div>
-      <hr />
-
-      <!-- <div>
-            <label for="sentenceSearch">Translate sentence</label>
-            <label for="sentenceSearch">English</label>
-            <input type="text" id="sentenceSearch" placeholder="Enter an English sentence" />
-            <button onclick="searchBySentence('zh')">Translate</button>
-            <button onclick="">Clear</button>
-            <button onclick="">Copy</button>
-
-            <label for="chineseSearch">Chinese</label>
-            <input type="text" id="chineseSearch" placeholder="Enter a Chinese sentence" />
-            <button onclick="searchBySentence('en')">Translate</button>
-            <button onclick="">Clear</button>
-            <button onclick="">Copy</button>
-
-            <label for="powhatanSearch">Powhatan</label>
-            <input type="text" id="powhatanSearch" placeholder="Enter a Powhatan sentence" />
-            <button onclick="">Translate</button>
-            <button onclick="">Clear</button>
-            <button onclick="">Copy</button>
-        </div> -->
-
-      <!-- Loading indicator -->
-      <div id="loading" style="display: none">Loading...</div>
 
       <!-- Form to update Powhatan definition -->
       <div id="updateForm">

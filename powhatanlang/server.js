@@ -67,135 +67,25 @@ async function searchhanzihero(query) {
   });
 }
 
-async function getSubcomponentsFromHanziHeroAndUpdateDictionary(
-  englishMeaning
-) {
+async function getSubcomponentsFromHanziHero(query) {
   return new Promise((resolve, reject) => {
-    const urls = [
-      `https://hanzihero.com/simplified/components/${encodeURIComponent(
-        englishMeaning
-      )}`,
-      // `https://hanzihero.com/simplified/words/${encodeURIComponent(
-      //   englishMeaning
-      // )}`,
-      `https://hanzihero.com/simplified/characters/${encodeURIComponent(
-        englishMeaning
-      )}`,
-    ];
+    const url = `https://hanzihero.com/simplified/characters/${encodeURIComponent(
+      query
+    )}`;
 
-    function tryFetching(urlIndex) {
-      if (urlIndex >= urls.length) {
-        reject(`Could not fetch subcomponents for ${englishMeaning}`);
-        return;
-      }
+    https.get(url, (response) => {
+      let html = "";
 
-      const url = urls[urlIndex];
+      // Collect response data
+      response.on("data", (chunk) => {
+        html += chunk;
+      });
 
-      https
-        .get(url, (response) => {
-          let data = "";
-
-          // Collect response data
-          response.on("data", (chunk) => {
-            data += chunk;
-
-            if (data.includes("redirected") && urlIndex + 1 <= 1) {
-              // console.log(
-              //   `Redirect found, trying next URL: ${urls[urlIndex + 1]}`
-              // );
-              tryFetching(urlIndex + 1);
-              return;
-            }
-          });
-
-          // When the response is complete
-          response.on("end", () => {
-            try {
-              // Regular expressions to match subcomponents
-              const originalCharacterMeaningRegex =
-                /<h2 class="text-3xl text-slate-600 sm:text-5xl">([^<]+)<\/h2>/;
-              const characterRegex =
-                /<span lang="zh-Hans" class="text-3xl h-12 w-12 font-noto-sc  flex items-center justify-center text-center text-white">([^<]+)<\/span>/g;
-              const englishRegex =
-                /<span class="pl-1 text-xl font-light capitalize text-slate-500">([^<]+)<\/span>/g;
-
-              // Extract original character meaning
-              const originalCharacterMeaningMatch =
-                originalCharacterMeaningRegex.exec(data);
-              const originalCharacterMeaning = originalCharacterMeaningMatch
-                ? originalCharacterMeaningMatch[1].trim()
-                : null;
-
-              let characters = [];
-              let englishTranslations = [];
-              let originalCharacter;
-              let index = 0;
-
-              // Extract subcomponents
-              while ((characterMatch = characterRegex.exec(data))) {
-                const characterText = characterMatch[1].trim();
-                const englishMatch = englishRegex.exec(data);
-                const englishText = englishMatch
-                  ? englishMatch[1].trim()
-                  : null;
-
-                if (characterText) {
-                  characters.push(characterText);
-                  englishTranslations.push(englishText);
-                }
-
-                index++;
-              }
-
-              characters.reverse();
-              originalCharacter = characters.pop();
-              const originalMeaning = englishTranslations.pop();
-              englishTranslations.reverse();
-              const subcomponents = characters.map(
-                (char, index) =>
-                  englishTranslations[index] && {
-                    [char]: englishTranslations[index],
-                  }
-              );
-
-              // Update dictionary
-              updateDictionary(originalCharacter, { subcomponents });
-
-              // resolve
-              const dictionary = JSON.parse(
-                fs.readFileSync(dictionaryFilePath, "utf8")
-              );
-              resolve({ subcomponents, ...dictionary[originalCharacter] });
-            } catch (error) {
-              reject(
-                `Error parsing data for ${englishMeaning}: ${error.message}`
-              );
-            }
-          });
-        })
-        .on("error", (error) => {
-          reject(
-            `Error fetching subcomponents for ${englishMeaning}: ${error.message}`
-          );
-        });
-    }
-
-    tryFetching(0); // Start with the first URL
+      response.on("end", () => {
+        resolve(html);
+      });
+    });
   });
-}
-
-// Function to handle translation
-async function translateText(text, targetLanguage) {
-  // Initialize Google Translate client
-  const translate = new Translate();
-
-  try {
-    const [translation] = await translate.translate(text, targetLanguage);
-    return translation;
-  } catch (error) {
-    console.error(`Error translating text: ${error.message}`);
-    throw error;
-  }
 }
 
 const server = http.createServer(async (req, res) => {
@@ -215,6 +105,45 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  if (req.method === "POST" && req.url.includes("/api/subcomponents")) {
+    let body = [];
+
+    // Collect the buffer data chunks
+    req.on("data", (chunk) => {
+      body.push(chunk);
+    });
+
+    req.on("end", async () => {
+      const data = Buffer.concat(body);
+      const { char } = JSON.parse(utf8Decode(data));
+      console.log(char);
+
+      // Read the cache
+      let cache = readCache();
+
+      // Check if the search value is in the cache
+      if (cache[char]) {
+        // Return the cached result as JSON
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(cache[char]));
+      } else {
+        const subcomponents = await getSubcomponentsFromHanziHero(char);
+
+        const response = {
+          subcomponents,
+        };
+
+        // Update the cache with the new result
+        cache[char] = response;
+        writeCache(cache);
+
+        // Set the response headers and return the subcomponents as JSON
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(response));
+      }
+    });
+  }
+
   if (req.method === "GET" && req.url.includes("/api/englishtohanzi")) {
     const parts = req.url.split("/");
     const searchValue = parts[parts.length - 1];
@@ -229,69 +158,17 @@ const server = http.createServer(async (req, res) => {
     } else {
       const html = await searchhanzihero(searchValue);
 
-      const updatedCharacter =
-        await getSubcomponentsFromHanziHeroAndUpdateDictionary(searchValue);
-
       const response = {
         html,
-        updatedCharacter,
       };
 
       // Update the cache with the new result
       cache[searchValue] = response;
       writeCache(cache);
 
-      // const result = await getSubcomponentsFromHanziHeroAndUpdateDictionary(searchValue);
       // Set the response headers and return the subcomponents as JSON
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(response));
-    }
-  }
-
-  // New route to handle translation using Google Translate API
-  if (req.method === "GET" && req.url.includes("/api/translate")) {
-    const urlParts = req.url.split("/");
-    const textToTranslate = decodeURIComponent(urlParts[3]); // Get text from URL
-    const targetLanguage = urlParts[2]; // Extract target language from the URL
-
-    // Read the cache
-    let cache = readCache();
-
-    // Create a cache key
-    const cacheKey = `${textToTranslate}_${targetLanguage}`;
-
-    // Check if the translation is in the cache
-    if (cache[cacheKey]) {
-      console.log(
-        `Cache hit for translation: ${textToTranslate} to ${targetLanguage}`
-      );
-
-      // Return the cached translation
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ translation: cache[cacheKey] }));
-    } else {
-      // Perform translation if not found in cache
-      translateText(textToTranslate, targetLanguage)
-        .then((translation) => {
-          console.log(
-            `Translation for ${textToTranslate} to ${targetLanguage}: ${translation}`
-          );
-
-          // Update the cache with the new translation
-          cache[cacheKey] = translation;
-          writeCache(cache);
-
-          // Return the translation as JSON
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ translation }));
-        })
-        .catch((error) => {
-          console.error(`Error translating text: ${error}`);
-
-          // Return an error response
-          res.writeHead(500, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Failed to translate text" }));
-        });
     }
   }
 
