@@ -116,7 +116,6 @@ const server = http.createServer(async (req, res) => {
     req.on("end", async () => {
       const data = Buffer.concat(body);
       const { char } = JSON.parse(utf8Decode(data));
-      console.log(char);
 
       // Read the cache
       let cache = readCache();

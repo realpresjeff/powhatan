@@ -30,13 +30,13 @@
       <!-- Loading indicator -->
       <div id="loading" style="display: none">Loading...</div>
 
-      <h3>Web Results</h3>
-      <div id="web-results"></div>
-      <hr />
-
       <!-- Display results -->
       <h3>Local Dictionary</h3>
       <div id="results"></div>
+      <hr />
+
+      <h3>Web Results</h3>
+      <div id="web-results"></div>
       <hr />
 
       <div id="web-results-subcomponents"></div>
@@ -85,59 +85,6 @@
           oninput=""
         />
         <button onclick="searchByPowhatan()">Translate</button>
-      </div>
-
-      <!-- Form to update Powhatan definition -->
-      <div id="updateForm">
-        <h3>Add/Update Powhatan Definition</h3>
-        <label for="character">Chinese Character:</label>
-        <input
-          type="text"
-          id="character"
-          placeholder="Enter the Chinese character"
-        />
-
-        <label for="powhatanDefinition">Powhatan Definition:</label>
-        <input
-          type="text"
-          id="powhatanDefinition"
-          placeholder="Enter the Powhatan definition"
-        />
-
-        <label for="powhatanOrigin">Origin:</label>
-        <input type="text" id="powhatanOrigin" placeholder="Enter the origin" />
-
-        <label for="powhatanSource">Source:</label>
-        <input type="text" id="powhatanSource" placeholder="Enter the source" />
-
-        <button onclick="updatePowhatan()">Update Powhatan Definition</button>
-      </div>
-
-      <!-- Form to update Maya image link -->
-      <div id="updateMayaForm">
-        <h3>Add/Update Maya Image</h3>
-        <label for="character">Chinese Character:</label>
-        <input
-          type="text"
-          id="mayaCharacter"
-          placeholder="Enter the Chinese character"
-        />
-
-        <label for="mayaImageLink">Maya Image Link:</label>
-        <input
-          type="text"
-          id="mayaImageLink"
-          placeholder="Enter the local path to the Maya image"
-        />
-
-        <label for="mayaImageText">Maya Image Text:</label>
-        <input
-          type="text"
-          id="mayaImageText"
-          placeholder="Enter the text for the Maya image"
-        />
-
-        <button onclick="updateMaya()">Update Maya Image</button>
       </div>
     </div>
 

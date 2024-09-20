@@ -72,8 +72,6 @@ function getSubcomponents(char) {
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log(data);
-
       subcomponents.innerHTML = data.subcomponents;
     })
     .catch((error) => console.error("Error fetching subcomponents:", error));
@@ -162,7 +160,7 @@ function displayResult(character, result) {
   // Build the result HTML
   let resultHTML = `
           <div class="result">
-              <p><strong>Character:</strong> ${character}</p>
+              <p id="chinese-simplified-character"><strong>Character:</strong> ${character}</p>
               <p><strong>Simplified:</strong> ${result.simplified}</p>
               <p><strong>Traditional:</strong> ${result.traditional}</p>
               <p><strong>Pinyin:</strong> ${
@@ -179,13 +177,13 @@ function displayResult(character, result) {
     });
 
   // Add Powhatan fields if available
-  resultHTML += `</ul><p><strong>Powhatan Definition:</strong> ${
+  resultHTML += `</ul><p class="editable" id="powhatanDefinition" data-key="definition"><strong>Powhatan Definition:</strong> ${
     result.powhatan || "Not available"
   }</p>`;
-  resultHTML += `<p><strong>Powhatan Origin:</strong> ${
+  resultHTML += `<p class="editable" id="powhatanOrigin" data-key="origin"><strong>Powhatan Origin:</strong> ${
     result.powhatanOrigin || "Not available"
   }</p>`;
-  resultHTML += `<p><strong>Powhatan Source:</strong> ${
+  resultHTML += `<p class="editable" id="powhatanSource" data-key="source"><strong>Powhatan Source:</strong> ${
     result.powhatanSource || "Not available"
   }</p>`;
 
@@ -216,15 +214,97 @@ function displayResult(character, result) {
   }
 
   resultsDiv.innerHTML += resultHTML;
+
+  // Function to turn <p> content into an input field
+  function makeEditable(event) {
+    let spanElement = event.target;
+    let key = spanElement.getAttribute("data-key");
+    let fullText = spanElement.innerText;
+
+    // Extract the text after the colon (":")
+    let valueAfterColon = fullText.split(":")[1].trim();
+    let textBeforeColon = fullText.split(":")[0].trim();
+
+    // Create input element
+    let input = document.createElement("input");
+    input.type = "text";
+
+    // Check if it's a valid URL
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    const sourceUrl = fullText.match(urlPattern)
+      ? fullText.match(urlPattern)[0]
+      : null;
+
+    if (sourceUrl) {
+      input.value = sourceUrl;
+    } else {
+      input.value = valueAfterColon;
+    }
+
+    // Replace the span with the input
+    let parentP = spanElement.parentNode;
+    parentP.replaceChild(input, spanElement);
+
+    // Focus the input
+    input.focus();
+
+    // When the input field loses focus (onblur), save the new value
+    input.onblur = function () {
+      // Function to convert text to camelCase
+      function toCamelCase(str) {
+        return str
+          .toLowerCase()
+          .replace(/[^a-zA-Z0-9]+(.)/g, (match, chr) => chr.toUpperCase());
+      }
+
+      let updatedValue = input.value;
+
+      // Create a new <span> with the updated value
+      let newSpan = document.createElement("p");
+      newSpan.className = "editable";
+      newSpan.setAttribute("data-key", key);
+
+      newSpan.innerText = fullText.split(":")[0] + ": " + updatedValue;
+
+      // Convert the text before the colon to camelCase and set it as the id
+      newSpan.id = toCamelCase(textBeforeColon);
+
+      // Replace input with the new <span>
+      parentP.replaceChild(newSpan, input);
+
+      // Add event listener to new span for editing again
+      newSpan.addEventListener("click", makeEditable);
+
+      updatePowhatan();
+    };
+  }
+
+  // Add event listeners to all editable spans
+  document.querySelectorAll(".editable").forEach((span) => {
+    span.addEventListener("click", makeEditable);
+  });
 }
 
 // Function to update Powhatan definition with new fields
 function updatePowhatan() {
-  const character = document.getElementById("character").value;
-  const powhatanDefinition =
-    document.getElementById("powhatanDefinition").value;
-  const powhatanOrigin = document.getElementById("powhatanOrigin").value;
-  const powhatanSource = document.getElementById("powhatanSource").value;
+  const character = document
+    .getElementById("chinese-simplified-character")
+    .innerText.split(":")[1]
+    .trim();
+  const powhatanDefinition = document
+    .getElementById("powhatanDefinition")
+    .innerText.split(":")[1]
+    .trim();
+  const powhatanOrigin = document
+    .getElementById("powhatanOrigin")
+    .innerText.split(":")[1]
+    .trim();
+  const powhatanSource = document.getElementById("powhatanSource").innerText;
+  // Check if it's a valid URL
+  const urlPattern = /(https?:\/\/[^\s]+)/g;
+  const sourceUrl = powhatanSource.match(urlPattern)
+    ? powhatanSource.match(urlPattern)[0]
+    : null;
 
   // Check if the character exists in the dictionary
   if (dictionary[character]) {
@@ -232,15 +312,14 @@ function updatePowhatan() {
     dictionary[character] = {
       ...dictionary[character],
       simplified: character,
-      traditional: character,
       powhatan: powhatanDefinition
         ? powhatanDefinition
         : dictionary[character].powhatanDefinition,
       powhatanOrigin: powhatanOrigin
         ? powhatanOrigin
         : dictionary[character].powhatanOrigin,
-      powhatanSource: powhatanSource
-        ? powhatanSource
+      powhatanSource: sourceUrl
+        ? sourceUrl
         : dictionary[character].powhatanSource,
     };
 
@@ -248,22 +327,15 @@ function updatePowhatan() {
   } else {
     dictionary[character] = {
       simplified: character,
-      traditional: character,
-      // pinyin: character,
       powhatan: powhatanDefinition,
-      origin: powhatanOrigin,
-      source: powhatanSource,
+      powhatanOrigin: powhatanOrigin,
+      powhatanSource: sourceUrl,
     };
 
     alert("Character not found in the dictionary.");
   }
 
   updateDictionary(character, dictionary[character]);
-
-  // Display updated result
-  displayResult(character, dictionary[character]);
-
-  updateCarousel();
 }
 
 // Function to update Maya image link
@@ -338,7 +410,7 @@ function updateCarousel() {
     if (powhatanTranslation) {
       powhatanDiv.innerText = `${powhatanTranslation.powhatan}`;
     } else {
-      powhatanDiv.innerText = "N/A";
+      powhatanDiv.innerText = "";
     }
 
     // Create a span for each character

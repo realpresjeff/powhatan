@@ -46,14 +46,14 @@ input {
 }
 
 .powhatan-translation {
-  font-size: 10px;
+  font-size: 16px;
   color: #2a65db; /* Choose a color that makes it stand out */
   text-align: center;
   margin-bottom: 10px;
 }
 
- /* Carousel container styles */
- #carousel-container {
+/* Carousel container styles */
+#carousel-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -93,4 +93,13 @@ input {
 }
 #carousel-container::-webkit-scrollbar-thumb:hover {
   background-color: #555;
+}
+
+p {
+  cursor: pointer;
+  padding: 5px;
+}
+input {
+  padding: 5px;
+  font-size: 1em;
 }
