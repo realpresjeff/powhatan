@@ -49,19 +49,7 @@
           id="chineseSentence"
           placeholder="Paste your Chinese sentence here"
         />
-        <button onclick="processSentence()">View Sentence</button>
-      </div>
-
-      <!-- Search by Chinese character -->
-      <div>
-        <label for="search">Search by Chinese character:</label>
-        <input
-          type="text"
-          id="search"
-          placeholder="Enter a Chinese character..."
-          oninput=""
-        />
-        <button onclick="searchCharacter()">Translate</button>
+        <button onclick="processChineseSentence()">View Sentence</button>
       </div>
 
       <!-- Search by English meaning -->
@@ -72,7 +60,7 @@
           id="englishSearch"
           placeholder="Enter English meaning..."
         />
-        <button onclick="searchByEnglish()">Translate</button>
+        <button onclick="processSentence()">Translate</button>
       </div>
 
       <!-- Search by Powhatan meaning -->
@@ -84,8 +72,19 @@
           placeholder="Enter Powhatan meaning..."
           oninput=""
         />
-        <button onclick="searchByPowhatan()">Translate</button>
+        <button onclick="processSentence('powhatan')">Translate</button>
       </div>
+
+      <h1>Google Text Scanner</h1>
+      <form id="imageUploadForm" enctype="multipart/form-data">
+        <input
+          type="file"
+          id="imageFile"
+          name="imageFile"
+          accept="image/*"
+          required
+        />
+      </form>
     </div>
 
     <script src="script.js"></script>

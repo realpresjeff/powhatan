@@ -3,12 +3,114 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const url = require("url");
+const { StringDecoder } = require("string_decoder");
 // const { Translate } = require("@google-cloud/translate").v2;
 
 const dictionaryFilePath = path.join(__dirname, "dictionary.json");
 
 // Path to the cache file
 const cacheFilePath = path.join(__dirname, "cache.json");
+
+const uploadDir = path.join(__dirname, "uploads");
+
+// Ensure the uploads directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// const vision = require("@google-cloud/vision");
+
+async function copy_text_from_image(filepath) {
+  console.log(filepath);
+  return "Hello world.";
+  // Creates a client
+  // const client = new vision.ImageAnnotatorClient();
+
+  // // Performs text detection on the local file
+  // const [result] = await client.textDetection(filepath);
+  // const detections = result.textAnnotations;
+  // console.log("Text:");
+  // detections.forEach((text) => console.log(text));
+  // let str = "";
+  // detections.map((text) => (str += text));
+  // return str;
+}
+
+function detectLanguage(text) {
+  let englishCount = 0;
+  let chineseCount = 0;
+
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+
+    // Check for English characters (A-Z, a-z)
+    if (
+      (charCode >= 65 && charCode <= 90) ||
+      (charCode >= 97 && charCode <= 122)
+    ) {
+      englishCount++;
+    }
+    // Check for Chinese characters (Unicode range for CJK Unified Ideographs)
+    else if (charCode >= 0x4e00 && charCode <= 0x9fff) {
+      chineseCount++;
+    }
+
+    // Stop checking if we have 2 characters from either language
+    if (chineseCount >= 2) {
+      return "Chinese";
+    }
+  }
+
+  return "English";
+}
+
+// Extract boundary for multipart form data
+function getBoundary(contentType) {
+  const boundaryPrefix = "boundary=";
+  const boundaryIndex = contentType.indexOf(boundaryPrefix);
+  if (boundaryIndex === -1) {
+    return null;
+  }
+  let boundary = contentType.slice(boundaryIndex + boundaryPrefix.length);
+  return boundary.trim();
+}
+
+// Parse the file upload from the stream
+function parseFormData(req, boundary) {
+  return new Promise((resolve, reject) => {
+    let chunks = [];
+    let decoder = new StringDecoder("utf8");
+    req.on("data", (chunk) => {
+      chunks.push(chunk);
+    });
+
+    req.on("end", () => {
+      const body = Buffer.concat(chunks).toString();
+      const parts = body.split(`--${boundary}`);
+
+      parts.forEach((part) => {
+        // Find the part that contains file data
+        if (
+          part.indexOf("Content-Disposition: form-data;") !== -1 &&
+          part.indexOf("filename=") !== -1
+        ) {
+          const fileName = part.match(/filename="(.+)"/)[1];
+          const fileData = part.split("\r\n\r\n")[1].split("\r\n--")[0]; // Extract the file content
+
+          // Write the file to the upload directory
+          const filePath = path.join(uploadDir, fileName);
+          fs.writeFileSync(filePath, fileData, "binary");
+
+          resolve(filePath); // Resolve with the path to the saved file
+        }
+      });
+    });
+
+    req.on("error", (err) => {
+      reject(err);
+    });
+  });
+}
 
 // Utility function to read the cache file
 function readCache() {
@@ -48,7 +150,7 @@ function updateDictionary(character, data) {
   }
 }
 
-async function searchhanzihero(query) {
+async function englishtohanzi(query) {
   return new Promise((resolve, reject) => {
     const url = `https://hanzihero.com/simplified/assignments/search?search%5Bquery%5D=${query}`;
 
@@ -67,7 +169,7 @@ async function searchhanzihero(query) {
   });
 }
 
-async function getSubcomponentsFromHanziHero(query) {
+async function getHanziSubcomponents(query) {
   return new Promise((resolve, reject) => {
     const url = `https://hanzihero.com/simplified/characters/${encodeURIComponent(
       query
@@ -126,7 +228,7 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(cache[char]));
       } else {
-        const subcomponents = await getSubcomponentsFromHanziHero(char);
+        const subcomponents = await getHanziSubcomponents(char);
 
         const response = {
           subcomponents,
@@ -155,7 +257,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(cache[searchValue]));
     } else {
-      const html = await searchhanzihero(searchValue);
+      const html = await englishtohanzi(searchValue);
 
       const response = {
         html,
@@ -168,6 +270,39 @@ const server = http.createServer(async (req, res) => {
       // Set the response headers and return the subcomponents as JSON
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(response));
+    }
+  }
+
+  if (
+    req.method === "POST" &&
+    req.headers["content-type"].includes("multipart/form-data") &&
+    req.url === "/api/image"
+  ) {
+    const boundary = getBoundary(req.headers["content-type"]);
+
+    if (!boundary) {
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      res.end("Bad Request: No boundary in multipart/form-data");
+      return;
+    }
+
+    try {
+      // Parse and save the file
+      const filePath = await parseFormData(req, boundary);
+
+      const text = copy_text_from_image(filePath);
+
+      // Respond with success and file path
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          text,
+          language: detectLanguage(text),
+        })
+      );
+    } catch (error) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "File upload failed" }));
     }
   }
 

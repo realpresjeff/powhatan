@@ -52,7 +52,6 @@ function searchHanziByEnglish(englishTerm, callback) {
     .then((data) => {
       const webResults = document.getElementById("web-results");
       webResults.innerHTML = data.html;
-
       callback(data);
       showLoadingIndicator(false);
     })
@@ -79,20 +78,17 @@ function getSubcomponents(char) {
 
 function searchCharacter(character) {
   // Function to search by Chinese character (simplified or traditional)
-  const searchValue = character
-    ? character
-    : document.getElementById("search").value;
-  const result = dictionary[searchValue];
+  const result = dictionary[character];
 
   if (result) {
-    displayResult(searchValue, result);
-    document.getElementById("search").value = "";
+    displayResult(character, result);
     return result;
   } else {
     // displayNoResult();
   }
 }
 
+let englishwordsprocessed = 0;
 // Function to search by English meaning
 function searchByEnglish(query) {
   const searchValue = query
@@ -100,10 +96,30 @@ function searchByEnglish(query) {
     : document.getElementById("englishSearch").value.toLowerCase();
 
   searchHanziByEnglish(searchValue, (data) => {
-    searchCharacter(query ? query : data.updatedCharacter.simplified);
-    // find character in local dictionary
-  });
+    const character = document
+      .querySelector("#web-results .font-noto-sc")
+      .textContent.trim();
+    const sentence = document.getElementById("chineseSentence");
 
+    if (translating) {
+      sentence.value = sentence.value += character;
+    } else {
+      sentence.value = character;
+    }
+
+    if (!translating) {
+      processChineseSentence();
+    }
+
+    englishwordsprocessed++;
+
+    if (englishwordsprocessed == indexProcessed) {
+      processChineseSentence();
+    }
+  });
+}
+
+function searchEnglishLocal() {
   let foundEntry = null;
   let foundKey = null;
 
@@ -122,34 +138,79 @@ function searchByEnglish(query) {
 
   if (foundEntry) {
     displayResult(foundKey, foundEntry);
+    displaySentenceCharacters(foundKey);
   } else {
     // displayNoResult();
   }
 }
 
 // Function to search by Powhatan meaning
-function searchByPowhatan() {
-  const searchValue = document
-    .getElementById("powhatanSearch")
-    .value.toLowerCase();
+function searchByPowhatan(word) {
+  const searchValue = word
+    ? word
+    : document.getElementById("powhatanSearch").value.toLowerCase();
   let foundEntry = null;
   let foundKey = null;
 
   // Iterate over the dictionary to find the corresponding Powhatan definition
+  // loop 1
   for (const key in dictionary) {
     const powhatanDefinition = dictionary[key].powhatan || "";
-    if (powhatanDefinition.toLowerCase().includes(searchValue)) {
+    if (powhatanDefinition.toLowerCase() === searchValue) {
       foundEntry = dictionary[key];
       foundKey = key;
       break;
     }
   }
 
+  if (!foundKey) {
+    // loop 2
+    for (const key in dictionary) {
+      const powhatanDefinition = dictionary[key].powhatan || "";
+      if (powhatanDefinition.toLowerCase().includes(searchValue)) {
+        foundEntry = dictionary[key];
+        foundKey = key;
+        break;
+      }
+    }
+  }
+
   if (foundEntry) {
     displayResult(foundKey, foundEntry);
+    displaySentenceCharacters(foundKey);
   } else {
     // displayNoResult();
   }
+}
+
+let translating;
+let indexProcessed = 0;
+function processSentence(mode) {
+  // english or powhatan
+  if (sentenceCharacters.length) {
+    sentenceCharacters = [];
+  }
+
+  let searchValue;
+
+  if (mode === "powhatan") {
+    searchValue = document.getElementById("powhatanSearch").value.toLowerCase();
+  } else {
+    searchValue = document.getElementById("englishSearch").value.toLowerCase();
+  }
+
+  translating = true;
+  const words = searchValue.split(" ");
+
+  words.forEach((word, index) => {
+    if (mode === "powhatan") {
+      searchByPowhatan(word);
+    } else {
+      searchByEnglish(word);
+    }
+
+    indexProcessed++;
+  });
 }
 
 // Function to display a result with Powhatan data
@@ -364,7 +425,8 @@ function updateMaya() {
 }
 
 // Function to process the pasted sentence
-function processSentence() {
+function processChineseSentence() {
+  translating = false;
   const sentence = document.getElementById("chineseSentence").value.trim();
 
   if (!sentence) {
@@ -384,7 +446,12 @@ let sentenceCharacters = [];
 
 // Function to display the full sentence and enlarge the selected character
 function displaySentenceCharacters(characters) {
-  sentenceCharacters = characters;
+  if (translating) {
+    sentenceCharacters.push(characters);
+  } else {
+    sentenceCharacters = characters;
+  }
+
   currentCharacterIndex = 0; // Reset the index
   updateCarousel(); // Initial update to show the sentence
   onClickCharacter();
@@ -442,7 +509,6 @@ function updateCarousel() {
 
 function onClickCharacter(char, index) {
   localSearch(char ? char : sentenceCharacters[currentCharacterIndex]);
-  searchByEnglish(char ? char : sentenceCharacters[currentCharacterIndex]);
   getSubcomponents(char ? char : sentenceCharacters[currentCharacterIndex]);
 
   if (typeof index === "number") {
@@ -479,3 +545,35 @@ function localSearch(character) {
     alert("Character not found in the dictionary.");
   }
 }
+
+document
+  .getElementById("imageFile")
+  .addEventListener("change", async function (e) {
+    e.preventDefault();
+    const fileInput = this;
+    if (fileInput.files && fileInput.files.length > 0) {
+      // Automatically submit the form as soon as a file is selected
+      const formData = new FormData();
+      const imageFile = document.getElementById("imageFile").files[0];
+
+      if (!imageFile) {
+        alert("Please select an image file.");
+        return;
+      }
+
+      formData.append("imageFile", imageFile);
+
+      try {
+        const response = await fetch("/api/image", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        console.log(data);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    }
+  });
