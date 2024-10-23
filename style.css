@@ -6,10 +6,6 @@ body {
 
 img { 
     width: 50%;
-
-    @media screen {
-        width: 90%
-    }
 }
 
 h1 {
