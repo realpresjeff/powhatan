@@ -13,6 +13,7 @@ h1 {
     Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   font-size: 3.5rem;
   margin-bottom: 0;
+  margin-top: 0;
 }
 
 p {
@@ -24,4 +25,8 @@ p {
 .top-bar {
   width: 100%;
   margin-bottom: 60px;
+}
+
+.sm {
+  font-size: 50%;
 }
