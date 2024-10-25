@@ -11,9 +11,9 @@ export class Topbar extends HTMLElement {
     return (
       <div className="topbar">
         <a href="/powhatan">Home</a>
-        <a href="/reservation">Reservation</a>
-        <a href="/usa">USA</a>
-        <a href="/game">Video Game</a>
+        <a href="/powhatan/reservation">Reservation</a>
+        <a href="/powhatan/usa">USA</a>
+        <a href="/powhatan/game">Video Game</a>
       </div>
     );
   }
