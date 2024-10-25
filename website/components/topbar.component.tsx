@@ -10,10 +10,10 @@ export class Topbar extends HTMLElement {
   render() {
     return (
       <div className="topbar">
-        <a href="/">Home</a>
-        <a href="/reservation/index.html">Reservation</a>
-        <a href="/usa/index.html">USA</a>
-        <a href="/game/index.html">Video Game</a>
+        <a href="/powhatan">Home</a>
+        <a href="/reservation">Reservation</a>
+        <a href="/usa">USA</a>
+        <a href="/game">Video Game</a>
       </div>
     );
   }
