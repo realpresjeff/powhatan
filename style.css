@@ -30,27 +30,3 @@ p {
 .sm {
   font-size: 50%;
 }
-
-/* Styling the interview invite image */
-.interview-invite {
-  width: 300px; /* Initial size */
-  cursor: url("magnifying-glass-icon.png"), auto; /* Change cursor to magnifying glass */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Add magnifying glass cursor hover */
-.interview-invite:hover {
-  cursor: url("magnifying-glass-icon.png"), auto;
-}
-
-/* Expanded image styling */
-.expanded {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%; /* Larger size for expanded image */
-  height: auto;
-  z-index: 1000;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
