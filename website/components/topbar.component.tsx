@@ -14,6 +14,7 @@ export class Topbar extends HTMLElement {
         <a href="/powhatan/reservation">Reservation</a>
         <a href="/powhatan/usa">USA</a>
         <a href="/powhatan/game">Video Game</a>
+        <a href="/powhatan/japan">Japan</a>
       </div>
     );
   }
