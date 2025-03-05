@@ -1,569 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="../style.css" />
     <link rel="stylesheet" href="reservation.css" />
-    <title>神は民: 预览</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <title>神は民</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden; /* Prevent scrollbars */
+      h1 {
+        margin-top: 30px;
+        margin-bottom: 30px;
+      }
+
+      img {
+        @media screen {
+          width: 100%;
         }
-        canvas {
-            display: block; /* Ensure the canvas fills the screen */
-        }
-        #toolbar {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10; /* Make sure it's above the canvas */
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            color: white;
-        }
-        #toolbar button {
-            margin: 5px;
-            padding: 10px;
-            background-color: #444;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #toolbar button:hover {
-            background-color: #666;
-        }
-    /* Full-screen overlay style for the popup */
-/* Popup container */
-.popup {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
-    display: none; /* Initially hidden */
-    justify-content: center;
-    align-items: center;
-    z-index: 9999; /* Ensure it overlays on top */
-}
-
-/* Popup content */
-.popup-content {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 70%; /* Adjust width as needed */
-    max-width: 600px;
-    position: relative;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* Close button */
-.popup-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 20px;
-    cursor: pointer;
-    color: #fff;
-    background-color: red;
-    border-radius: 50%;
-    padding: 5px 10px;
-}
-
-/* Menu Items */
-#menu-items {
-    list-style-type: none;
-    padding: 0;
-}
-
-.menu-item {
-    padding: 10px;
-    border: 1px solid #ddd;
-    cursor: pointer;
-}
-
-.menu-item:hover {
-    background-color: #f0f0f0;
-}
-
-
-#popup-text {
-  font-size: 24px;
-  color: black;
-  font-family: Arial, sans-serif;
-  margin-bottom: 20px;
-}
-
-.menu-item {
-  cursor: pointer;
-  padding: 10px;
-  margin: 5px 0;
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  transition: background-color 0.3s;
-}
-
-.menu-item:hover {
-  background-color: #e0e0e0;
-}
-
-/* Context Menu */
-.context-menu {
-  position: absolute;
-  background-color: white;
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  display: none;
-}
-
-/* Context Menu */
-.context-menu {
-  position: absolute;
-  background-color: white; /* Solid background */
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  display: none;
-  opacity: 1; /* Ensure full visibility */
-  z-index: 10000; /* Ensure the context menu stays on top */
-}
-
-.context-menu ul {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-}
-
-.context-menu li {
-  padding: 10px;
-  cursor: pointer;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.context-menu li:hover {
-  background-color: #e0e0e0;
-}
-
-
-/* Fade-in animation */
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.stats-popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border: 1px solid #000;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-
+      }
     </style>
-</head>
-<body>
-    <div id="toolbar">
-        <button id="inventory">Inventory</button>
-        <button id="spells">Spellbook</button>
-        <button id="stats">Stats</button>
-        <button id="worn">Worn</button>
-        <button id="quests">Quests</button>
-        <button id="combat">Combat Settings</button>
-    </div>
+  </head>
+  <body>
+    <!-- Top Navigation Bar -->
+    <top-bar class="top-bar"></top-bar>
 
-<!-- Popup container (hidden initially) -->
-<div id="popup" class="popup" style="display: none;">
-    <div class="popup-content">
-        <span id="popup-close" class="popup-close">X</span>
-        <span id="popup-text">Menu:</span>
-        <ul id="menu-items"></ul>
-    </div>
-</div>
+    <h2>(预览)</h2>
 
-<div id="statsPopup" class="stats-popup" onclick="event.stopPropagation();">
-    <h2>Character Stats</h2>
-    <ul>
-        <li>Magic: 200,546,787</li>
-        <li>Archery: 7,434,876</li>
-        <li>Strength: 3,768,423</li>
-        <li>Defense: 4,768,234</li>
-        <li>HP: 9,654,768</li>
-        <li>Stamina: 7,543,657</li>
-        <li>Blacksmithing: 2,489,894</li>
-        <li>Mining: 6,438,938</li>
-        <li>Construction: 3,230,395</li>
-        <li>Craft: 2,020,043</li>
-        <li>Fishing: 1,528,010</li>
-        <li>Cooking: 1,232,360</li>
-    </ul>
-    <button class="close-button" onclick="closeStats()">Close</button>
-</div>
+    <img
+      src="../images/game.jpeg"
+      alt="Powhatan Video Game"
+      title="Powhatan Video Game"
+    />
 
-  
-  <!-- Context Menu for item actions (hidden initially) -->
-  <div id="context-menu" class="context-menu" style="display: none;">
-    <ul>
-      <li onclick="dropItem()" id="drop-item-button">Drop Item</li>
-    </ul>
-  </div>
-  
+    <img
+      src="../images/powhatan_video_game_2.jpg"
+      alt="Powhatan Video Game"
+      title="Powhatan Video Game"
+    />
+
+    <script src="../main.js"></script>
     <script>
-                function showStats() {
-            document.getElementById("statsPopup").style.display = "block";
-        }
-        function closeStats() {
-            document.getElementById("statsPopup").style.display = "none";
-        }
+      document.addEventListener("DOMContentLoaded", function () {
+        // Get all imgs
+        const inviteImages = document.querySelectorAll("img");
 
-        // Scene setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        inviteImages.forEach((image) => {
+          image.addEventListener("click", function () {
+            // Check if the image is already expanded
+            if (image.classList.contains("expanded")) {
+              collapseImage(image); // Collapse if it's already expanded
+            } else {
+              // Add overlay background
+              const overlay = document.createElement("div");
+              overlay.classList.add("overlay");
+              document.body.appendChild(overlay);
 
-        // Lighting
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(10, 20, 10);
-        scene.add(light);
+              // Expand the image and scale to fit the screen
+              scaleToFitScreen(image);
 
-        // Ground (map)
-        const groundGeometry = new THREE.PlaneGeometry(100, 100);
-        const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2;
-        scene.add(ground);
-
-        // Player character (simple cube)
-        const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
-        const playerMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
-        const player = new THREE.Mesh(playerGeometry, playerMaterial);
-        player.position.y = 1;
-        scene.add(player);
-
-        // Camera settings
-        let cameraAngle = 0; // Angle around the player
-        let cameraDistance = 15; // Camera distance from player
-        const cameraHeight = 10;
-        let cameraVerticalOffset = 0; // Vertical offset for panning up and down
-        const minCameraHeight = 1; // Minimum height of the camera (stop panning down below this level)
-
-        // Update camera position to orbit around the player
-        function updateCameraPosition() {
-            const offsetX = Math.sin(cameraAngle) * cameraDistance;
-            const offsetZ = Math.cos(cameraAngle) * cameraDistance;
-
-            camera.position.set(
-                player.position.x + offsetX,
-                player.position.y + cameraHeight + cameraVerticalOffset,
-                player.position.z + offsetZ
-            );
-
-            // Prevent camera from going below the ground
-            if (camera.position.y < minCameraHeight) {
-                camera.position.y = minCameraHeight; // Stop panning down
-                cameraVerticalOffset = 0; // Prevent further downward panning
+              // Remove expansion when clicking on the overlay
+              overlay.addEventListener("click", function () {
+                collapseImage(image);
+                overlay.remove(); // Remove the overlay when collapsing
+              });
             }
-
-            camera.lookAt(player.position);
-        }
-        updateCameraPosition();
-
-        // Handle keyboard input for camera rotation
-        document.addEventListener("keydown", (event) => {
-            const rotationSpeed = 0.1; // Increased rotation speed
-            const verticalSpeed = 0.1; // Increased vertical speed to match horizontal speed
-            if (event.key === "ArrowLeft") {
-                cameraAngle -= rotationSpeed; // Reverse the direction: Rotate right
-            } else if (event.key === "ArrowRight") {
-                cameraAngle += rotationSpeed; // Reverse the direction: Rotate left
-            } else if (event.key === "ArrowUp") {
-                cameraVerticalOffset += verticalSpeed; // Increased vertical panning speed
-            } else if (event.key === "ArrowDown") {
-                if (camera.position.y > minCameraHeight) {
-                    cameraVerticalOffset -= verticalSpeed; // Increased vertical panning speed
-                }
-            }
-            updateCameraPosition();
+          });
         });
 
-        // Mouse input for zooming (scrolling to zoom)
-        document.addEventListener('wheel', (event) => {
-            cameraDistance += even             // addToInventory(object);t.deltaY * 0.05; // Adjust zoom speed (now modifies distance from player)
-            cameraDistance = Math.max(5, Math.min(cameraDistance, 30)); // Limiting zoom in and out range
-            updateCameraPosition();
-        });
+        // Function to scale the image to fit the screen
+        function scaleToFitScreen(image) {
+          const screenWidth = window.innerWidth;
+          const screenHeight = window.innerHeight;
+          const imageAspectRatio = image.naturalWidth / image.naturalHeight;
 
-        // Click-to-move setup (for player movement)
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        let targetPosition = player.position.clone();
-        let isMoving = false;
-        const moveSpeed = 0.1;
+          // Calculate the new width and height for the image to fit within the screen
+          let newWidth, newHeight;
 
-        document.addEventListener('click', (event) => {
-            if (event.button === 0) { // Left-click to move
-                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects([ground]);
+          if (screenWidth / screenHeight > imageAspectRatio) {
+            // Screen is wider than image aspect ratio, limit by height
+            newHeight = screenHeight * 0.9; // Use 90% of screen height
+            newWidth = newHeight * imageAspectRatio;
+          } else {
+            // Screen is narrower than image aspect ratio, limit by width
+            newWidth = screenWidth * 0.9; // Use 90% of screen width
+            newHeight = newWidth / imageAspectRatio;
+          }
 
-                if (intersects.length > 0) {
-                    targetPosition = intersects[0].point;
-                    targetPosition.y = player.position.y; // Keep player on ground level
-                    isMoving = true;
-                }
-
-                const itemintersections = raycaster.intersectObjects(scene.children);
-
-                if (itemintersections.length > 1) {
-                    const object = itemintersections[0].object;
-
-                    if (object.userData.isRemovable) {
-                    addToInventory(object.userData);
-                    scene.remove(object);
-                    }
-                }
-            }
-        });
-        
-        // Function to add an item to the inventory
-function addToInventory(item) {
-    inventory.push(item); // Add item to inventory array
-    updateInventoryUI(); // Update UI display
-}
-
-let inventory = [{ name: "pickaxe" }]; // Array to store picked-up items
-
-document.addEventListener('click', (event) => {
-    if (event.button === 0) { // Left-click to interact
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(scene.children);
-
-        if (intersects.length > 1) {
-            const object = intersects[0].object;
-            // Check if the object is a "dropped item"
-            if (object.userData) {
-                addToInventory(object.userData);
-                scene.remove(object);
-            }
-        }
-    }
-});
-
-// Function to add an item to the inventory
-function addToInventory(item) {
-    inventory.push(item);
-    updateInventoryUI();
-}
-
-// Function to update the popup menu with inventory items onInit
-(function updateInventoryUI() {
-    const menuItems = document.getElementById("menu-items");
-    menuItems.innerHTML = ""; // Clear existing items
-
-    inventory.forEach((item) => {
-        const li = document.createElement("li");
-        li.classList.add("menu-item");
-        li.textContent = item.name;
-        li.style.backgroundColor = `#${item.color}`;
-        li.oncontextmenu = (event) => showContextMenu(event, item);
-        menuItems.appendChild(li);
-    });
-}())
-
-// Function to update the popup menu with inventory items
-function updateInventoryUI() {
-    const menuItems = document.getElementById("menu-items");
-    menuItems.innerHTML = ""; // Clear existing items
-
-    inventory.forEach((item) => {
-        if(item) {
-        const li = document.createElement("li");
-        li.classList.add("menu-item");
-        li.textContent = item.name;
-        li.style.backgroundColor = `#${item.color}`;
-        li.oncontextmenu = (event) => showContextMenu(event, item);
-        menuItems.appendChild(li);
-        }
-    });
-}
-
-
-        // Smooth movement function (player movement)
-        function movePlayer() {
-            if (isMoving) {
-                player.position.lerp(targetPosition, moveSpeed);
-                if (player.position.distanceTo(targetPosition) < 0.1) {
-                    isMoving = false;
-                }
-            }
+          // Apply expanded class and set dynamic size
+          image.classList.add("expanded");
+          image.style.width = `${newWidth}px`;
+          image.style.height = `${newHeight}px`;
+          image.style.top = `50%`;
+          image.style.left = `50%`;
+          image.style.position = `fixed`;
+          image.style.zIndex = `1000`;
+          image.style.transform = `translate(-50%, -50%)`;
         }
 
-// Function to show the popup
-function createPopup(content) {
-    const popup = document.getElementById('popup');
-    const popupText = document.getElementById('popup-text');
-    
-    // Set the content for the popup
-    popupText.textContent = content;
-
-    // Display the popup and trigger the animation
-    popup.style.display = 'flex';
-}
-
-// Show the context menu when right-clicking a menu item
-function showContextMenu(event, item) {
-    event.preventDefault(); // Prevent default right-click menu
-
-    // Get the context menu and position it at the mouse coordinates
-    const contextMenu = document.getElementById('context-menu');
-    contextMenu.style.display = 'block';
-    contextMenu.style.left = `${event.pageX}px`;
-    contextMenu.style.top = `${event.pageY}px`;
-
-    // Store the selected item for later (in case we want to drop it)
-    contextMenu.selectedItem = item;
-}
-
-function dropItem() {
-    const contextMenu = document.getElementById('context-menu');
-
-    // Get the selected item
-    let selectedItem = contextMenu.selectedItem;
-
-    if (selectedItem) {
-        // Remove the selected item from the inventory array
-        inventory = inventory.filter(item => item !== selectedItem && item !== undefined);
-
-        // Drop the item on the ground at a random position (keep y-axis at the ground level)
-        const itemGeometry = new THREE.BoxGeometry(1, 1, 1); // Simple item geometry (a cube)
-        const itemMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red color for the dropped item
-        const item = new THREE.Mesh(itemGeometry, itemMaterial);
-
-        // Set the position of the dropped item
-        item.position.set(player.position.x, 0.5, player.position.z); // Adjust height to make sure it appears above the ground
-        item.userData.isRemovable = true;
-        item.userData.name = selectedItem.name;
-        scene.add(item);
-    }
-
-        // Hide the context menu after the item is dropped
-        contextMenu.style.display = 'none';
-        updateInventoryUI();
-}
-
-
-
-
-// Hide the context menu if clicked outside of it
-document.addEventListener('click', function(event) {
-    const contextMenu = document.getElementById('context-menu');
-    if (!contextMenu.contains(event.target) && !event.target.classList.contains('menu-item')) {
-        contextMenu.style.display = 'none';
-    }
-});
-
-// Function to hide the popup
-function hidePopup() {
-    const popup = document.getElementById('popup');
-    popup.style.display = 'none'; // Hide the popup
-}
-
-// Stop clicks from reaching the canvas when interacting with the popup
-document.getElementById('popup').addEventListener('click', function(event) {
-    // Prevent the click from propagating to the background (e.g., canvas)
-    event.stopPropagation();
-});
-
-// Prevent clicks on the popup content from being passed to the canvas
-document.querySelector('.popup-content').addEventListener('click', function(event) {
-    // This will stop the event from propagating to the background elements
-    event.stopPropagation();
-});
-
-
-// Close the popup when the close button is clicked
-document.getElementById('popup-close').addEventListener('click', hidePopup);
-
-
-        // In-world UI buttons for opening popups
-        document.getElementById('inventory').addEventListener('click', () => {
-            createPopup('Inventory');
-        });
-        document.getElementById('spells').addEventListener('click', () => {
-            createPopup('Spellbook');
-        });
-        document.getElementById('stats').addEventListener('click', () => {
-            showStats();
-        });
-        document.getElementById('worn').addEventListener('click', () => {
-            createPopup('Worn');
-        });
-        document.getElementById('quests').addEventListener('click', () => {
-            createPopup('Quests');
-        });
-        document.getElementById('combat').addEventListener('click', () => {
-            createPopup('Combat Settings');
-        });
-
-        // Prevent the "Drop item" button click from affecting the canvas
-document.getElementById('drop-item-button').addEventListener('click', function(event) {
-    // Stop the event propagation so it doesn't trigger canvas interactions
-    event.stopPropagation();
-    
-    // Logic to drop the item here (this can be your function to drop the item)
-});
-
-
-// Function to handle the "Drop item" button click
-document.getElementById('drop-item-button').addEventListener('click', function(event) {
-    event.stopPropagation();  // Prevent event propagation
-});
-
-
-
-
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-            movePlayer();
-            updateCameraPosition();
-            renderer.render(scene, camera);
+        // Function to collapse the image back to its original state
+        function collapseImage(image) {
+          // Remove the expanded class and reset inline styles
+          image.classList.remove("expanded");
+          image.style.width = "";
+          image.style.height = "";
+          image.style.top = "";
+          image.style.left = "";
+          image.style.position = "";
+          image.style.zIndex = "";
+          image.style.transform = "";
         }
-        animate();
-
-        // Handle window resizing
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        
+      });
     </script>
-</body>
+  </body>
 </html>
-
