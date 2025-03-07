@@ -1636,7 +1636,7 @@
             fishingSpots.push(createFishingSpot({ x: 10, y: 0, z: 14 }));
 
             // ⛏️ Generate Natural Coal Mine
-            createCoalMine({ x: 15, y: 0, z: -10 });
+            createCoalMine({ x: 42.5, y: 0, z: -10 });
         }
 
 
@@ -1727,6 +1727,8 @@
             entrance.userData = { isEntrance: true, type: "coal", name: "Coal Mine Entrance" };
             mine.add(entrance);
 
+            createMineGround(position, { height: 15, width: 15 })
+
             // ⛏️ Coal Deposits inside the mine
             function spawnCoal() {
                 const coal = new THREE.Mesh(
@@ -1800,7 +1802,7 @@
 
             const mineGround = new THREE.Mesh(mineGroundGeometry, mineGroundMaterial);
             mineGround.rotation.x = -Math.PI / 2;
-            mineGround.position.set(position.x, position.y - 0.01, position.z); // Slightly below the mine
+            mineGround.position.set(position.x, position.y + 0.01, position.z); // Slightly below the mine
 
             scene.add(mineGround);
             return mineGround;
