@@ -563,6 +563,7 @@
                 if (equippedItems[slotName]) {
                     // Move to Inventory (Placeholder)
                     console.log(`Unequipped ${equippedItems[slotName]}`);
+                    addToInventory({name: equippedItems[slotName]});
                     equippedItems[slotName] = null;
                     slot.textContent = "Empty";
                 }
