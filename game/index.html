@@ -403,6 +403,23 @@
         .equipment-slot:hover {
             background: #5c4835;
         }
+
+        .menu {
+            position: absolute;
+            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid white;
+            padding: 5px;
+            color: white;
+            z-index: 100;
+        }
+
+        .menu button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -517,6 +534,10 @@
         </ul>
     </div>
 
+    <div id="contextMenu" class="menu">
+        <button onclick="doAction()">Cancel</button>
+    </div>
+
     <script>
         // Get elements
         const combatPopup = document.getElementById("combatPopup");
@@ -574,7 +595,7 @@
                 if (equippedItems[slotName]) {
                     // Move to Inventory (Placeholder)
                     console.log(`Unequipped ${equippedItems[slotName]}`);
-                    addToInventory({name: equippedItems[slotName]});
+                    addToInventory({ name: equippedItems[slotName] });
                     equippedItems[slotName] = null;
                     slot.textContent = "Empty";
                 }
@@ -1025,7 +1046,7 @@
                 li.classList.add("menu-item");
                 li.textContent = item.name;
                 li.style.backgroundColor = `#${item.color}`;
-                li.oncontextmenu = (event) => showContextMenu(event, item);
+                li.oncontextmenu = (event) => showInventoryContextMenu(event, item);
                 menuItems.appendChild(li);
             });
         }())
@@ -1041,7 +1062,7 @@
                     li.classList.add("menu-item");
                     li.textContent = item.name;
                     li.style.backgroundColor = `#${item.color}`;
-                    li.oncontextmenu = (event) => showContextMenu(event, item);
+                    li.oncontextmenu = (event) => showInventoryContextMenu(event, item);
                     menuItems.appendChild(li);
                 }
             });
@@ -1071,7 +1092,7 @@
         }
 
         // Show the context menu when right-clicking a menu item
-        function showContextMenu(event, item) {
+        function showInventoryContextMenu(event, item) {
             event.preventDefault(); // Prevent default right-click menu
 
             // Get the context menu and position it at the mouse coordinates
@@ -1147,7 +1168,7 @@
         document.getElementById('inventory').addEventListener('click', () => {
             createPopup('Inventory');
         });
-        
+
         document.getElementById('stats').addEventListener('click', () => {
             showStats();
         });
@@ -1166,8 +1187,49 @@
             event.stopPropagation();  // Prevent event propagation
         });
 
+        function showContextMenu(x, y, object) {
+            const menu = document.getElementById("contextMenu");
+            menu.style.left = `${x}px`;
+            menu.style.top = `${y}px`;
+            menu.style.display = "block";
 
+            // Store the selected object for use in menu actions
+            menu.dataset.objectId = object.uuid;
 
+            // Hide menu when clicking elsewhere
+            document.addEventListener("click", () => {
+                menu.style.display = "none";
+            }, { once: true });
+        }
+
+        // Example action function
+        function doAction() {
+            const menu = document.getElementById("contextMenu");
+            console.log("Performing action on:", menu.dataset.objectId);
+            menu.style.display = "none";
+        }
+
+        document.addEventListener("contextmenu", (event) => {
+            // Check if the right-click happened inside a popup
+            if (event.target.closest(".popup")) {
+                return; // Allow default behavior for popups
+            }
+
+            event.preventDefault(); // Prevent the browser's context menu if not clicking on a popup
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+
+            if (intersects.length > 0) {
+                const selectedObject = intersects[0].object;
+                console.log("Right-clicked on:", selectedObject);
+
+                showContextMenu(event.clientX, event.clientY, selectedObject);
+            }
+        });
 
         // Animation loop
         function animate() {
