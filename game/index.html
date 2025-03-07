@@ -565,7 +565,7 @@
         function loadWornItems() {
             equipmentSlots.forEach(slot => {
                 const slotName = slot.dataset.slot;
-                slot.textContent = equippedItems[slotName] || "Empty";
+                slot.textContent = equippedItems[slotName] || equippedItems[slotName].name ? equippedItems[slotName].name : "Empty";
             });
         }
 
@@ -595,7 +595,7 @@
                 if (equippedItems[slotName]) {
                     // Move to Inventory (Placeholder)
                     console.log(`Unequipped ${equippedItems[slotName]}`);
-                    addToInventory({ name: equippedItems[slotName] });
+                    addToInventory(equippedItems[slotName].name ? equippedItems[slotName] : { name: equippedItems[slotName] });
                     equippedItems[slotName] = null;
                     slot.textContent = "Empty";
                 }
@@ -1308,8 +1308,9 @@
 
             // Store equipped item
             equippedItems[slot] = item;
+            console.log(equippedItems)
 
-            updateWornPopup(); // Refresh UI
+            // updateWornPopup(); // Refresh UI
 
             removeFromInventory(item);
         }
@@ -1328,56 +1329,6 @@
             };
             return slots[equipType] || null;
         }
-
-        function updateWornPopup() {
-            console.log("Updating worn popup UI...");
-
-            const wornSlots = [
-                "helmet", "torso", "pants", "left-hand", "right-hand",
-                "left-shoe", "right-shoe", "ring", "necklace"
-            ];
-
-            wornSlots.forEach(slot => {
-                const slotElement = document.getElementById(slot);
-                if (!slotElement) return console.warn(`Slot not found: ${slot}`);
-
-                slotElement.innerHTML = ""; // Clear previous content
-
-                const equippedItem = equippedItems[slot];
-
-                if (equippedItem) {
-                    console.log(equippedItem.name)
-                    const equippedItemDiv = document.createElement("div");
-                    equippedItemDiv.classList.add("equipped-item");
-
-                    // Set correct name
-                    const itemName = document.createElement("span");
-                    itemName.innerHTML = equippedItem.name || "Unknown Item";
-                    itemName.classList.add("equipped-name");
-
-                    // Create item icon
-                    const icon = document.createElement("img");
-                    icon.src = equippedItem.icon ? equippedItem.icon : "./assets/default_spell_icon.png";
-                    icon.alt = equippedItem.name || "Unknown Item";
-                    icon.classList.add("equipped-icon");
-
-                    equippedItemDiv.appendChild(icon);
-                    equippedItemDiv.appendChild(itemName);
-
-                    // Click to unequip
-                    equippedItemDiv.addEventListener("click", () => {
-                        unequipItem(slot);
-                    });
-
-                    console.log(equippedItemDiv);
-
-                    slotElement.appendChild(equippedItemDiv);
-                } else {
-                    console.log(`No item equipped in ${slot}`);
-                }
-            });
-        }
-
 
         // Animation loop
         function animate() {
