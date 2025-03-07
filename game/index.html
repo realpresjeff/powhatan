@@ -503,15 +503,15 @@
             <h2>Worn Items</h2>
 
             <div class="equipment-grid">
-                <div class="equipment-slot" data-slot="helmet">Helmet</div>
-                <div class="equipment-slot" data-slot="torso">Torso</div>
-                <div class="equipment-slot" data-slot="pants">Pants</div>
-                <div class="equipment-slot" data-slot="left-hand">Left Hand</div>
-                <div class="equipment-slot" data-slot="right-hand">Right Hand</div>
-                <div class="equipment-slot" data-slot="left-shoe">Left Shoe</div>
-                <div class="equipment-slot" data-slot="right-shoe">Right Shoe</div>
-                <div class="equipment-slot" data-slot="ring">Ring</div>
-                <div class="equipment-slot" data-slot="necklace">Necklace</div>
+                <div class="equipment-slot" data-slot="helmet" id="helmet">Helmet</div>
+                <div class="equipment-slot" data-slot="torso" id="torso">Torso</div>
+                <div class="equipment-slot" data-slot="pants" id="pants">Pants</div>
+                <div class="equipment-slot" data-slot="left-hand" id="left-hand">Left Hand</div>
+                <div class="equipment-slot" data-slot="right-hand" id="right-hand">Right Hand</div>
+                <div class="equipment-slot" data-slot="left-shoe" id="left-shoe">Left Shoe</div>
+                <div class="equipment-slot" data-slot="right-shoe" id="right-shoe">Right Shoe</div>
+                <div class="equipment-slot" data-slot="ring" id="ring">Ring</div>
+                <div class="equipment-slot" data-slot="necklace" id="necklace">Necklace</div>
             </div>
         </div>
     </div>
@@ -1010,7 +1010,7 @@
             updateInventoryUI(); // Update UI display
         }
 
-        let inventory = [{ name: "pickaxe", pickupable: true }]; // Array to store picked-up items
+        let inventory = [{ name: "pickaxe", pickupable: true }, { name: "steel helmet", equipable: true, equipType: "helmet", }]; // Array to store picked-up items
 
         document.addEventListener('click', (event) => {
             if (event.button === 0) { // Left-click to interact
@@ -1091,19 +1091,37 @@
             popup.style.display = 'flex';
         }
 
-        // Show the context menu when right-clicking a menu item
         function showInventoryContextMenu(event, item) {
             event.preventDefault(); // Prevent default right-click menu
 
-            // Get the context menu and position it at the mouse coordinates
-            const contextMenu = document.getElementById('context-menu');
-            contextMenu.style.display = 'block';
+            const contextMenu = document.getElementById("context-menu");
+            contextMenu.innerHTML = ""; // Clear previous options
+
+            // Equip option (only for equipable items)
+            if (item.equipable) {
+                const equipOption = document.createElement("div");
+                equipOption.textContent = `Equip ${item.name}`;
+                equipOption.className = "context-menu-item";
+                equipOption.onclick = () => equipItem(item);
+                contextMenu.appendChild(equipOption);
+            }
+
+            // Drop option (always available)
+            const dropOption = document.createElement("div");
+            dropOption.textContent = `Drop ${item.name}`;
+            dropOption.className = "context-menu-item";
+            dropOption.onclick = () => dropItem(item);
+            contextMenu.appendChild(dropOption);
+
+            // Position and show menu
+            contextMenu.style.display = "block";
             contextMenu.style.left = `${event.pageX}px`;
             contextMenu.style.top = `${event.pageY}px`;
 
-            // Store the selected item for later (in case we want to drop it)
+            // Store selected item
             contextMenu.selectedItem = item;
         }
+
 
         function dropItem() {
             const contextMenu = document.getElementById('context-menu');
@@ -1122,13 +1140,17 @@
 
                 // Set the position of the dropped item
                 item.position.set(player.position.x, 0.5, player.position.z); // Adjust height to make sure it appears above the ground
-                item.userData.pickupable = true;
-                item.userData.name = selectedItem.name;
+                item.userData = selectedItem;
                 scene.add(item);
             }
 
             // Hide the context menu after the item is dropped
             contextMenu.style.display = 'none';
+            updateInventoryUI();
+        }
+
+        function removeFromInventory(selectedItem) {
+            inventory = inventory.filter(item => item !== selectedItem && item !== undefined);
             updateInventoryUI();
         }
 
@@ -1267,6 +1289,94 @@
                 showContextMenu(event.clientX, event.clientY, menuOptions);
             }
         });
+
+        function equipItem(item) {
+            console.log(`Equipping ${item.name} in slot: ${item.equipType}`);
+
+            const slot = getEquipmentSlot(item.equipType);
+            if (!slot) return console.warn("No valid slot for this item.");
+
+            const wornSlot = document.getElementById(slot);
+            if (!wornSlot) return console.warn(`Worn slot element not found: ${slot}`);
+
+            // Unequip existing item first
+            if (equippedItems[slot]) {
+                console.log(`Unequipping ${equippedItems[slot].name} from ${slot}`);
+                addToInventory(equippedItems[slot]);
+                delete equippedItems[slot];
+            }
+
+            // Store equipped item
+            equippedItems[slot] = item;
+
+            updateWornPopup(); // Refresh UI
+
+            removeFromInventory(item);
+        }
+
+        function getEquipmentSlot(equipType) {
+            const slots = {
+                helmet: "helmet",
+                torso: "torso",
+                pants: "pants",
+                leftHand: "leftHand",
+                rightHand: "rightHand",
+                leftShoe: "leftShoe",
+                rightShoe: "rightShoe",
+                ring: "ring",
+                necklace: "necklace",
+            };
+            return slots[equipType] || null;
+        }
+
+        function updateWornPopup() {
+            console.log("Updating worn popup UI...");
+
+            const wornSlots = [
+                "helmet", "torso", "pants", "left-hand", "right-hand",
+                "left-shoe", "right-shoe", "ring", "necklace"
+            ];
+
+            wornSlots.forEach(slot => {
+                const slotElement = document.getElementById(slot);
+                if (!slotElement) return console.warn(`Slot not found: ${slot}`);
+
+                slotElement.innerHTML = ""; // Clear previous content
+
+                const equippedItem = equippedItems[slot];
+
+                if (equippedItem) {
+                    console.log(equippedItem.name)
+                    const equippedItemDiv = document.createElement("div");
+                    equippedItemDiv.classList.add("equipped-item");
+
+                    // Set correct name
+                    const itemName = document.createElement("span");
+                    itemName.innerHTML = equippedItem.name || "Unknown Item";
+                    itemName.classList.add("equipped-name");
+
+                    // Create item icon
+                    const icon = document.createElement("img");
+                    icon.src = equippedItem.icon ? equippedItem.icon : "./assets/default_spell_icon.png";
+                    icon.alt = equippedItem.name || "Unknown Item";
+                    icon.classList.add("equipped-icon");
+
+                    equippedItemDiv.appendChild(icon);
+                    equippedItemDiv.appendChild(itemName);
+
+                    // Click to unequip
+                    equippedItemDiv.addEventListener("click", () => {
+                        unequipItem(slot);
+                    });
+
+                    console.log(equippedItemDiv);
+
+                    slotElement.appendChild(equippedItemDiv);
+                } else {
+                    console.log(`No item equipped in ${slot}`);
+                }
+            });
+        }
 
 
         // Animation loop
