@@ -1010,25 +1010,25 @@
             updateInventoryUI(); // Update UI display
         }
 
-        let inventory = [{ name: "pickaxe", pickupable: true }, { name: "steel helmet", equipable: true, equipType: "helmet", }]; // Array to store picked-up items
+        let inventory = [{ name: "pickaxe", pickupable: true }, { name: "steel helmet", equipable: true, equipType: "helmet", pickupable: true }]; // Array to store picked-up items
 
-        document.addEventListener('click', (event) => {
-            if (event.button === 0) { // Left-click to interact
-                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(scene.children);
+        // document.addEventListener('click', (event) => {
+        //     if (event.button === 0) { // Left-click to interact
+        //         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        //         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        //         raycaster.setFromCamera(mouse, camera);
+        //         const intersects = raycaster.intersectObjects(scene.children);
 
-                if (intersects.length > 1) {
-                    const object = intersects[0].object;
-                    // Check if the object is a "dropped item"
-                    if (object.userData) {
-                        addToInventory(object.userData);
-                        scene.remove(object);
-                    }
-                }
-            }
-        });
+        //         if (intersects.length > 1) {
+        //             const object = intersects[0].object;
+        //             // Check if the object is a "dropped item"
+        //             if (object.userData) {
+        //                 addToInventory(object.userData);
+        //                 scene.remove(object);
+        //             }
+        //         }
+        //     }
+        // });
 
         // Function to add an item to the inventory
         function addToInventory(item) {
