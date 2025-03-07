@@ -996,7 +996,7 @@
                 if (itemintersections.length > 1) {
                     const object = itemintersections[0].object;
 
-                    if (object.userData.isRemovable) {
+                    if (object.userData.pickupable) {
                         addToInventory(object.userData);
                         scene.remove(object);
                     }
@@ -1010,7 +1010,7 @@
             updateInventoryUI(); // Update UI display
         }
 
-        let inventory = [{ name: "pickaxe" }]; // Array to store picked-up items
+        let inventory = [{ name: "pickaxe", pickupable: true }]; // Array to store picked-up items
 
         document.addEventListener('click', (event) => {
             if (event.button === 0) { // Left-click to interact
@@ -1122,7 +1122,7 @@
 
                 // Set the position of the dropped item
                 item.position.set(player.position.x, 0.5, player.position.z); // Adjust height to make sure it appears above the ground
-                item.userData.isRemovable = true;
+                item.userData.pickupable = true;
                 item.userData.name = selectedItem.name;
                 scene.add(item);
             }
@@ -1187,20 +1187,31 @@
             event.stopPropagation();  // Prevent event propagation
         });
 
-        function showContextMenu(x, y, object) {
+        function showContextMenu(x, y, options) {
             const menu = document.getElementById("contextMenu");
-            menu.style.left = `${x}px`;
+            menu.innerHTML = ""; // Clear previous menu items
+
+            options.forEach(({ label, action }) => {
+                const menuItem = document.createElement("div");
+                menuItem.className = "context-menu-item";
+                menuItem.textContent = label;
+                menuItem.onclick = () => {
+                    action();
+                    menu.style.display = "none";
+                };
+                menu.appendChild(menuItem);
+            });
+
             menu.style.top = `${y}px`;
+            menu.style.left = `${x}px`;
             menu.style.display = "block";
-
-            // Store the selected object for use in menu actions
-            menu.dataset.objectId = object.uuid;
-
-            // Hide menu when clicking elsewhere
-            document.addEventListener("click", () => {
-                menu.style.display = "none";
-            }, { once: true });
         }
+
+        // Hide menu when clicking elsewhere
+        document.addEventListener("click", () => {
+            document.getElementById("contextMenu").style.display = "none";
+        });
+
 
         // Example action function
         function doAction() {
@@ -1210,12 +1221,9 @@
         }
 
         document.addEventListener("contextmenu", (event) => {
-            // Check if the right-click happened inside a popup
-            if (event.target.closest(".popup")) {
-                return; // Allow default behavior for popups
-            }
+            if (event.target.closest(".popup")) return; // Allow default context menu for popups
 
-            event.preventDefault(); // Prevent the browser's context menu if not clicking on a popup
+            event.preventDefault(); // Prevent browser context menu
 
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -1227,9 +1235,39 @@
                 const selectedObject = intersects[0].object;
                 console.log("Right-clicked on:", selectedObject);
 
-                showContextMenu(event.clientX, event.clientY, selectedObject);
+                const menuOptions = [{ label: 'Cancel', action: () => document.getElementById("contextMenu").style.display = "none" }];
+
+                // If object has 'attackable' property
+                if (selectedObject.userData.attackable) {
+                    menuOptions.unshift({
+                        label: `Attack ${selectedObject.userData.name || "Enemy"}`,
+                        action: () => attack(selectedObject),
+                    });
+                }
+
+                // If object has 'pickupable' property
+                if (selectedObject.userData.pickupable) {
+                    menuOptions.unshift({
+                        label: `Pick up ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            addToInventory(selectedObject.userData);
+                            scene.remove(selectedObject);
+                        }
+                    });
+                }
+
+                // If object has a custom button label (dynamic)
+                if (selectedObject.userData.customActionLabel && selectedObject.userData.customAction) {
+                    menuOptions.unshift({
+                        label: selectedObject.userData.customActionLabel,
+                        action: selectedObject.userData.customAction,
+                    });
+                }
+
+                showContextMenu(event.clientX, event.clientY, menuOptions);
             }
         });
+
 
         // Animation loop
         function animate() {
