@@ -55,7 +55,7 @@
             bottom: 0;
             background-color: rgba(0, 0, 0, 0.7);
             /* Semi-transparent background */
-            display: none;
+            /* display: none; */
             /* Initially hidden */
             justify-content: center;
             align-items: center;
@@ -319,6 +319,89 @@
             text-align: center;
             border-radius: 5px;
         }
+
+        /* Popup Overlay (Hidden by Default) */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        /* Popup Window */
+        .popup {
+            background: #2a1f14;
+            padding: 20px;
+            border-radius: 10px;
+            border: 3px solid #b4975a;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            width: 300px;
+            position: relative;
+        }
+
+        /* Close Button */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .close-button:hover {
+            color: red;
+        }
+
+        /* Combat Mode Selection */
+        .combat-mode {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .combat-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Equipment Grid */
+        .equipment-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            justify-items: center;
+            margin-top: 10px;
+        }
+
+        /* Equipment Slot */
+        .equipment-slot {
+            width: 80px;
+            height: 80px;
+            background: #4b382a;
+            border: 2px solid #b4975a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .equipment-slot:hover {
+            background: #5c4835;
+        }
     </style>
 </head>
 
@@ -327,8 +410,8 @@
         <button id="inventory">Inventory</button>
         <button id="spells">Spellbook</button>
         <button id="stats">Stats</button>
-        <button id="worn">Worn</button>
-        <button id="combat">Combat Settings</button>
+        <button id="open-worn-items">Worn</button>
+        <button id="open-combat-settings">Combat Settings</button>
     </div>
 
     <!-- Popup container (hidden initially) -->
@@ -359,6 +442,52 @@
         <button class="close-button" onclick="closeStats()">Close</button>
     </div>
 
+    <!-- Combat Settings Popup -->
+    <div class="popup-overlay" id="combatPopup">
+        <div class="popup">
+            <button class="close-button" id="close-combat">✖</button>
+            <h2>Combat Settings</h2>
+
+            <div class="combat-mode">
+                <label>
+                    <input type="radio" name="combatMode" value="attack" checked>
+                    Attack
+                </label>
+                <label>
+                    <input type="radio" name="combatMode" value="defend">
+                    Defend
+                </label>
+            </div>
+
+            <div class="combat-options">
+                <label>
+                    <input type="checkbox" id="autoAttack"> Auto Attack
+                </label>
+                <button id="specialAttack">Special Attack</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Worn Items Popup -->
+    <div class="popup-overlay" id="wornPopup">
+        <div class="popup">
+            <button class="close-button" id="close-worn">✖</button>
+            <h2>Worn Items</h2>
+
+            <div class="equipment-grid">
+                <div class="equipment-slot" data-slot="helmet">Helmet</div>
+                <div class="equipment-slot" data-slot="torso">Torso</div>
+                <div class="equipment-slot" data-slot="pants">Pants</div>
+                <div class="equipment-slot" data-slot="left-hand">Left Hand</div>
+                <div class="equipment-slot" data-slot="right-hand">Right Hand</div>
+                <div class="equipment-slot" data-slot="left-shoe">Left Shoe</div>
+                <div class="equipment-slot" data-slot="right-shoe">Right Shoe</div>
+                <div class="equipment-slot" data-slot="ring">Ring</div>
+                <div class="equipment-slot" data-slot="necklace">Necklace</div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Spellbook Overlay (Hidden Initially) -->
     <div class="spellbook-overlay" id="spellbookOverlay">
@@ -378,6 +507,68 @@
     </div>
 
     <script>
+        // Get elements
+        const combatPopup = document.getElementById("combatPopup");
+        const wornPopup = document.getElementById("wornPopup");
+        const openCombatButton = document.getElementById("open-combat-settings");
+        const openWornButton = document.getElementById("open-worn-items");
+        const closeCombatButton = document.getElementById("close-combat");
+        const closeWornButton = document.getElementById("close-worn");
+        const equipmentSlots = document.querySelectorAll(".equipment-slot");
+
+        // Sample Equipment Data
+        const equippedItems = {
+            helmet: null,
+            torso: null,
+            pants: null,
+            "left-hand": "Sword",
+            "right-hand": null,
+            "left-shoe": "Leather Boots",
+            "right-shoe": "Leather Boots",
+            ring: null,
+            necklace: "Silver Pendant"
+        };
+
+        // Function to Load Worn Equipment
+        function loadWornItems() {
+            equipmentSlots.forEach(slot => {
+                const slotName = slot.dataset.slot;
+                slot.textContent = equippedItems[slotName] || "Empty";
+            });
+        }
+
+        // Open Combat Settings
+        openCombatButton.addEventListener("click", function () {
+            combatPopup.style.display = "flex";
+        });
+
+        // Open Worn Items
+        openWornButton.addEventListener("click", function () {
+            wornPopup.style.display = "flex";
+            loadWornItems();
+        });
+
+        // Close Popups
+        closeCombatButton.addEventListener("click", function () {
+            combatPopup.style.display = "none";
+        });
+        closeWornButton.addEventListener("click", function () {
+            wornPopup.style.display = "none";
+        });
+
+        // Unequip Items on Click
+        equipmentSlots.forEach(slot => {
+            slot.addEventListener("click", function () {
+                const slotName = slot.dataset.slot;
+                if (equippedItems[slotName]) {
+                    // Move to Inventory (Placeholder)
+                    console.log(`Unequipped ${equippedItems[slotName]}`);
+                    equippedItems[slotName] = null;
+                    slot.textContent = "Empty";
+                }
+            });
+        });
+
         const spells = [
             {
                 name: "Cursed Flame",
@@ -944,14 +1135,9 @@
         document.getElementById('inventory').addEventListener('click', () => {
             createPopup('Inventory');
         });
+        
         document.getElementById('stats').addEventListener('click', () => {
             showStats();
-        });
-        document.getElementById('worn').addEventListener('click', () => {
-            createPopup('Worn');
-        });
-        document.getElementById('combat').addEventListener('click', () => {
-            createPopup('Combat Settings');
         });
 
         // Prevent the "Drop item" button click from affecting the canvas
