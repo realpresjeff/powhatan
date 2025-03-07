@@ -405,8 +405,8 @@
         }
 
         .equipped-item img {
-height: 50px;
-width: 50px;
+            height: 50px;
+            width: 50px;
         }
 
         .menu {
@@ -558,12 +558,12 @@ width: 50px;
             helmet: null,
             torso: null,
             pants: null,
-            "left-hand": {name: "Sword", equipable: true, equipType: 'left-hand'},
+            "left-hand": { name: "Sword", equipable: true, equipType: 'left-hand' },
             "right-hand": null,
-            "left-shoe": {name:"Leather Boot", equipable: true, equipType: 'left-shoe'},
-            "right-shoe": {name:"Leather Boot", equipable: true, equipType: 'right-shoe'},
+            "left-shoe": { name: "Leather Boot", equipable: true, equipType: 'left-shoe' },
+            "right-shoe": { name: "Leather Boot", equipable: true, equipType: 'right-shoe' },
             ring: null,
-            necklace: {name: "Silver Pendant", equipable: true, equipType: 'necklace'}
+            necklace: { name: "Silver Pendant", equipable: true, equipType: 'necklace' }
         };
 
         // Function to Load Worn Equipment
@@ -1015,7 +1015,7 @@ width: 50px;
             updateInventoryUI(); // Update UI display
         }
 
-        let inventory = [{ name: "pickaxe", equipable: true, equipType: "both_hands" }, { name: "steel helmet", equipable: true, equipType: "helmet"}]; // Array to store picked-up items
+        let inventory = [{ name: "pickaxe", equipable: true, equipType: "both_hands" }, { name: "steel helmet", equipable: true, equipType: "helmet" }]; // Array to store picked-up items
 
         // Function to add an item to the inventory
         function addToInventory(item) {
@@ -1107,6 +1107,39 @@ width: 50px;
 
             // Store selected item
             contextMenu.selectedItem = item;
+
+            // Hide menu when clicking anywhere else
+            document.addEventListener("click", closeContextMenu);
+            const popup = document.querySelector('#popup');
+            console.log(popup)
+            popup.addEventListener("click", closeContextMenu)
+            contextMenu.addEventListener("click", closeContextMenu);
+        }
+
+        // Function to close the context menu
+        function closeContextMenu(event) {
+            const contextMenu = document.getElementById('context-menu');
+
+            // Check if the click was inside the menu
+            contextMenu.style.display = 'none';
+            document.removeEventListener("click", closeContextMenu); // Remove event listener to avoid unnecessary calls
+
+        }
+
+        // Function to handle menu option selection
+        function onMenuOptionClick(action) {
+            const contextMenu = document.getElementById('context-menu');
+
+            // Handle different actions (e.g., Equip, Drop, etc.)
+            if (action === "equip") {
+                equipItem(contextMenu.selectedItem);
+            } else if (action === "drop") {
+                removeFromInventory(contextMenu.selectedItem);
+            }
+
+            // Hide the menu after selection
+            contextMenu.style.display = "none";
+            document.removeEventListener("click", closeContextMenu);
         }
 
 
@@ -1255,7 +1288,7 @@ width: 50px;
                 }
 
                 // If object has 'pickupable' property
-                if (!selectedObject.userData.pickupable === true) {
+                if (!selectedObject.userData.pickupable === true && selectedObject.userData.name) {
                     menuOptions.unshift({
                         label: `Pick up ${selectedObject.userData.name || "Item"}`,
                         action: () => {
