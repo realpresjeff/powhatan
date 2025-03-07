@@ -563,7 +563,6 @@ width: 50px;
             "left-shoe": {name:"Leather Boot", equipable: true, equipType: 'left-shoe'},
             "right-shoe": {name:"Leather Boot", equipable: true, equipType: 'right-shoe'},
             ring: null,
-
             necklace: {name: "Silver Pendant", equipable: true, equipType: 'necklace'}
         };
 
@@ -571,7 +570,7 @@ width: 50px;
         function loadWornItems() {
             equipmentSlots.forEach(slot => {
                 const slotName = slot.dataset.slot;
-                slot.textContent = equippedItems[slotName] ? equippedItems[slotName] : equippedItems[slotName].name ? equippedItems[slotName].name : "Empty";
+                slot.textContent = equippedItems[slotName] ? equippedItems[slotName].name : "Empty";
             });
         }
 
@@ -1016,7 +1015,7 @@ width: 50px;
             updateInventoryUI(); // Update UI display
         }
 
-        let inventory = [{ name: "pickaxe", }, { name: "steel helmet", equipable: true, equipType: "helmet"}]; // Array to store picked-up items
+        let inventory = [{ name: "pickaxe", equipable: true, equipType: "both_hands" }, { name: "steel helmet", equipable: true, equipType: "helmet"}]; // Array to store picked-up items
 
         // Function to add an item to the inventory
         function addToInventory(item) {
@@ -1296,11 +1295,13 @@ width: 50px;
                 delete equippedItems[slot];
             }
 
-            // Store equipped item
+            console.log(item);
+
+            // equip item
             equippedItems[item.equipType] = item;
             console.log(equippedItems)
             removeFromInventory(item);
-            updateWornPopup();
+            // updateWornPopup();
         }
 
         function getEquipmentSlot(equipType) {
@@ -1321,9 +1322,8 @@ width: 50px;
 
                 slotElement.innerHTML = ""; // Clear previous content
 
-                const equippedItem = getEquipmentSlot(slot); // Function to retrieve equipped item (see below)
 
-
+                const equippedItem = equippedItems[slot]; // Function to retrieve equipped item (see below)
 
                 if (equippedItem) {
                     const equippedItemDiv = document.createElement("div");
@@ -1367,8 +1367,6 @@ width: 50px;
 
                 const equippedItem = getEquipmentSlot(slot); // Function to retrieve equipped item (see below)
 
-
-
                 if (equippedItem) {
                     const equippedItemDiv = document.createElement("div");
                     equippedItemDiv.classList.add("equipped-item");
@@ -1389,6 +1387,7 @@ width: 50px;
 
                     slotElement.appendChild(equippedItemDiv);
                 } else {
+                    slotElement.textContent = "Empty"
                     console.log(`No item equipped in ${slot}`);
                 }
             });
