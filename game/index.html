@@ -1511,26 +1511,24 @@
         console.log(trees);
 
         function createWater(position, size) {
-    const waterGeometry = new THREE.PlaneGeometry(size.width, size.height, 32, 32);
-    const waterMaterial = new THREE.MeshStandardMaterial({
-        color: "#1E90FF", // Deep Blue
-        transparent: true,  // Allow light to pass through
-        opacity: 0.8,  // Slight transparency for a more natural look
-        side: THREE.DoubleSide
-    });
+            const waterGeometry = new THREE.PlaneGeometry(size.width, size.height, 32, 32);
+            const waterMaterial = new THREE.MeshStandardMaterial({
+                color: "#1E90FF", // Deep Blue
+                transparent: true,  // Allow light to pass through
+                opacity: 0.8,  // Slight transparency for a more natural look
+                side: THREE.DoubleSide
+            });
 
-    const water = new THREE.Mesh(waterGeometry, waterMaterial);
-    water.rotation.x = -Math.PI / 2; // Make it horizontal
-    water.position.set(position.x, position.y + 0.01, position.z); // Lift slightly above ground
+            const water = new THREE.Mesh(waterGeometry, waterMaterial);
+            water.rotation.x = -Math.PI / 2; // Make it horizontal
+            water.position.set(position.x, position.y + 0.01, position.z); // Lift slightly above ground
 
-    water.receiveShadow = true; // Make it interact better with light
-    water.userData = { isWater: true };
+            water.receiveShadow = true; // Make it interact better with light
+            water.userData = { isWater: true };
 
-    scene.add(water);
-    return water;
-}
-
-
+            scene.add(water);
+            return water;
+        }
 
         function createFishingSpot(position) {
             const bubbles = new THREE.Group();
@@ -1590,20 +1588,71 @@
         }
 
         const waters = [];
-const fishingSpots = [];
+        const fishingSpots = [];
 
-function generateEnvironment() {
-    // Create small water bodies (1x1 or 2x2)
-    waters.push(createWater({ x: 25, y: 0, z: 10 }, { width: 50, height: 10 }));
+        function generateEnvironment() {
+            // Create small water bodies (1x1 or 2x2)
+            waters.push(createWater({ x: 25, y: 0, z: 10 }, { width: 50, height: 10 }));
 
-    // Add a couple of fishing spots in the small water
-    fishingSpots.push(createFishingSpot({ x: 10, y: 0, z: 14 }));
-}
+            // Add a couple of fishing spots in the small water
+            fishingSpots.push(createFishingSpot({ x: 10, y: 0, z: 14 }));
+        }
 
 
-// Call this once when setting up the world
-generateEnvironment();
+        // Call this once when setting up the world
+        generateEnvironment();
 
+        const herbTypes = [
+            { name: "Creasey Greens", color: "#4CAF50" }, // Traditional plant from Powhatan, VA
+            { name: "Wild Mint", color: "#3B873E" },
+            { name: "Chamomile", color: "#FFD700" },
+            { name: "Lavender", color: "#8A2BE2" }
+        ];
+
+        // Generate a random herb
+        function createHerb(position) {
+            const herbType = herbTypes[Math.floor(Math.random() * herbTypes.length)];
+
+            const herbGeometry = new THREE.SphereGeometry(0.3, 6, 6); // Small plant-like object
+            const herbMaterial = new THREE.MeshStandardMaterial({ color: herbType.color });
+            const herb = new THREE.Mesh(herbGeometry, herbMaterial);
+
+            herb.position.set(position.x, position.y, position.z);
+            herb.userData = { isHerb: true, name: herbType.name };
+
+            scene.add(herb);
+            return herb;
+        }
+
+        // Function to remove herb & schedule respawn
+        function forageHerb(herb) {
+            console.log(`Picked up ${herb.userData.name}`);
+
+            // Remove from scene
+            scene.remove(herb);
+
+            // Schedule respawn (random 1-2 min)
+            const respawnTime = Math.random() * 60000 + 60000; // Between 60s - 120s
+            setTimeout(() => {
+                const newHerb = createHerb(herb.position);
+                console.log(`${newHerb.userData.name} has respawned!`);
+            }, respawnTime);
+        }
+
+        const worldSize = {
+            width: ground.scale.x * 10, // Adjusting based on ground size
+            height: ground.scale.z * 10
+        };
+
+        // Generate herbs (random locations)
+        for (let i = 0; i < 5; i++) {
+            const position = {
+                x: Math.random() * worldSize.width - worldSize.width / 2,
+                y: 0,
+                z: Math.random() * worldSize.height - worldSize.height / 2
+            };
+            createHerb(position);
+        }
 
 
         // Animation loop
