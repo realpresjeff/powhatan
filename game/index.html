@@ -404,6 +404,11 @@
             background: #5c4835;
         }
 
+        .equipped-item img {
+height: 50px;
+width: 50px;
+        }
+
         .menu {
             position: absolute;
             display: none;
@@ -553,19 +558,20 @@
             helmet: null,
             torso: null,
             pants: null,
-            "left-hand": "Sword",
+            "left-hand": {name: "Sword", equipable: true, equipType: 'left-hand'},
             "right-hand": null,
-            "left-shoe": "Leather Boots",
-            "right-shoe": "Leather Boots",
+            "left-shoe": {name:"Leather Boot", equipable: true, equipType: 'left-shoe'},
+            "right-shoe": {name:"Leather Boot", equipable: true, equipType: 'right-shoe'},
             ring: null,
-            necklace: "Silver Pendant"
+
+            necklace: {name: "Silver Pendant", equipable: true, equipType: 'necklace'}
         };
 
         // Function to Load Worn Equipment
         function loadWornItems() {
             equipmentSlots.forEach(slot => {
                 const slotName = slot.dataset.slot;
-                slot.textContent = equippedItems[slotName] || equippedItems[slotName].name ? equippedItems[slotName].name : "Empty";
+                slot.textContent = equippedItems[slotName] ? equippedItems[slotName] : equippedItems[slotName].name ? equippedItems[slotName].name : "Empty";
             });
         }
 
@@ -996,7 +1002,7 @@
                 if (itemintersections.length > 1) {
                     const object = itemintersections[0].object;
 
-                    if (object.userData.pickupable) {
+                    if (!object.userData.pickupable === true) {
                         addToInventory(object.userData);
                         scene.remove(object);
                     }
@@ -1010,25 +1016,7 @@
             updateInventoryUI(); // Update UI display
         }
 
-        let inventory = [{ name: "pickaxe", pickupable: true }, { name: "steel helmet", equipable: true, equipType: "helmet", pickupable: true }]; // Array to store picked-up items
-
-        // document.addEventListener('click', (event) => {
-        //     if (event.button === 0) { // Left-click to interact
-        //         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        //         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        //         raycaster.setFromCamera(mouse, camera);
-        //         const intersects = raycaster.intersectObjects(scene.children);
-
-        //         if (intersects.length > 1) {
-        //             const object = intersects[0].object;
-        //             // Check if the object is a "dropped item"
-        //             if (object.userData) {
-        //                 addToInventory(object.userData);
-        //                 scene.remove(object);
-        //             }
-        //         }
-        //     }
-        // });
+        let inventory = [{ name: "pickaxe", }, { name: "steel helmet", equipable: true, equipType: "helmet"}]; // Array to store picked-up items
 
         // Function to add an item to the inventory
         function addToInventory(item) {
@@ -1268,7 +1256,7 @@
                 }
 
                 // If object has 'pickupable' property
-                if (selectedObject.userData.pickupable) {
+                if (!selectedObject.userData.pickupable === true) {
                     menuOptions.unshift({
                         label: `Pick up ${selectedObject.userData.name || "Item"}`,
                         action: () => {
@@ -1291,44 +1279,121 @@
         });
 
         function equipItem(item) {
+            console.log(item.equipType);
             console.log(`Equipping ${item.name} in slot: ${item.equipType}`);
 
-            const slot = getEquipmentSlot(item.equipType);
-            if (!slot) return console.warn("No valid slot for this item.");
+            // const slot = getEquipmentSlot(item.equipType);
+            // console.log(slot);
+            // if (!slot) return console.warn("No valid slot for this item.");
 
-            const wornSlot = document.getElementById(slot);
-            if (!wornSlot) return console.warn(`Worn slot element not found: ${slot}`);
+            // const wornSlot = document.getElementById(slot);
+            // if (!wornSlot) return console.warn(`Worn slot element not found: ${slot}`);
 
             // Unequip existing item first
-            if (equippedItems[slot]) {
+            if (equippedItems[item.equipType]) {
                 console.log(`Unequipping ${equippedItems[slot].name} from ${slot}`);
                 addToInventory(equippedItems[slot]);
                 delete equippedItems[slot];
             }
 
             // Store equipped item
-            equippedItems[slot] = item;
+            equippedItems[item.equipType] = item;
             console.log(equippedItems)
-
-            // updateWornPopup(); // Refresh UI
-
             removeFromInventory(item);
+            updateWornPopup();
         }
 
         function getEquipmentSlot(equipType) {
-            const slots = {
-                helmet: "helmet",
-                torso: "torso",
-                pants: "pants",
-                leftHand: "leftHand",
-                rightHand: "rightHand",
-                leftShoe: "leftShoe",
-                rightShoe: "rightShoe",
-                ring: "ring",
-                necklace: "necklace",
-            };
-            return slots[equipType] || null;
+            return equippedItems[equipType] || null;
         }
+
+        function updateWornPopup() {
+            console.log("Updating worn popup UI...");
+
+            const wornSlots = [
+                "helmet", "torso", "pants", "left-hand", "right-hand",
+                "left-shoe", "right-shoe", "ring", "necklace"
+            ];
+
+            wornSlots.forEach(slot => {
+                const slotElement = document.getElementById(slot);
+                if (!slotElement) return console.warn(`Slot not found: ${slot}`);
+
+                slotElement.innerHTML = ""; // Clear previous content
+
+                const equippedItem = getEquipmentSlot(slot); // Function to retrieve equipped item (see below)
+
+
+
+                if (equippedItem) {
+                    const equippedItemDiv = document.createElement("div");
+                    equippedItemDiv.classList.add("equipped-item");
+                    equippedItemDiv.userData = equippedItem;
+
+                    // Create item icon
+                    const icon = document.createElement("img");
+                    icon.src = equippedItem.icon ? equippedItem.icon : "./assets/default_spell_icon.png";
+                    icon.alt = equippedItem.name;
+                    icon.classList.add("equipped-icon");
+
+                    equippedItemDiv.appendChild(icon);
+
+                    // Click to unequip
+                    equippedItemDiv.addEventListener("click", () => {
+                        unequipItem(slot);
+                    });
+
+                    slotElement.appendChild(equippedItemDiv);
+                } else {
+                    console.log(`No item equipped in ${slot}`);
+                }
+            });
+        }
+
+
+        (function updateWornPopup() {
+            console.log("Updating worn popup UI...");
+
+            const wornSlots = [
+                "helmet", "torso", "pants", "left-hand", "right-hand",
+                "left-shoe", "right-shoe", "ring", "necklace"
+            ];
+
+            wornSlots.forEach(slot => {
+                const slotElement = document.getElementById(slot);
+                if (!slotElement) return console.warn(`Slot not found: ${slot}`);
+
+                slotElement.innerHTML = ""; // Clear previous content
+
+                const equippedItem = getEquipmentSlot(slot); // Function to retrieve equipped item (see below)
+
+
+
+                if (equippedItem) {
+                    const equippedItemDiv = document.createElement("div");
+                    equippedItemDiv.classList.add("equipped-item");
+                    equippedItemDiv.userData = equippedItem;
+
+                    // Create item icon
+                    const icon = document.createElement("img");
+                    icon.src = equippedItem.icon ? equippedItem.icon : "./assets/default_spell_icon.png";
+                    icon.alt = equippedItem.name;
+                    icon.classList.add("equipped-icon");
+
+                    equippedItemDiv.appendChild(icon);
+
+                    // Click to unequip
+                    equippedItemDiv.addEventListener("click", () => {
+                        unequipItem(slot);
+                    });
+
+                    slotElement.appendChild(equippedItemDiv);
+                } else {
+                    console.log(`No item equipped in ${slot}`);
+                }
+            });
+        }())
+
 
         // Animation loop
         function animate() {
