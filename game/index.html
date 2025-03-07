@@ -1426,6 +1426,48 @@
             });
         }())
 
+        function createTree(type, position) {
+            const tree = new THREE.Group();
+            let trunkMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Brown
+            let leavesMaterial = new THREE.MeshStandardMaterial({ color: "#228B22" }); // Green
+
+            // Create trunk
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.5, 0.8, 5, 8),
+                trunkMaterial
+            );
+            trunk.position.set(0, 2.5, 0);
+            tree.add(trunk);
+
+            // Create leaves (adjust shape based on tree type)
+            let leaves;
+            if (type === "pine") {
+                leaves = new THREE.Mesh(
+                    new THREE.ConeGeometry(3, 6, 8),
+                    leavesMaterial
+                );
+            } else {
+                leaves = new THREE.Mesh(
+                    new THREE.SphereGeometry(3, 8, 8),
+                    leavesMaterial
+                );
+            }
+            leaves.position.set(0, 6, 0);
+            tree.add(leaves);
+
+            tree.position.set(position.x, position.y, position.z);
+            tree.userData = { name: type, isTree: true };
+
+            scene.add(tree);
+            return tree;
+        }
+
+        const trees = [
+    createTree("oak", { x: -5, y: 0, z: -5 }),
+    createTree("pine", { x: 3, y: 0, z: 2 }),
+    createTree("maple", { x: 7, y: 0, z: -3 }),
+    createTree("hickory", { x: -8, y: 0, z: 6 })
+];
 
         // Animation loop
         function animate() {
