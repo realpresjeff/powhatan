@@ -2185,40 +2185,8 @@
         }
 
         function createAnvil(position) {
-            const anvil = new THREE.Group();
-
-            // Base of the anvil
-            const baseGeometry = new THREE.BoxGeometry(0, 2, 0);
-            const baseMaterial = new THREE.MeshStandardMaterial({ color: "#555", metalness: 0.9, roughness: 0.4 });
-            const base = new THREE.Mesh(baseGeometry, baseMaterial);
-            base.position.set(0, 1, 0);
-            // anvil.add(base);
-
-            // Anvil body
-            const bodyGeometry = new THREE.BoxGeometry(6, 3, 3);
-            const body = new THREE.Mesh(bodyGeometry, baseMaterial);
-            body.position.set(0, 4, 0);
-            // anvil.add(body);
-
-            // Anvil top
-            const topGeometry = new THREE.BoxGeometry(6, 1, 3);
-            const top = new THREE.Mesh(topGeometry, baseMaterial);
-            top.position.set(0, 6, 0);
-            // anvil.add(top);
-
-            // Horn
-            const hornGeometry = new THREE.CylinderGeometry(0.3, 1, 3, 16);
-            const horn = new THREE.Mesh(hornGeometry, baseMaterial);
-            horn.rotation.z = -Math.PI / 2;
-            horn.position.set(3.5, 6, 0);
-            // anvil.add(horn);
-
-            // Hardy hole (a small square indent)
-            const hardyGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-            const hardy = new THREE.Mesh(hardyGeometry, baseMaterial);
-            hardy.position.set(-2.5, 6.5, 0);
-            // anvil.add(hardy);
-
+            const anvil = new THREE.Group(new THREE.BoxGeometry(0, 2, 0));
+            
             anvil.position.set(position.x, position.y, position.z);
 
             const loader = new THREE.GLTFLoader();
