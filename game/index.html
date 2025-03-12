@@ -333,7 +333,25 @@
             display: none;
             justify-content: center;
             align-items: center;
+            z-index: 2000;
+        }
+
+        .popup-overlay-clear {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
             z-index: 1000;
+        }
+
+        #bankUI {
+            width: 50%;
+            position: fixed;
+            left: 40%;
         }
 
         /* Popup Window */
@@ -439,7 +457,7 @@
     </div>
 
     <!-- Popup container (hidden initially) -->
-    <div id="popup" class="popup-overlay" style="display: none;">
+    <div id="popup" class="popup-overlay-clear" style="display: none;">
         <div class="popup">
             <div class="popup-content">
                 <button id="popup-close" class="close-button">✖</button>
@@ -524,12 +542,19 @@
 
 
     <!-- Spellbook Overlay (Hidden Initially) -->
-    <div class="popup-overlay" id="spellbookOverlay">
+    <div class="popup-overlay" id="spellbookOverlay" onclick="event.stopPropagation();">
         <div class="spellbook">
             <button id="close-spellbook" class="close-button" onclick="toggleSpellbook()">✖</button>
             <h2>Spellbook</h2>
             <ul class="spells-container" id="spellList">
             </ul>
+        </div>
+    </div>
+
+    <div class="popup-overlay-clear" id="bankUI">
+        <div id="bankUI" class="popup">
+            <div id="bankItems"></div>
+            <button onclick="closeBank()" class="close-button">✖</button>
         </div>
     </div>
 
@@ -1013,7 +1038,7 @@
             }
         });
 
-        let inventory = [{ name: "pickaxe", equipable: true, equipType: "both_hands", quantity: 1 }, { name: "steel helmet", equipable: true, equipType: "helmet", quantity: 1 }]; // Array to store picked-up items
+        let inventory = [{ name: "pickaxe", equipable: true, equipType: "both_hands", quantity: 1, pickupable: true }, { name: "steel helmet", equipable: true, equipType: "helmet", quantity: 1, pickupable: true }, { name: "iron ore", quantity: 5, type: "iron", pickupable: true }]; // Array to store picked-up items
 
         // Function to add an item to the inventory
         function addToInventory(item) {
@@ -1087,19 +1112,8 @@
                 contextMenu.appendChild(equipOption);
             }
 
-            if (item.isTree) {
-                const cutOption = document.createElement("div");
-                cutOption.textContent = `Cut down ${item.name}`;
-                cutOption.onclick = () => attemptWoodcutting(item);
-                contextMenu.appendChild(cutOption);
-            }
-
-            if (item.ismine) {
-                const mineOption = document.createElement("div");
-                mineOption.textContent = `Cut down ${item.name}`;
-                mineOption.onclick = () => mineOre(item);
-                contextMenu.appendChild(mineOption);
-
+            if (banking) {
+                openContextMenu(event, item);
             }
 
             // Drop option (always available)
@@ -1178,9 +1192,19 @@
             updateInventoryUI();
         }
 
-        function removeFromInventory(selectedItem) {
-            inventory = inventory.filter(item => item !== selectedItem && item !== undefined);
-            updateInventoryUI();
+        function removeFromInventory(item, quantity = 1) {
+            let index = inventory.findIndex(i => i.name === item.name);
+
+            if (index !== -1) {
+                if (inventory[index].quantity > quantity) {
+                    inventory[index].quantity -= quantity; // Reduce quantity
+                } else {
+                    inventory.splice(index, 1); // Remove item if quantity reaches 0
+                }
+                console.log(`Removed ${quantity} ${item.name} from inventory.`);
+            } else {
+                console.log(`Item ${item.name} not found in inventory.`);
+            }
         }
 
 
@@ -1321,9 +1345,9 @@
 
                 if (selectedObject.userData.bank) {
                     menuOptions.unshift({
-                        label: `Bank ${selectedObject.userData.name || "Item"}`,
+                        label: "Bank",
                         action: () => {
-                            bank(selectedObject.userData);
+                            openBank(selectedObject.userData);
                         }
                     });
                 }
@@ -1341,7 +1365,7 @@
                 // If object has 'isFire' property
                 if (selectedObject.userData.isFishingSpot) {
                     menuOptions.unshift({
-                        label: `Fish ${selectedObject.userData.name || "Item"}`,
+                        label: `Fish the ${selectedObject.userData.name || "Item"}`,
                         action: () => {
                             fish(selectedObject.userData);
                         }
@@ -1386,14 +1410,6 @@
                     });
                 }
 
-                // If object is a fishing spot
-                if (selectedObject.userData.fish) {
-                    menuOptions.push({
-                        label: `Fish`,
-                        action: () => fish(selectedObject.userData),
-                    });
-                }
-
                 if (selectedObject.userData.smelt) {
                     menuOptions.push({
                         label: `Smelt`,
@@ -1404,6 +1420,30 @@
                 showContextMenu(event.clientX, event.clientY, menuOptions);
             }
         });
+
+        function smelt() {
+
+            let smeltingSpeed = Math.max(500 - (playerStats.agility / 1000) - (playerStats.craft / 500), 100); // Min speed: 100ms
+            let smeltedItems = [];
+
+            inventory.forEach((item, index) => {
+                if (item.name.includes("ore")) {
+                    let barType = item.name.replace("ore", "bar").trim(); // Convert "iron ore" → "iron bar"
+
+                    setTimeout(() => {
+                        if (inventory[index].quantity > 0) {
+                            removeFromInventory(item, 1);
+                            addToInventory({ ...item, name: barType, quantity: 1 });
+
+                            smeltedItems.push({ ...item, name: barType });
+                            console.log(`Smelted 1 ${item.name} → ${barType}`);
+                        }
+                    }, smeltingSpeed * index); // Delay increases per item
+                }
+            });
+
+            return smeltedItems;
+        }
 
         function equipItem(item) {
             console.log(item.equipType);
@@ -1585,7 +1625,7 @@
                     );
 
                     fruit.position.set(position.x + randomizedX - weight, 0, position.z + randomizedZ - weight);
-                    fruit.userData = { isFruit: true, tree: wrapperMesh, name: "Persimmon" };
+                    fruit.userData = { isFruit: true, tree: wrapperMesh, name: "Persimmon", pickupable: true };
 
                     scene.add(fruit);
                     fruits.push(fruit);
@@ -1777,7 +1817,7 @@
 
         function createFishingSpot(position) {
             const bubbles = new THREE.Mesh();
-            const data = { isFishingSpot: true, fish: true };
+            const data = { isFishingSpot: true, fish: true, name: "Chesapeake Bay" };
 
             for (let i = 0; i < 5; i++) {
                 const bubble = new THREE.Mesh(
@@ -1785,7 +1825,7 @@
                     new THREE.MeshStandardMaterial({ color: "white", transparent: true, opacity: 0.8 })
                 );
 
-                bubble.userData = { isFishingSpot: true }
+                bubble.userData = { isFishingSpot: true, fish: true, name: "Chesapeake Bay" };
 
                 bubble.position.set(
                     position.x + (Math.random() - 0.5) * 0.5,
@@ -1812,23 +1852,23 @@
             return bubbles;
         }
 
-        function fish(fishingSpot) {
-            if (!playerHasFishingRod()) {
-                console.log("You need a fishing rod to fish!");
-                return;
-            }
+        // function fish(fishingSpot) {
+        //     if (!playerHasFishingRod()) {
+        //         console.log("You need a fishing rod to fish!");
+        //         return;
+        //     }
 
-            console.log("Fishing...");
+        //     console.log("Fishing...");
 
-            setTimeout(() => {
-                if (Math.random() < 0.5) { // 50% success rate
-                    console.log("You caught a fish!");
-                    addToInventory({ name: "Fish", type: "food" });
-                } else {
-                    console.log("The fish got away...");
-                }
-            }, 3000); // Simulate time delay for fishing
-        }
+        //     setTimeout(() => {
+        //         if (Math.random() < 0.5) { // 50% success rate
+        //             console.log("You caught a fish!");
+        //             addToInventory({ name: "Fish", type: "food" });
+        //         } else {
+        //             console.log("The fish got away...");
+        //         }
+        //     }, 3000); // Simulate time delay for fishing
+        // }
 
         function playerHasFishingRod() {
             return inventory.some(item => item.name === "Fishing Rod");
@@ -2619,6 +2659,7 @@
 
         // Example player stats with max agility and experience
         let playerStats = {
+            craft: 50,
             agility: 10,  // Initial agility level
             strength: 8,  // Strength level
             maxAgility: 10, // Max agility level
@@ -2677,6 +2718,78 @@
         // Function to check if the player has reached max experience
         function hasMaxExperience() {
             return playerStats.experience >= playerStats.maxExperience;
+        }
+
+        function cook(cookingMethod) {
+            console.log(cookingMethod);
+            let cookedItems = [];
+            let burntItems = [];
+            let craftExpDrain = 500; // Craft XP drains per cook attempt
+            let baseSuccessRate = Math.min(95, Math.max(30, playerStats.craft / 1000000)); // 30% min, 95% max
+
+            inventory.forEach(item => {
+                if (item.raw && item.cookable) {
+                    let successRate = Math.max(10, baseSuccessRate - (5000000 / (playerStats.craft + 1))); // XP drain affects success
+                    let success = Math.random() * 100 < successRate;
+
+                    let cookedItem = {
+                        name: success ? `Cooked ${item.name}` : `Burnt ${item.name}`,
+                        raw: false,
+                        pickupable: true,
+                        cookable: success && item.cookable // Cooked items might stay cookable
+                    };
+
+                    removeFromInventory(item, 1);
+                    addToInventory(cookedItem);
+
+                    if (success) {
+                        cookedItems.push(cookedItem.name);
+                    } else {
+                        burntItems.push(cookedItem.name);
+                    }
+
+                    playerStats.craft = Math.max(0, playerStats.craft - craftExpDrain); // Drain XP, can't go negative
+                }
+            });
+
+            if (cookedItems.length > 0 || burntItems.length > 0) {
+                console.log(`Using ${cookingMethod}, you cooked: ${cookedItems.join(", ")}`);
+                console.log(`Burnt items: ${burntItems.join(", ")}`);
+            } else {
+                console.log("You have nothing raw to cook.");
+            }
+        }
+
+        function fish() {
+            if (playerStats.agility <= 0 || playerStats.strength <= 0) {
+                console.log("You're too exhausted to fish. Rest to recover.");
+                return;
+            }
+
+            const virginiaFish = ["Largemouth Bass", "Bluegill", "Brook Trout", "Channel Catfish", "Smallmouth Bass", "American Shad", "Longnose Gar"];
+
+            const baseRate = 5; // Base seconds per catch
+            const agilityFactor = Math.max(1, 10 - Math.floor(playerStats.agility / 20)); // Faster with higher agility
+            const strengthFactor = Math.max(1, 10 - Math.floor(playerStats.strength / 20)); // Faster with higher strength
+            const fishingSpeed = Math.max(1, baseRate - Math.floor((agilityFactor + strengthFactor) / 2)); // Balanced rate
+
+            console.log(`Casting line... (Catching fish every ${fishingSpeed} seconds)`);
+
+            let fishingInterval = setInterval(() => {
+                if (playerStats.agility <= 0 || playerStats.strength <= 0) {
+                    console.log("You're too exhausted to keep fishing.");
+                    clearInterval(fishingInterval);
+                    return;
+                }
+
+                let caughtFish = virginiaFish[Math.floor(Math.random() * virginiaFish.length)];
+                addToInventory({ name: caughtFish, quantity: 1, pickupable: true, cookable: true, raw: true });
+                console.log(`You caught a ${caughtFish}!`);
+
+                playerStats.agility = Math.max(0, playerStats.agility - 3);
+                playerStats.strength = Math.max(0, playerStats.strength - 2);
+
+            }, fishingSpeed * 1000);
         }
 
         // Function to simulate mining ore
@@ -2755,6 +2868,139 @@
                 playerIsMining = false;
             }
         });
+
+        let bankStorage = {}; // Stores banked items
+
+        let banking = false;
+
+        // Opens Bank UI
+        function openBank() {
+            document.getElementById("bankUI").style.display = "block";
+            document.getElementById("popup").style.display = "block";
+            updateBankDisplay();
+            banking = true;
+        }
+
+        // Closes Bank UI
+        function closeBank() {
+            document.getElementById("bankUI").style.display = "none";
+            document.getElementById("popup").style.display = "none";
+            banking = false;
+        }
+
+        // Deposits an item into the bank
+        function depositItem(item, quantity) {
+            console.log(item)
+            if (inventory[item].quantity < quantity) {
+                console.log(`Not enough ${item} to deposit.`);
+                return;
+            }
+
+            inventory[item] -= quantity;
+            bankStorage[item] = (bankStorage[item] || 0) + quantity;
+
+            if (inventory[item] <= 0) delete inventory[item]; // Remove if empty
+
+            updateBankDisplay();
+            updateInventoryDisplay();
+        }
+
+        // Withdraws an item from the bank
+        function withdrawItem(item, quantity) {
+            if (!bankStorage[item] || bankStorage[item] < quantity) {
+                console.log(`Not enough ${item} in the bank.`);
+                return;
+            }
+
+            bankStorage[item] -= quantity;
+            player.inventory[item] = (player.inventory[item] || 0) + quantity;
+
+            if (bankStorage[item] <= 0) delete bankStorage[item]; // Remove if empty
+
+            updateBankDisplay();
+            updateInventoryDisplay();
+        }
+
+        // Updates the bank UI
+        function updateBankDisplay() {
+            let bankUI = document.getElementById("bankItems");
+            // bankUI.innerHTML = "";
+
+            for (let item in bankStorage) {
+                let itemElement = document.createElement("div");
+                itemElement.className = "bank-item";
+                itemElement.innerHTML = `<img src="spell-icon.png"> ${item} x${bankStorage[item]}`;
+
+                itemElement.addEventListener("click", () => withdrawItem(item, bankStorage[item])); // Left-click withdraw all
+                itemElement.addEventListener("contextmenu", (e) => {
+                    e.preventDefault();
+                    openContextMenu(e, item, "withdraw");
+                });
+
+                bankUI.appendChild(itemElement);
+            }
+        }
+
+        // Updates the inventory UI
+        function updateInventoryDisplay() {
+            let inventoryUI = document.getElementById("inventoryItems");
+            inventoryUI.innerHTML = "";
+
+            for (let item in player.inventory) {
+                let itemElement = document.createElement("div");
+                itemElement.className = "inventory-item";
+                itemElement.innerHTML = `<img src="spell-icon.png"> ${item} x${player.inventory[item]}`;
+
+                itemElement.addEventListen
+                
+                er("click", () => depositItem(item, player.inventory[item])); // Left-click deposit all
+                itemElement.addEventListener("contextmenu", (e) => {
+                    e.preventDefault();
+                    openContextMenu(e, item, "deposit");
+                });
+
+                inventoryUI.appendChild(itemElement);
+            }
+        }
+
+        // Opens right-click menu for Deposit/Withdraw options
+        function openContextMenu(event, item) {
+            let contextMenu = document.getElementById("context-menu");
+            let contextMenuOptions = document.getElementById("context-menu-options");
+
+            console.log(item);
+
+            // Clear previous options
+
+            if (banking) {
+                // Banking mode - Show deposit options
+                contextMenu.innerHTML = `
+            <li onclick="depositItem("${JSON.stringify(item)}, 1")">Deposit-1</li>
+            <li onclick="depositItem("${JSON.stringify(item)}", 5)">Deposit-5</li>
+            <li onclick="depositItem('${JSON.stringify(item)}', 10)">Deposit-10</li>
+            <li onclick="promptCustomAmount('${JSON.stringify(item)}', 'deposit')">Deposit-X</li>
+            <li onclick="depositItem('${JSON.stringify(item)}', player.inventory['${item}'])">Deposit-All</li>
+        `;
+            } else {
+                // Normal mode - Show drop option
+                contextMenu.innerHTML = `
+            <li onclick="dropItem('${item}')">Drop Item</li>
+        `;
+            }
+
+            // Position and show the menu
+            contextMenu.style.top = `${event.clientY}px`;
+            contextMenu.style.left = `${event.clientX}px`;
+            contextMenu.style.display = "block";
+        }
+
+        // Opens a prompt for user to input a custom deposit/withdraw amount
+        function promptCustomAmount(item, actionType) {
+            let amount = parseInt(prompt(`Enter amount to ${actionType}:`));
+            if (!isNaN(amount) && amount > 0) {
+                actionType === "deposit" ? depositItem(item, amount) : withdrawItem(item, amount);
+            }
+        }
 
         // Animation loop
         function animate() {
