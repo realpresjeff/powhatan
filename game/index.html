@@ -2286,10 +2286,18 @@
             chimney.position.set(position.x, position.y + size, position.z - size / 3);
             oven.add(chimney);
 
+            const loader = new THREE.GLTFLoader();
+            loader.load('assets/brick_ovenfurnace_triangulate_game_asset.glb', function (gltf) {
+                scene.add(gltf.scene);
+            }, undefined, function (error) {
+                console.error("Error loading model:", error);
+            });
+
+
             // Save references
             oven.userData = { isOven: true };
 
-            scene.add(oven);
+            // scene.add(oven);
             return oven;
         }
 
