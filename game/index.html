@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Powhatan Game</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.139.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.174.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <style>
         body {
             margin: 0;
@@ -978,6 +979,8 @@
 
         // Click-to-move setup (for player movement)
         const raycaster = new THREE.Raycaster();
+
+        raycaster.far = 500;
         const mouse = new THREE.Vector2();
         let targetPosition = player.position.clone();
         let isMoving = false;
@@ -989,6 +992,7 @@
                 mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
                 raycaster.setFromCamera(mouse, camera);
                 const intersects = raycaster.intersectObjects([ground]);
+                console.log(intersects);
 
                 if (intersects.length > 0) {
                     targetPosition = intersects[0].point;
@@ -1001,7 +1005,7 @@
                 if (itemintersections.length > 1) {
                     const object = itemintersections[0].object;
 
-                    if (!object.userData.pickupable === true) {
+                    if (object.userData.pickupable === true) {
                         addToInventory(object.userData);
                         scene.remove(object);
                     }
@@ -1009,36 +1013,27 @@
             }
         });
 
-        // Function to add an item to the inventory
-        function addToInventory(item) {
-            inventory.push(item); // Add item to inventory array
-            updateInventoryUI(); // Update UI display
-        }
-
-        let inventory = [{ name: "pickaxe", equipable: true, equipType: "both_hands" }, { name: "steel helmet", equipable: true, equipType: "helmet" }]; // Array to store picked-up items
+        let inventory = [{ name: "pickaxe", equipable: true, equipType: "both_hands", quantity: 1 }, { name: "steel helmet", equipable: true, equipType: "helmet", quantity: 1 }]; // Array to store picked-up items
 
         // Function to add an item to the inventory
         function addToInventory(item) {
-            inventory.push(item);
+            // Check if the item already exists in the inventory
+            const existingItem = inventory.find(i => i.name === item.name);
+
+            if (existingItem) {
+                // If item exists, increase the quantity
+                existingItem.quantity += item.quantity || 1;
+            } else {
+                // If item doesn't exist, add the new item to the inventory
+                inventory.push({ ...item, quantity: item.quantity || 1 });
+            }
             updateInventoryUI();
         }
 
         // Function to update the popup menu with inventory items onInit
-        (function updateInventoryUI() {
-            const menuItems = document.getElementById("menu-items");
-            menuItems.innerHTML = ""; // Clear existing items
+        updateInventoryUI();
 
-            inventory.forEach((item) => {
-                const li = document.createElement("li");
-                li.classList.add("menu-item");
-                li.textContent = item.name;
-                li.style.backgroundColor = `#${item.color}`;
-                li.oncontextmenu = (event) => showInventoryContextMenu(event, item);
-                menuItems.appendChild(li);
-            });
-        }())
-
-        // Function to update the popup menu with inventory items
+        // Function to update the popup menu with inventory items (called after adding/removing items)
         function updateInventoryUI() {
             const menuItems = document.getElementById("menu-items");
             menuItems.innerHTML = ""; // Clear existing items
@@ -1047,14 +1042,13 @@
                 if (item) {
                     const li = document.createElement("li");
                     li.classList.add("menu-item");
-                    li.textContent = item.name;
-                    li.style.backgroundColor = `#${item.color}`;
+                    li.textContent = `${item.name} x${item.quantity}`;  // Display quantity alongside item name
+                    li.style.backgroundColor = `#${item.color || 'FFFFFF'}`;  // Optional color for item
                     li.oncontextmenu = (event) => showInventoryContextMenu(event, item);
                     menuItems.appendChild(li);
                 }
             });
         }
-
 
         // Smooth movement function (player movement)
         function movePlayer() {
@@ -1290,6 +1284,7 @@
 
             if (intersects.length > 0) {
                 const selectedObject = intersects[0].object;
+                console.log(intersects)
                 console.log("Right-clicked on:", selectedObject);
 
                 const menuOptions = [{ label: 'Cancel', action: () => document.getElementById("contextMenu").style.display = "none" }];
@@ -1303,11 +1298,23 @@
                 }
 
                 // If object has 'pickupable' property
-                if (!selectedObject.userData.pickupable === true && selectedObject.userData.name) {
+                if (selectedObject.userData.pickupable === true && selectedObject.userData.name) {
                     menuOptions.unshift({
                         label: `Pick up ${selectedObject.userData.name || "Item"}`,
                         action: () => {
                             addToInventory(selectedObject.userData);
+                            scene.remove(selectedObject);
+                        }
+                    });
+                }
+
+
+                // If object has 'pickupable' property
+                if (selectedObject.userData.isOre) {
+                    menuOptions.unshift({
+                        label: `Mine ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            mineOre(selectedObject.userData);
                             scene.remove(selectedObject);
                         }
                     });
@@ -1322,11 +1329,11 @@
                 }
 
                 // If object has a custom button label (dynamic)
-                if (selectedObject.userData.isTree && selectedObject.userData.customAction) {
+                if (selectedObject.userData.isTree) {
                     menuOptions.unshift({
                         label: `Cut down ${selectedObject.userData.name}`,
                         action: () => {
-                            // cutTree(selectedObject.userData)
+                            cutTree(selectedObject.userData)
                         },
                     });
                 }
@@ -1335,7 +1342,14 @@
                 if (selectedObject.userData.fish) {
                     menuOptions.push({
                         label: `Fish`,
-                        action: () => fish(selectedObject.parent),
+                        action: () => fish(selectedObject.userData),
+                    });
+                }
+
+                if (selectedObject.userData.smelt) {
+                    menuOptions.push({
+                        label: `Smelt`,
+                        action: () => smelt(selectedObject.userData),
                     });
                 }
 
@@ -1460,10 +1474,12 @@
         }())
 
         function createTree(type, position, hasFruit) {
-            const tree = new THREE.Group();
-            tree.name = type;
+            // Create a parent mesh to wrap all tree parts
+            const wrapperMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ visible: false }));
+
+            // Define tree data
             const data = { isTree: true, type: type, name: type.charAt(0).toUpperCase() + type.slice(1) };
-            tree.userData = data;
+            wrapperMesh.userData = data; // Add userData to the parent mesh
 
             let trunkMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Brown
             let leavesMaterial = new THREE.MeshStandardMaterial({ color: "#228B22" }); // Green
@@ -1478,7 +1494,7 @@
             );
             trunk.position.set(0, 2.5, 0);
             trunk.userData = data;
-            tree.add(trunk);
+            wrapperMesh.add(trunk); // Add trunk to the parent mesh
 
             // Create leaves (adjust shape based on tree type)
             let leaves;
@@ -1496,11 +1512,12 @@
 
             leaves.position.set(0, 6, 0);
             leaves.userData = data;
+            wrapperMesh.add(leaves); // Add leaves to the parent mesh
 
-            tree.add(leaves);
+            // Set the position of the parent mesh
+            wrapperMesh.position.set(position.x, position.y, position.z);
 
-            tree.position.set(position.x, position.y, position.z);
-
+            // If the tree has fruit, generate and add fruit to the scene
             if (hasFruit) {
                 // Generate random number of fruits (1-5)
                 const fruitCount = Math.floor(Math.random() * 5) + 1;
@@ -1520,24 +1537,167 @@
                     );
 
                     fruit.position.set(position.x + randomizedX - weight, 0, position.z + randomizedZ - weight);
-                    fruit.userData = { isFruit: true, tree: tree, name: "Persimmon" };
+                    fruit.userData = { isFruit: true, tree: wrapperMesh, name: "Persimmon" };
 
                     scene.add(fruit);
                     fruits.push(fruit);
                 }
-
             }
 
-            console.log(tree);
+            // Add the parent mesh (tree) to the scene
+            scene.add(wrapperMesh);
 
-            scene.add(tree);
+            return wrapperMesh;
+        }
 
-            return tree;
+        class Tree {
+            constructor(type, position, hasFruit) {
+                this.type = type;
+                this.position = position;
+                this.hasFruit = hasFruit;
+                this.treeParent = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ visible: false }));
+
+                // Tree data
+                const data = { isTree: true, type: type, name: type.charAt(0).toUpperCase() + type.slice(1) };
+                this.treeParent.userData = data;
+
+                // Materials
+                this.trunkMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Brown for trunk
+                this.leavesMaterial = new THREE.MeshStandardMaterial({ color: "#228B22" }); // Green for leaves
+                this.trunkMaterial.userData = data;
+                this.leavesMaterial.userData = data;
+
+                // Create trunk
+                this.trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.5, 0.8, 5, 8),
+                    this.trunkMaterial
+                );
+                this.trunk.position.set(0, 2.5, 0);
+                this.trunk.userData = data;
+                this.treeParent.add(this.trunk);
+
+                // Create leaves based on tree type
+                this.leaves = this.createLeaves();
+
+                // Position the tree parent mesh
+                this.treeParent.position.set(this.position.x, this.position.y, this.position.z);
+
+                // If tree has fruit, add fruits
+                if (this.hasFruit) {
+                    this.createFruits();
+                }
+
+                // Add the tree parent mesh to the scene
+                scene.add(this.treeParent);
+            }
+
+            createLeaves() {
+                let leaves;
+                if (this.type === "pine") {
+                    leaves = new THREE.Mesh(
+                        new THREE.ConeGeometry(3, 6, 8),
+                        this.leavesMaterial
+                    );
+                } else {
+                    leaves = new THREE.Mesh(
+                        new THREE.SphereGeometry(3, 8, 8),
+                        this.leavesMaterial
+                    );
+                }
+                leaves.position.set(0, 6, 0);
+                leaves.userData = this.treeParent.userData;
+                this.treeParent.add(leaves);
+                return leaves;
+            }
+
+            createFruits() {
+                // Generate random number of fruits (1-5)
+                const fruitCount = Math.floor(Math.random() * 5) + 1;
+                const fruits = [];
+
+                const randomizedX = (Math.random() - 0.5) * 2.4;
+                const randomizedZ = (Math.random() - 0.5) * 4;
+                const weight = 0.3;
+
+                for (let i = 0; i < fruitCount; i++) {
+                    const offsetX = (Math.random() - 0.5) * 2;
+                    const offsetZ = (Math.random() - 0.5) * 2;
+
+                    const fruit = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.3, 8, 8),
+                        new THREE.MeshStandardMaterial({ color: "#FFA500" }) // Orange color for fruits
+                    );
+
+                    fruit.position.set(this.position.x + randomizedX - weight, 0, this.position.z + randomizedZ - weight);
+                    fruit.userData = { isFruit: true, tree: this.treeParent, name: "Persimmon" };
+
+                    scene.add(fruit);
+                    fruits.push(fruit);
+                }
+            }
+
+            onClick() {
+                alert('Tree clicked!');
+            }
         }
 
 
+        function cutTree(tree) {
+            // if (!playerHasAxe()) {
+            //     console.log("You need an axe to cut down the tree!");
+            //     return;
+            // }
+
+            // Calculate cutting speed based on player's strength and agility
+            const cuttingSpeed = calculateCuttingSpeed(); // This will be similar to calculateMiningSpeed
+
+            let cuttingInterval = setInterval(() => {
+                // Stop mining if agility is 0 or max experience is reached
+                if (playerStats.agility === 0 || hasMaxExperience()) {
+                    clearInterval(cuttingInterval);
+                    if (playerStats.agility === 0) {
+                        console.log("You have run out of agility and can no longer mine.");
+                        startAgilityRegeneration(); // Start the agility regeneration process
+                    }
+                    if (hasMaxExperience()) {
+                        console.log("You have reached max experience!");
+                    }
+                    return;
+                }
+
+                // Calculate the log based on the tree type
+                const log = tree.name; // Use the tree's name (type) as the log's name
+
+                // Add the log to the inventory
+                addToInventory({ name: `${log} Log`, equipable: false });
+
+                // Drain agility after each mining action
+                drainAgility();
+
+                console.log(`Cut down a ${tree.name} tree and got a ${log} log!`);
+
+
+
+                // Increment experience after each ore mined (you can customize how much experience is gained)
+                playerStats.experience += 1;
+            }, calculateMiningSpeed());  // Speed based on player stats
+        }
+
+        // Helper function to calculate cutting speed based on strength and agility
+        function calculateCuttingSpeed() {
+            const baseSpeed = 1000;  // Base time in ms for one cut
+            const agilityFactor = 10; // Agility decreases the speed (faster cutting)
+            const strengthFactor = 20; // Strength decreases the speed (faster cutting)
+
+            // Calculate cutting speed based on player's agility and strength
+            const speed = baseSpeed - (playerStats.agility * agilityFactor) - (playerStats.strength * strengthFactor);
+
+            // Ensure speed doesn't go below a certain threshold to avoid cutting too fast
+            return Math.max(speed, 200);  // Minimum speed of 200ms per cut
+        }
 
         const trees = [
+            new Tree('pine', { x: 0, y: 0, z: 0 }, true),
             createTree("pine", { x: -5, y: 0, z: -5 }),
             createTree("pine", { x: 3, y: 0, z: 2 }),
             createTree("maple", { x: 7, y: 0, z: -3 }),
@@ -1638,17 +1798,532 @@
             // ⛏️ Generate Natural Coal Mine
             createCoalMine({ x: 42.5, y: 0, z: -10 });
 
+            createOpenLogFire({ x: 20, y: 0, z: -10 });
+
             // create a longhouse
             const myLonghouse = createLonghouse({ x: -40, y: 0, z: 0 }, 20, 35, 10); // 30ft long, 15ft wide, 10ft tall
+            createBrickOven({ x: -35, y: 0, z: 0 });
+            createBurlapSack({ x: -45, y: 0, z: -10 });
 
-                       // create a smith shop
-                       const smithshop = createLonghouse({ x: 20, y: 0, z: -40 }, 20, 15, 5); // 30ft long, 15ft wide, 10ft tall
+            // create a smith shop
+            const smithshop = createLonghouse({ x: 20, y: 0, z: -40 }, 20, 15, 5); // 30ft long, 15ft wide, 10ft tall
+            createAnvil({ x: 15, y: 0, z: -40 });
+            createSmelt({ x: 25, y: 0, z: -43 })
 
+            const teePee = createBuilding({ x: 0, y: 0, z: 40 }, 10, 8, 5, true, false);
+
+            const europeanBuilding = createBuilding({ x: 40, y: 0, z: 40 }, 15, 20, 5, false, true);
         }
-
 
         // Call this once when setting up the world
         generateEnvironment();
+
+
+
+
+        function createBurlapSack(position) {
+            const bag = new THREE.Group();
+            bag.userData = { bank: true };
+
+            // **Bag Body**
+            const bagGeometry = new THREE.CylinderGeometry(2, 2.5, 5, 16); // Tapered shape
+            const bagTexture = new THREE.TextureLoader().load('textures/burlap.jpg');
+            bagTexture.wrapS = bagTexture.wrapT = THREE.RepeatWrapping;
+            bagTexture.repeat.set(2, 2);
+            const bagMaterial = new THREE.MeshStandardMaterial({
+                map: bagTexture,
+                color: "#C2A878",
+                roughness: 1,
+            });
+            const bagBody = new THREE.Mesh(bagGeometry, bagMaterial);
+            bagBody.position.set(0, 2.5, 0);
+            bag.add(bagBody);
+
+            // **Bag Top (Tied Look)**
+            const topGeometry = new THREE.SphereGeometry(1.5, 16, 12);
+            topGeometry.scale(1, 0.7, 1); // Squashed for tied look
+            const topMaterial = new THREE.MeshStandardMaterial({
+                color: "#9C6B30",
+                roughness: 1,
+            });
+            const bagTop = new THREE.Mesh(topGeometry, topMaterial);
+            bagTop.position.set(0, 5, 0);
+            bag.add(bagTop);
+
+            // **Rope Tie**
+            const ropeGeometry = new THREE.TorusGeometry(1.6, 0.1, 8, 16);
+            const ropeMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B", roughness: 0.9 });
+            const rope = new THREE.Mesh(ropeGeometry, ropeMaterial);
+            rope.rotation.x = Math.PI / 2;
+            rope.position.set(0, 4.7, 0);
+            bag.add(rope);
+
+            // **Positioning Fix**
+            bag.position.set(position.x, position.y, position.z);
+            scene.add(bag);
+
+            return bag;
+        }
+
+
+        class Deer {
+            constructor(position) {
+                this.hp = 20;
+                this.maxHp = 20;
+                this.strength = 30;
+                this.defense = 13;
+                this.magic = 2;
+                this.ranged = 0;
+                this.alive = true;
+                this.position = position;
+                this.model = this.createModel();
+                scene.add(this.model);
+            }
+
+            createModel() {
+                const deerGroup = new THREE.Group();
+
+                // Body (Simplified)
+                const bodyMaterial = new THREE.MeshStandardMaterial({ color: "brown" });
+                const body = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 1), bodyMaterial);
+                body.position.set(0, 1, 0);
+                deerGroup.add(body);
+
+                // Head
+                const head = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), bodyMaterial);
+                head.position.set(1.5, 1.5, 0);
+                deerGroup.add(head);
+
+                // Legs
+                const legMaterial = new THREE.MeshStandardMaterial({ color: "darkbrown" });
+                for (let i = 0; i < 4; i++) {
+                    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2), legMaterial);
+                    leg.position.set(i < 2 ? -1 : 1, 0, i % 2 === 0 ? -0.5 : 0.5);
+                    deerGroup.add(leg);
+                }
+
+                deerGroup.position.set(this.position.x, this.position.y, this.position.z);
+                return deerGroup;
+            }
+
+            takeDamage(damage) {
+                if (!this.alive) return;
+                this.hp -= damage;
+                if (this.hp <= 0) {
+                    this.die();
+                }
+            }
+
+            die() {
+                this.alive = false;
+                scene.remove(this.model);
+                setTimeout(() => this.respawn(), 5000); // Respawns after 50 seconds
+            }
+
+            respawn() {
+                this.hp = this.maxHp;
+                this.alive = true;
+                this.model = this.createModel();
+                scene.add(this.model);
+            }
+        }
+
+        // Initialize a deer
+        const deer = new Deer({ x: 5, y: 0, z: -5 });
+
+        // Example of attacking the deer (attach this to player combat logic)
+        function playerAttack(deer, playerDamage) {
+            if (deer.alive) {
+                deer.takeDamage(playerDamage);
+                console.log(`Player hit the deer for ${playerDamage} damage!`);
+            } else {
+                console.log("The deer is dead.");
+            }
+        }
+
+        // Example attack simulation
+        // setTimeout(() => playerAttack(deer, 10), 10000)
+
+        class Human {
+            constructor(position) {
+                this.races = ["Indian", "African", "European", "Zambo", "Mestizo", "Pardo", "Mulatto"];
+                this.race = this.races[Math.floor(Math.random() * this.races.length)];
+
+                // Generate random stats
+                this.hp = Math.floor(Math.random() * 50) + 50; // 50-100 HP
+                this.maxHp = this.hp;
+                this.strength = Math.floor(Math.random() * 20) + 10; // 10-30
+                this.defense = Math.floor(Math.random() * 15) + 5; // 5-20
+                this.magic = Math.floor(Math.random() * 10); // 0-10
+                this.ranged = Math.floor(Math.random() * 15); // 0-15
+                this.alive = true;
+                this.position = position;
+                this.model = this.createModel();
+
+                scene.add(this.model);
+            }
+
+            createModel() {
+                const humanGroup = new THREE.Group();
+                const skinColors = {
+                    "Indian": 0x8d5524,
+                    "African": 0x3d1e10,
+                    "European": 0xffdbac,
+                    "Zambo": 0x5c3a1e,
+                    "Mestizo": 0xc68642,
+                    "Pardo": 0x9c7248,
+                    "Mulatto": 0xaf6e51
+                };
+
+                // Body Material
+                const bodyMaterial = new THREE.MeshStandardMaterial({ color: skinColors[this.race] });
+
+                // Body
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.5), bodyMaterial);
+                body.position.set(0, 1, 0);
+                humanGroup.add(body);
+
+                // Head
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.5), bodyMaterial);
+                head.position.set(0, 2.5, 0);
+                humanGroup.add(head);
+
+                // Arms
+                for (let i = -1; i <= 1; i += 2) {
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.5), bodyMaterial);
+                    arm.position.set(i * 0.6, 1.75, 0);
+                    humanGroup.add(arm);
+                }
+
+                // Legs
+                for (let i = -1; i <= 1; i += 2) {
+                    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2), bodyMaterial);
+                    leg.position.set(i * 0.3, 0, 0);
+                    humanGroup.add(leg);
+                }
+
+                humanGroup.position.set(this.position.x, this.position.y, this.position.z);
+                return humanGroup;
+            }
+
+            takeDamage(damage) {
+                if (!this.alive) return;
+                this.hp -= damage;
+                if (this.hp <= 0) {
+                    this.die();
+                }
+            }
+
+            die() {
+                this.alive = false;
+                console.log(`${this.race} human has died.`);
+                scene.remove(this.model);
+                setTimeout(() => this.respawn(), 50000); // Respawns after 50 seconds
+            }
+
+            respawn() {
+                this.hp = this.maxHp;
+                this.alive = true;
+                this.model = this.createModel();
+                scene.add(this.model);
+                console.log(`${this.race} human has respawned.`);
+            }
+        }
+
+        // Create a random human at a given position
+        const human = new Human({ x: 2, y: 0, z: -2 });
+
+        // Example: Attacking the human NPC
+        function playerAttack(human, playerDamage) {
+            if (human.alive) {
+                human.takeDamage(playerDamage);
+                console.log(`Player hit the ${human.race} human for ${playerDamage} damage!`);
+            } else {
+                console.log("The human is dead.");
+            }
+        }
+
+        // Simulated attacks
+        // playerAttack(human, 20);
+        // setTimeout(() => playerAttack(human, 30), 3000);
+
+        function calculateLevel(experience) {
+            return Math.floor(100 * (1 - Math.exp(-experience / 20000000)));
+        }
+
+        function calculateMaxHit(strengthLevel, weaponBonus = 50, baseDamage = 5) {
+            return Math.floor((strengthLevel * weaponBonus) / 100 + baseDamage);
+        }
+
+        function calculateDamageTaken(maxHit, defense) {
+            const damageReduction = defense / (defense + 50);
+            return Math.floor(maxHit * (1 - damageReduction));
+        }
+
+        // **New: Calculate Miss Rate (Higher agility & accuracy reduces miss chance)**
+        function calculateMissRate(attackerAgility, attackerLevel, defenderDefense) {
+            const hitChance = Math.min(0.95, Math.max(0.1, (attackerLevel + attackerAgility) / (attackerLevel + attackerAgility + defenderDefense + 50)));
+            return Math.random() > hitChance; // True means missed
+        }
+
+        // **New: Attack Speed (Lower agility = slower attacks)**
+        function calculateAttackSpeed(agility) {
+            return Math.max(1.5, 5 - agility / 20); // 5s for low agility, 1.5s for high
+        }
+
+        // **New: Magic Drain (Each spell uses up magic stamina, based on total XP)**
+        function calculateMagicDrain(totalMagicXP, spellCost) {
+            return Math.max(0, totalMagicXP - spellCost); // Ensures it doesn't go negative
+        }
+
+        // **New: Cast Failure Rate (Lower XP = More Failed Casts)**
+        function calculateCastFailureRate(magicLevel, spellDifficulty) {
+            const successChance = Math.min(0.98, Math.max(0.2, magicLevel / (magicLevel + spellDifficulty + 50)));
+            return Math.random() > successChance; // True means spell failed
+        }
+
+        // **Example Combat Flow**
+        function attack(attacker, defender) {
+            if (calculateMissRate(attacker.agility, attacker.strength, defender.defense)) {
+                console.log(`${attacker.name} missed the attack!`);
+                return;
+            }
+
+            const maxHit = calculateMaxHit(attacker.strength);
+            const damage = calculateDamageTaken(maxHit, defender.defense);
+            defender.hp -= damage;
+
+            console.log(`${attacker.name} hit ${defender.name} for ${damage} damage!`);
+        }
+
+        // **Example Magic Cast**
+        function castSpell(caster, spellCost, spellDifficulty) {
+            if (caster.magicStamina < spellCost) {
+                console.log(`${caster.name} does not have enough magic stamina!`);
+                return;
+            }
+
+            if (calculateCastFailureRate(caster.magic, spellDifficulty)) {
+                console.log(`${caster.name} failed to cast the spell!`);
+                return;
+            }
+
+            caster.magicStamina = calculateMagicDrain(caster.magicStamina, spellCost);
+            console.log(`${caster.name} successfully casts the spell!`);
+        }
+
+        // **Example Usage**
+        // const player = { name: "Player", hp: 100, strength: 999999999, defense: 50, agility: 80, magic: 75, magicStamina: 5000000 };
+        // const deer = { name: "Deer", hp: 20, strength: 30, defense: 13, agility: 25 };
+
+        // attack(player, deer);
+        // castSpell(player, 30000, 20);
+
+
+        function simulateFight(playerExperience, deer) {
+            const playerLevel = calculateLevel(playerExperience);
+            const playerMaxHit = calculateMaxHit(playerLevel);
+            const playerDamage = calculateDamageTaken(playerMaxHit, deer.defense);
+
+            const deerMaxHit = calculateMaxHit(deer.strength, 20, 2);
+            const deerDamage = calculateDamageTaken(deerMaxHit, playerLevel);
+
+            console.log(`Player Level: ${playerLevel}`);
+            console.log(`Player Max Hit: ${playerMaxHit}`);
+            console.log(`Player Damage to Deer: ${playerDamage}`);
+
+            console.log(`Deer Max Hit: ${deerMaxHit}`);
+            console.log(`Deer Damage to Player: ${deerDamage}`);
+
+            if (playerDamage >= deer.hp) {
+                console.log("Player wins! The deer is defeated.");
+            } else {
+                console.log("The deer survives the first hit and might counterattack!");
+            }
+        }
+
+        // Example: Simulate a fight with a player having 999 million strength XP
+        // simulateFight(999000000, deer);
+
+
+        function createSmelt(position) {
+            const smelt = new THREE.Mesh();
+            smelt.userData = { smelt: true }
+
+            // Furnace body (a tapered cylinder to resemble a clay/stone bloomery)
+            const furnaceGeometry = new THREE.CylinderGeometry(3, 4, 6, 16, 1);
+            const furnaceMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B", roughness: 0.8 }); // Clay/stone look
+            const furnace = new THREE.Mesh(furnaceGeometry, furnaceMaterial);
+            furnace.position.set(0, 3, 0);
+            smelt.add(furnace);
+
+            // Furnace opening (arched door where iron/slag is extracted)
+            const openingGeometry = new THREE.BoxGeometry(1.5, 2, 0.5);
+            const openingMaterial = new THREE.MeshStandardMaterial({ color: "black", transparent: true, opacity: 0.5 });
+            const opening = new THREE.Mesh(openingGeometry, openingMaterial);
+            opening.position.set(0, 1.5, 2.01);
+            smelt.add(opening);
+
+            // Chimney hole at the top
+            const chimneyGeometry = new THREE.CylinderGeometry(1, 1, 1, 8);
+            const chimneyMaterial = new THREE.MeshStandardMaterial({ color: "black", roughness: 0.7 });
+            const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
+            chimney.position.set(0, 6.5, 0);
+            smelt.add(chimney);
+
+            // Charcoal/ore pile near furnace
+            const oreGeometry = new THREE.SphereGeometry(1, 8, 8);
+            const oreMaterial = new THREE.MeshStandardMaterial({ color: "#3B3B3B" });
+            const orePile = new THREE.Mesh(oreGeometry, oreMaterial);
+            orePile.position.set(2, 0.5, 2);
+            smelt.add(orePile);
+
+            smelt.position.set(position.x, position.y, position.z);
+            scene.add(smelt);
+            console.log(smelt);
+            return smelt;
+        }
+
+        function createAnvil(position) {
+            const anvil = new THREE.Group();
+
+            // Base of the anvil
+            const baseGeometry = new THREE.BoxGeometry(4, 2, 4);
+            const baseMaterial = new THREE.MeshStandardMaterial({ color: "#555", metalness: 0.9, roughness: 0.4 });
+            const base = new THREE.Mesh(baseGeometry, baseMaterial);
+            base.position.set(0, 1, 0);
+            anvil.add(base);
+
+            // Anvil body
+            const bodyGeometry = new THREE.BoxGeometry(6, 3, 3);
+            const body = new THREE.Mesh(bodyGeometry, baseMaterial);
+            body.position.set(0, 4, 0);
+            anvil.add(body);
+
+            // Anvil top
+            const topGeometry = new THREE.BoxGeometry(6, 1, 3);
+            const top = new THREE.Mesh(topGeometry, baseMaterial);
+            top.position.set(0, 6, 0);
+            anvil.add(top);
+
+            // Horn
+            const hornGeometry = new THREE.CylinderGeometry(0.3, 1, 3, 16);
+            const horn = new THREE.Mesh(hornGeometry, baseMaterial);
+            horn.rotation.z = -Math.PI / 2;
+            horn.position.set(3.5, 6, 0);
+            anvil.add(horn);
+
+            // Hardy hole (a small square indent)
+            const hardyGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const hardy = new THREE.Mesh(hardyGeometry, baseMaterial);
+            hardy.position.set(-2.5, 6.5, 0);
+            anvil.add(hardy);
+
+            anvil.position.set(position.x, position.y, position.z);
+
+            const loader = new THREE.GLTFLoader();
+            loader.load('assets/anvil.glb', function (gltf) {
+                scene.add(gltf.scene);
+            }, undefined, function (error) {
+                console.error("Error loading model:", error);
+            });
+
+            // scene.add(anvil);
+            return anvil;
+        }
+
+        function createOpenLogFire(position) {
+            const fireGroup = new THREE.Group();
+
+            // Create logs
+            const logMaterial = new THREE.MeshStandardMaterial({ color: "#8B4513" });
+            for (let i = 0; i < 5; i++) {
+                const logGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 12);
+                const log = new THREE.Mesh(logGeometry, logMaterial);
+                log.rotation.z = Math.random() * Math.PI / 2;
+                log.rotation.y = Math.random() * Math.PI;
+                log.position.set(
+                    position.x + Math.random() * 1 - 0.5,
+                    position.y + 0.2,
+                    position.z + Math.random() * 1 - 0.5
+                );
+                fireGroup.add(log);
+            }
+
+            // Create embers
+            const emberMaterial = new THREE.MeshStandardMaterial({ emissive: "#FF4500" });
+            const emberGeometry = new THREE.SphereGeometry(0.4, 8, 8);
+            const embers = new THREE.Mesh(emberGeometry, emberMaterial);
+            embers.position.set(position.x, position.y + 0.1, position.z);
+            fireGroup.add(embers);
+
+            // Fire particles
+            const fireParticles = new THREE.Group();
+            const fireMaterial = new THREE.MeshStandardMaterial({ emissive: "#FF6347", transparent: true, opacity: 0.8 });
+            for (let i = 0; i < 10; i++) {
+                const flame = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), fireMaterial);
+                flame.position.set(position.x, position.y + 0.5 + Math.random() * 0.5, position.z);
+                fireParticles.add(flame);
+            }
+            fireGroup.add(fireParticles);
+
+            // Fire light
+            const fireLight = new THREE.PointLight("#FFA500", 1.5, 5);
+            fireLight.position.set(position.x, position.y + 1, position.z);
+            fireGroup.add(fireLight);
+
+            // Flicker animation
+            function animateFire() {
+                fireParticles.children.forEach(particle => {
+                    particle.position.y += Math.random() * 0.02;
+                    particle.material.opacity = 0.5 + Math.random() * 0.5;
+                });
+                fireLight.intensity = 1 + Math.random() * 0.5;
+                requestAnimationFrame(animateFire);
+            }
+            animateFire();
+
+            scene.add(fireGroup);
+            return fireGroup;
+        }
+
+        function createBrickOven(position, size = 4) {
+            const oven = new THREE.Group();
+
+            // Brick Material
+            const brickMaterial = new THREE.MeshStandardMaterial({ color: "#B22222" }); // Reddish-brown bricks
+
+            // Base (Rectangular brick foundation)
+            const baseGeometry = new THREE.BoxGeometry(size, size / 2, size);
+            const base = new THREE.Mesh(baseGeometry, brickMaterial);
+            base.position.set(position.x, position.y + size / 4, position.z);
+            oven.add(base);
+
+            // Dome (Clay oven top)
+            const domeGeometry = new THREE.SphereGeometry(size / 2, 16, 16, 0, Math.PI);
+            const dome = new THREE.Mesh(domeGeometry, brickMaterial);
+            dome.position.set(position.x, position.y + size / 2 + size / 4, position.z);
+            oven.add(dome);
+
+            // Arch Entrance (Cutout for the opening)
+            const entranceGeometry = new THREE.CylinderGeometry(size / 4, size / 4, size / 2, 16, 1, true, 0, Math.PI);
+            const entrance = new THREE.Mesh(entranceGeometry, brickMaterial);
+            entrance.rotation.x = Math.PI / 2;
+            entrance.position.set(position.x, position.y + size / 2, position.z + size / 3);
+            oven.add(entrance);
+
+            // Chimney (Small cylinder for smoke exit)
+            const chimneyGeometry = new THREE.CylinderGeometry(size / 8, size / 8, size / 2, 12);
+            const chimney = new THREE.Mesh(chimneyGeometry, brickMaterial);
+            chimney.position.set(position.x, position.y + size, position.z - size / 3);
+            oven.add(chimney);
+
+            // Save references
+            oven.userData = { isOven: true };
+
+            scene.add(oven);
+            return oven;
+        }
 
         function createLonghouse(position, length = 20, width = 10, height = 8) {
             const longhouse = new THREE.Group();
@@ -1707,6 +2382,71 @@
             return longhouse;
         }
 
+        function createBuilding(position, length = 20, width = 10, height = 8, hasCircularWalls = false, hasTriangularRoof = false) {
+            const longhouse = new THREE.Group();
+
+            // Wall Material
+            const wallMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Wooden brown
+
+            // Side Walls
+            const sideWallGeometry = new THREE.BoxGeometry(1, height, width);
+            const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+            leftWall.position.set(position.x - length / 2, position.y + height / 2, position.z);
+            longhouse.add(leftWall);
+
+            const rightWall = leftWall.clone();
+            rightWall.position.set(position.x + length / 2, position.y + height / 2, position.z);
+            longhouse.add(rightWall);
+
+            // Front & Back Walls (without door using separate parts)
+            const wallWidth = length / 2 - 2; // Leave space for a 4ft door
+            const frontLeftWall = new THREE.Mesh(new THREE.BoxGeometry(wallWidth, height, 1), wallMaterial);
+            frontLeftWall.position.set(position.x - wallWidth / 2 - 2, position.y + height / 2, position.z + width / 2);
+            longhouse.add(frontLeftWall);
+
+            const frontRightWall = frontLeftWall.clone();
+            frontRightWall.position.set(position.x + wallWidth / 2 + 2, position.y + height / 2, position.z + width / 2);
+            longhouse.add(frontRightWall);
+
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(length, height, 1), wallMaterial);
+            backWall.position.set(position.x, position.y + height / 2, position.z - width / 2);
+            longhouse.add(backWall);
+
+            // Floor (Dirt)
+            const floorMaterial = new THREE.MeshStandardMaterial({ color: "#8B4513" }); // Dirt brown
+            const floorGeometry = new THREE.PlaneGeometry(length, width);
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(position.x, position.y, position.z);
+            longhouse.add(floor);
+
+            const roofMaterial = new THREE.MeshStandardMaterial({ color: "#D2B48C", side: THREE.DoubleSide });
+
+            // Choose Roof Geometry Based on hasTriangularRoof
+            if (hasTriangularRoof) {
+                // Triangular Roof
+                const roofGeometry = new THREE.ConeGeometry(width / 2, height, 3); // Triangular roof (cone)
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.set(position.x, position.y + height * 0.8, position.z);
+                roof.userData = { isRoof: true };
+                longhouse.add(roof);
+                longhouse.userData = { isLonghouse: true, roof: roof };
+            } else {
+                // Regular Roof (Thatch, fully covers structure)
+                const roofGeometry = new THREE.CylinderGeometry(width / 2 + 1, width / 2 + 1, length + 2, 8, 1, true, 0, Math.PI);
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.rotation.z = Math.PI / 2;
+                roof.position.set(position.x, position.y + height * 0.8, position.z);
+                roof.userData = { isRoof: true };
+                longhouse.add(roof);
+                longhouse.userData = { isLonghouse: true, roof: roof };
+            }
+
+            // Save references
+            scene.add(longhouse);
+            return longhouse;
+        }
+
         const herbTypes = [
             { name: "Creasey Greens", color: "#4CAF50" }, // Traditional plant from Powhatan, VA
             { name: "Wild Mint", color: "#3B873E" },
@@ -1723,7 +2463,7 @@
             const herb = new THREE.Mesh(herbGeometry, herbMaterial);
 
             herb.position.set(position.x, position.y, position.z);
-            herb.userData = { isHerb: true, name: herbType.name };
+            herb.userData = { isHerb: true, name: herbType.name, pickupable: true };
 
             scene.add(herb);
             return herb;
@@ -1830,32 +2570,123 @@
             return mine;
         }
 
-        const possibleOres = [
-            { name: "Coal", color: "#3B3B3B" },
-            { name: "Gold Nugget", color: "#FFD700" },
-            { name: "Ruby", color: "#E0115F" },
-            { name: "Emerald", color: "#50C878" },
-            { name: "Sapphire", color: "#0F52BA" }
-        ];
+        // Example player stats with max agility and experience
+        let playerStats = {
+            agility: 10,  // Initial agility level
+            strength: 8,  // Strength level
+            maxAgility: 10, // Max agility level
+            maxExperience: 100, // Max experience level
+            experience: 0,  // Current experience
+        };
 
-        function mineOre(mine) {
-            if (!playerHasPickaxe()) {
-                console.log("You need a pickaxe to mine!");
-                return;
+        // Helper function to calculate mining speed
+        function calculateMiningSpeed() {
+            const baseSpeed = 1000;  // Base speed of 1 second per mining action
+            const agilityFactor = 0.05;  // Agility impact on speed
+            const strengthFactor = 0.03;  // Strength impact on speed
+
+            // Calculate mining speed where higher agility and strength reduce the time between actions
+            let miningSpeed = baseSpeed - (playerStats.agility * agilityFactor * baseSpeed) - (playerStats.strength * strengthFactor * baseSpeed);
+
+            // Ensure mining speed doesn't go below a minimum threshold (e.g., 200ms)
+            miningSpeed = Math.max(miningSpeed, 200); // Minimum speed (200ms)
+
+            return miningSpeed;
+        }
+
+        // Function to drain agility as mining progresses
+        function drainAgility() {
+            const agilityDrainAmount = 1; // Amount of agility drained per ore mined
+            playerStats.agility -= agilityDrainAmount;
+
+            // Ensure agility doesn't drop below 0
+            if (playerStats.agility < 0) {
+                playerStats.agility = 0;
             }
+        }
 
+        // Function to regenerate agility back to maxAgility over time
+        function regenerateAgility() {
+            const agilityRegenerationRate = 0.1; // Rate at which agility regenerates per interval (fraction of difference)
+
+            // Only regenerate agility if the player is not mining
+            if (!playerIsMining && playerStats.agility < playerStats.maxAgility) {
+                playerStats.agility += (playerStats.maxAgility - playerStats.agility) * agilityRegenerationRate;
+
+                // Ensure agility doesn't exceed maxAgility
+                if (playerStats.agility > playerStats.maxAgility) {
+                    playerStats.agility = playerStats.maxAgility;
+                }
+
+                console.log(`Agility Regeneration: ${playerStats.agility}`);
+            }
+        }
+
+        // Function to start the regeneration of agility (called when the player is not mining)
+        function startAgilityRegeneration() {
+            setInterval(regenerateAgility, 1000); // Regenerate agility every second
+        }
+
+        // Function to check if the player has reached max experience
+        function hasMaxExperience() {
+            return playerStats.experience >= playerStats.maxExperience;
+        }
+
+        // Function to simulate mining ore
+        function mineOre(mine) {
+            // if (!playerHasPickaxe()) {
+            //     console.log("You need a pickaxe to mine!");
+            //     return;
+            // }
+
+            // Start mining interval
             let miningInterval = setInterval(() => {
-                if (!playerIsMining || inventoryIsFull()) {
+                // Stop mining if agility is 0 or max experience is reached
+                if (playerStats.agility === 0 || hasMaxExperience()) {
                     clearInterval(miningInterval);
+                    if (playerStats.agility === 0) {
+                        console.log("You have run out of agility and can no longer mine.");
+                        startAgilityRegeneration(); // Start the agility regeneration process
+                    }
+                    if (hasMaxExperience()) {
+                        console.log("You have reached max experience!");
+                    }
                     return;
                 }
 
-                const ore = possibleOres[Math.floor(Math.random() * possibleOres.length)];
-                addToInventory(ore.name);
+                // Simulate mining
+                addToInventory({ name: mine.type });
 
-                console.log(`Mined a ${ore.name}!`);
-            }, calculateMiningSpeed()); // Uses player stats to determine mining speed
+                console.log(`Mined a ${mine.type}!`);
+
+                // Drain agility after each mining action
+                drainAgility();
+
+                // Increment experience after each ore mined (you can customize how much experience is gained)
+                playerStats.experience += 1;
+
+                console.log(`Experience: ${playerStats.experience}, Agility: ${playerStats.agility}`);
+            }, calculateMiningSpeed()); // Uses calculated mining speed based on player stats
         }
+
+        // function mineOre(mine) {
+        //     // if (!playerHasPickaxe()) {
+        //     //     console.log("You need a pickaxe to mine!");
+        //     //     return;
+        //     // }
+
+        //     let miningInterval = setInterval(() => {
+        //         // if (!playerIsMining || inventoryIsFull()) {
+        //         //     clearInterval(miningInterval);
+        //         //     return;
+        //         // }
+
+        //         addToInventory({ name: mine.type });
+
+        //         console.log(`Mined a ${mine.type}!`);
+        //     }, calculateMiningSpeed()); // Uses calculated mining speed based on player stats
+        // }
+
 
         function createMineGround(position, size) {
             const mineGroundGeometry = new THREE.PlaneGeometry(size.width, size.height, 8, 8);
