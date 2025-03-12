@@ -1349,7 +1349,7 @@
                 }
 
                 // If object has 'isFire' property
-                if (selectedObject.userData.isFire) {
+                if (selectedObject.userData.isFire || selectedObject.userData.isOven || selectedObject.userData.name === "Object_2") {
                     menuOptions.unshift({
                         label: `Cook ${selectedObject.userData.name || "Item"}`,
                         action: () => {
@@ -1359,7 +1359,7 @@
                 }
 
                 // If object has 'isFire' property
-                if (selectedObject.userData.isAnvil) {
+                if (selectedObject.userData.isAnvil || selectedObject.userData.name === "Object_2") {
                     menuOptions.unshift({
                         label: `Smith ${selectedObject.userData.name || "Item"}`,
                         action: () => {
@@ -1868,9 +1868,6 @@
         // Call this once when setting up the world
         generateEnvironment();
 
-
-
-
         function createBank(position) {
             const bag = new THREE.Group();
             bag.userData = { bank: true };
@@ -2249,7 +2246,7 @@
         }
 
         function createAnvil(position) {
-            const anvil = new THREE.Group(new THREE.BoxGeometry(0, 2, 0));
+            const anvil = new THREE.Group();
             anvil.userData = { isAnvil: true }
 
             anvil.position.set(position.x, position.y, position.z);
@@ -2330,6 +2327,7 @@
 
         function createBrickOven(position, size = 4) {
             const oven = new THREE.Group();
+            oven.userData = { isOven: true };
 
             // Brick Material
             const brickMaterial = new THREE.MeshStandardMaterial({ color: "#B22222" }); // Reddish-brown bricks
