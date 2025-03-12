@@ -2223,7 +2223,7 @@
 
             const loader = new THREE.GLTFLoader();
             loader.load('assets/blacksmith_anvil.glb', function (gltf) {
-                scene.add(gltf.asset);
+                scene.add(gltf.scene);
             }, undefined, function (error) {
                 console.error("Error loading model:", error);
             });
