@@ -2222,13 +2222,13 @@
             anvil.position.set(position.x, position.y, position.z);
 
             const loader = new THREE.GLTFLoader();
-            loader.load('assets/anvil_rusty.glb', function (gltf) {
-                scene.add(gltf.scene);
+            loader.load('assets/anvil.glb', function (gltf) {
+                anvil.add(gltf.scene);
             }, undefined, function (error) {
                 console.error("Error loading model:", error);
             });
 
-            // scene.add(anvil);
+            scene.add(anvil);
             return anvil;
         }
 
