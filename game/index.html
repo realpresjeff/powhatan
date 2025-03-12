@@ -2223,7 +2223,7 @@
 
             const loader = new THREE.GLTFLoader();
             loader.load('assets/anvil.glb', function (gltf) {
-                scene.add(gltf.scene);
+                scene.add(gltf.asset);
             }, undefined, function (error) {
                 console.error("Error loading model:", error);
             });
