@@ -2186,11 +2186,11 @@
 
         function createAnvil(position) {
             const anvil = new THREE.Group(new THREE.BoxGeometry(0, 2, 0));
-            
+
             anvil.position.set(position.x, position.y, position.z);
 
             const loader = new THREE.GLTFLoader();
-            loader.load('assets/anvil.glb', function (gltf) {
+            loader.load('assets/anvil_three.glb', function (gltf) {
                 anvil.add(gltf.scene);
             }, undefined, function (error) {
                 console.error("Error loading model:", error);
