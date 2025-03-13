@@ -1534,8 +1534,6 @@
             }
         }
 
-
-
         function updateInventoryItem(item, amount) {
             if (!inventory[item]) inventory[item] = 0; // Ensure item exists
             inventory[item] += amount;
@@ -1556,13 +1554,13 @@
 
             // List of smithable items
             const smithableItems = [
-                { name: "Arrow Heads", material: "iron bar", cost: 1 },
-                { name: "Platelegs", material: "iron bar", cost: 3 },
-                { name: "Chestplate", material: "iron bar", cost: 5 },
-                { name: "Boots", material: "iron bar", cost: 2 },
-                { name: "Gloves", material: "iron bar", cost: 1 },
-                { name: "Sword", material: "iron bar", cost: 3 },
-                { name: "Shield", material: "iron bar", cost: 4 }
+                { name: "Arrow Heads", material: "bar", cost: 1 },
+                { name: "Platelegs", material: "bar", cost: 3 },
+                { name: "Chestplate", material: "bar", cost: 5 },
+                { name: "Boots", material: "bar", cost: 2 },
+                { name: "Gloves", material: "bar", cost: 1 },
+                { name: "Sword", material: "bar", cost: 3 },
+                { name: "Shield", material: "bar", cost: 4 }
             ];
 
             // Generate item grid
@@ -1571,13 +1569,15 @@
                 itemElement.classList.add("smith-item");
                 itemElement.innerHTML = `
             <div class="smith-item-name">${item.name}</div>
-            <button onclick="smithItem('${item.name}', '${item.material}', ${item.cost})">Smith</button>
+            <button onclick="fletchItem('${item.name}', '${item.material}', ${item.cost})">Smith</button>
         `;
                 smithItemsContainer.appendChild(itemElement);
             });
 
             // Show the smithing UI
             smithUI.style.display = "block";
+
+            createPopup('Inventory');
         }
 
         // Toggles the smith UI
@@ -1588,7 +1588,6 @@
 
 
         function smelt() {
-
             let smeltingSpeed = Math.max(500 - (playerStats.agility / 1000) - (playerStats.craft / 500), 100); // Min speed: 100ms
             let smeltedItems = [];
 
