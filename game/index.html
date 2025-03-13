@@ -1359,7 +1359,7 @@
                 if (selectedObject.userData.attackable) {
                     menuOptions.unshift({
                         label: `Attack ${selectedObject.userData.name || "Enemy"}`,
-                        action: () => attack(selectedObject),
+                        action: () => playerAttack(deer, 1000),
                     });
                 }
 
@@ -2138,13 +2138,21 @@
 
 
         class Deer {
+            stats = {
+                hp: 0,
+                strength: 0,
+                defense: 0,
+                magic: 0,
+                ranged: 0
+            }
+
             constructor(position) {
-                this.hp = 20;
+                this.stats.hp = 20;
                 this.maxHp = 20;
-                this.strength = 30;
-                this.defense = 13;
-                this.magic = 2;
-                this.ranged = 0;
+                this.stats.strength = 30;
+                this.stats.defense = 13;
+                this.stats.magic = 2;
+                this.stats.ranged = 0;
                 this.alive = true;
                 this.position = position;
                 this.model = this.createModel();
@@ -2153,19 +2161,20 @@
 
             createModel() {
                 const deerGroup = new THREE.Mesh();
-                deerGroup.userData = { attackable: true }
+                const deerData = { attackable: true, name: "Deer", stats: this.stats }
+                deerGroup.userData = deerData
 
                 // Body (Simplified)
                 const bodyMaterial = new THREE.MeshStandardMaterial({ color: "brown" });
-                bodyMaterial.userData = { attackable: true }
+                bodyMaterial.userData = deerData
                 const body = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 1), bodyMaterial);
-                body.userData = { attackable: true }
+                body.userData = deerData
                 body.position.set(0, 1, 0);
                 deerGroup.add(body);
 
                 // Head
                 const head = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), bodyMaterial);
-                head.userData = { attackable: true }
+                head.userData = deerData
                 head.position.set(1.5, 1.5, 0);
                 deerGroup.add(head);
 
@@ -2183,23 +2192,60 @@
 
             takeDamage(damage) {
                 if (!this.alive) return;
-                this.hp -= damage;
-                if (this.hp <= 0) {
+                this.stats.hp -= damage;
+                if (this.stats.hp <= 0) {
                     this.die();
                 }
+            }
+
+            attack() {
+                
             }
 
             die() {
                 this.alive = false;
                 scene.remove(this.model);
+                this.drop();
                 setTimeout(() => this.respawn(), 5000); // Respawns after 50 seconds
             }
 
             respawn() {
-                this.hp = this.maxHp;
+                this.stats.hp = this.maxHp;
                 this.alive = true;
                 this.model = this.createModel();
                 scene.add(this.model);
+            }
+
+            drop() {
+                const drops = {
+                    "Coins": 100,
+                    "Bones": 1,
+                    "Deer Hide": 1,
+                    "Deer Meat": 1
+                };
+
+                Object.keys(drops).forEach(item => {
+                    this.spawnLoot(item, drops[item]);
+                });
+
+                console.log("Deer dropped loot on the ground!");
+            }
+
+            spawnLoot(itemName, quantity) {
+                const loot = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.5, 0.5, 0.5), // Small box to represent loot
+                    new THREE.MeshStandardMaterial({ color: "gold" }) // Default gold color
+                );
+
+                loot.position.set(this.position.x, 0.5, this.position.z); // Drops at the deer's location
+                loot.userData = { name: itemName, quantity: quantity, pickupable: true };
+
+                scene.add(loot);
+
+                // Allow player to collect loot on interaction
+                setTimeout(() => {
+                    loot.userData.pickupable = true;
+                }, 1000); // Loot becomes collectible after 1 second
             }
         }
 
