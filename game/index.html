@@ -470,7 +470,8 @@
             overflow-y: auto;
             padding: 10px;
             display: flex;
-            flex-direction: column-reverse; /* Show newest messages at the bottom */
+            flex-direction: column-reverse;
+            /* Show newest messages at the bottom */
             font-size: 14px;
         }
 
@@ -3354,27 +3355,48 @@
         const messagesDiv = document.getElementById("messages");
         const messageInput = document.getElementById("messageInput");
 
-        // // Receive messages from the server
-        // socket.on("message", (msg) => {
-        //     addMessage(msg);
+        const username = "kyte9934"; // Default username
+
+        // Receive messages from the server
+        // socket.on("message", ({ username, message }) => {
+        //     addMessage(username, message);
+        //     displayAboveCharacter(username, message); // Show above character
         // });
 
         // Send a message to the server
         function sendMessage() {
             const message = messageInput.value.trim();
             if (message) {
-                //socket.emit("message", message); // Send message
-                addMessage(message);
-                messageInput.value = ""; // Clear input
+                // socket.emit("message", { username, message });
+                addMessage(username, message);
+                messageInput.value = "";
             }
         }
 
-        // Add message to the chat
-        function addMessage(msg) {
+        // Add message to the chatbox
+        function addMessage(username, message) {
             const msgElement = document.createElement("div");
             msgElement.classList.add("message");
-            msgElement.innerText = msg;
-            messagesDiv.appendChild(msgElement); // Add message to the top
+            msgElement.innerHTML = `<span class="username">${username}:</span> ${message}`;
+            messagesDiv.prepend(msgElement);
+        }
+
+        // Show text above the character (mock function)
+        function displayAboveCharacter(username, message) {
+            const gameMessage = document.createElement("div");
+            gameMessage.classList.add("game-message");
+            gameMessage.innerHTML = `<span class="username">${username}:</span> ${message}`;
+
+            // Randomize position (for now, simulate character positioning)
+            gameMessage.style.left = Math.random() * window.innerWidth + "px";
+            gameMessage.style.top = Math.random() * window.innerHeight / 2 + "px";
+
+            document.body.appendChild(gameMessage);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                document.body.removeChild(gameMessage);
+            }, 3000);
         }
 
         // Send message on Enter key press
