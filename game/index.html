@@ -1499,43 +1499,39 @@
             function getInventoryItemByMaterial(material) {
                 let foundItem = 0; // Default to 0 if no match is found
 
-                inventory.forEach(item => {
-                    console.log(item);
+                inventory.map(item => {
                     if (item.name.toLowerCase().includes(material.toLowerCase())) {
-                        return foundItem = inventory[item]; // Store the first matching item quantity
+                        return foundItem = item; // Store the first matching item quantity
                     }
                 });
 
                 return foundItem;
             }
 
+            const inventoryItem = getInventoryItemByMaterial(material);
+            const secondaryItem = getInventoryItemByMaterial(secondary);
+
             // Check if player has enough primary material
-            if (getInventoryItemByMaterial(material).quantity < cost) {
-                console.log(`Not enough ${material} to fletch ${itemName}.`);
-                return;
+            if (inventoryItem && inventoryItem.quantity < cost) {
+                return console.log(`Not enough ${material} to fletch ${itemName}.`);
             }
 
             // If secondary material is required, check for it
-            if (secondary && getInventoryItemByMaterial(secondary).quantity < cost) {
-                console.log(`Not enough ${secondary} to fletch ${itemName}.`);
-                return;
+            else if (secondaryItem && secondary && secondaryItem.quantity < cost) {
+                return console.log(`Not enough ${secondary} to fletch ${itemName}.`);
             }
 
-            // Deduct materials
-            // updateInventoryItem(material, -cost);
-            removeFromInventory(getInventoryItemByMaterial(material), -cost)
-            if (secondary) {
-                // updateInventoryItem(secondary, -cost);
-                removeFromInventory(getInventoryItemByMaterial(secondary), -cost)
+            else if (inventoryItem) {
+                // Deduct materials
+                removeFromInventory(inventoryItem, cost)
+                if (secondary) {
+                    removeFromInventory(secondaryItem, cost)
+                }
+
+                // Add the fletched item
+                addToInventory({ name: `${inventoryItem.type} ${itemName}` })
+                updateInventoryUI();
             }
-
-            console.log(getInventoryItemByMaterial(material));
-
-            // Add the fletched item
-            addToInventory({ name: getInventoryItemByMaterial(material).type })
-
-            console.log(`Successfully fletched: ${itemName}`);
-            updateInventoryUI();
         }
 
 
@@ -1929,12 +1925,12 @@
                 // Add the log to the inventory
                 addToInventory({ name: `${log} Log`, fletch: true, type: log });
 
+                createPopup('Inventory');
+
                 // Drain agility after each mining action
                 drainAgility();
 
                 console.log(`Cut down a ${tree.name} tree and got a ${log} log!`);
-
-
 
                 // Increment experience after each ore mined (you can customize how much experience is gained)
                 playerStats.experience += 1;
