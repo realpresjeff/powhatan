@@ -3350,6 +3350,38 @@
             }
         }
 
+        // const socket = io("http://localhost:3000"); // Connect to the server
+        const messagesDiv = document.getElementById("messages");
+        const messageInput = document.getElementById("messageInput");
+
+        // // Receive messages from the server
+        // socket.on("message", (msg) => {
+        //     addMessage(msg);
+        // });
+
+        // Send a message to the server
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                //socket.emit("message", message); // Send message
+                addMessage(message);
+                messageInput.value = ""; // Clear input
+            }
+        }
+
+        // Add message to the chat
+        function addMessage(msg) {
+            const msgElement = document.createElement("div");
+            msgElement.classList.add("message");
+            msgElement.innerText = msg;
+            messagesDiv.appendChild(msgElement); // Add message to the top
+        }
+
+        // Send message on Enter key press
+        messageInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
