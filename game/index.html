@@ -444,6 +444,73 @@
             color: white;
             cursor: pointer;
         }
+
+        /* Fixed Chat Container */
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 50%;
+            height: 30%;
+            background: #2c2f33;
+            opacity: 0.5;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            border: 2px solid #23272a;
+        }
+
+        /* Messages */
+        .messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column-reverse; /* Show newest messages at the bottom */
+            font-size: 14px;
+        }
+
+        .message {
+            background: #424549;
+            padding: 5px 10px;
+            margin: 3px 0;
+            border-radius: 5px;
+            word-wrap: break-word;
+        }
+
+        /* Input Field */
+        .chat-input {
+            display: flex;
+            border-top: 2px solid #23272a;
+            background: #40444b;
+        }
+
+        .chat-input input {
+            flex: 1;
+            border: none;
+            padding: 8px;
+            background: #40444b;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input button {
+            background: #5865f2;
+            color: white;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .chat-input button:hover {
+            background: #4752c4;
+        }
     </style>
 </head>
 
@@ -583,6 +650,15 @@
     <div id="contextMenu" class="menu">
         <button onclick="doAction()">Cancel</button>
     </div>
+
+    <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
 
     <script>
         // Get elements
@@ -2199,7 +2275,7 @@
             }
 
             attack() {
-                
+
             }
 
             die() {
