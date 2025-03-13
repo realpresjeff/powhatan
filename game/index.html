@@ -1193,11 +1193,13 @@
         }
 
         function removeFromInventory(item, quantity = 1) {
+            console.log(inventory);
             let index = inventory.findIndex(i => i.name === item.name);
 
             if (index !== -1) {
-                if (inventory[index].quantity > quantity) {
-                    inventory[index].quantity -= quantity; // Reduce quantity
+                console.log(inventory[index])
+                if (inventory[index].quantity > 0 && inventory[index].quantity - quantity > 0) {
+                    inventory[index].quantity = inventory[index].quantity - quantity; // Reduce quantity
                 } else {
                     inventory.splice(index, 1); // Remove item if quantity reaches 0
                 }
@@ -2888,50 +2890,87 @@
             banking = false;
         }
 
+        // Getter for bank storage
+        function getBankStorage(itemName) {
+            return bankStorage[itemName] || null;
+        }
+
+        // Setter for bank storage (handles stacking properly)
+        function setBankStorage(itemName, quantity, withdraw = false) {
+            if (bankStorage[itemName]) {
+                if (withdraw) {
+                    bankStorage[itemName].quantity -= quantity;
+                } else {
+                    bankStorage[itemName].quantity += quantity;
+                }
+            } else {
+                bankStorage[itemName] = { name: itemName, quantity: quantity };
+            }
+        }
+
         // Deposits an item into the bank
-        function depositItem(item, quantity) {
-            console.log(item)
-            if (inventory[item].quantity < quantity) {
-                console.log(`Not enough ${item} to deposit.`);
+        function depositItem(quantity) {
+            console.log(5);
+            console.log(quantity);
+            if (!currentBankingItem) {
+                console.log(`Not enough ${currentBankingItem.name} to deposit.`);
                 return;
             }
 
-            inventory[item] -= quantity;
-            bankStorage[item] = (bankStorage[item] || 0) + quantity;
+            // Handle "all" case and ensure we don’t overdraw
+            if (quantity === "all" || quantity >= currentBankingItem.quantity) {
+                quantity = currentBankingItem.quantity;
+            }
 
-            if (inventory[item] <= 0) delete inventory[item]; // Remove if empty
+            // Remove from inventory first
+            removeFromInventory(currentBankingItem, quantity);
+
+            // Use setter to update bank storage
+            setBankStorage(currentBankingItem.name, quantity);
 
             updateBankDisplay();
-            updateInventoryDisplay();
+            updateInventoryUI();
         }
+
 
         // Withdraws an item from the bank
-        function withdrawItem(item, quantity) {
-            if (!bankStorage[item] || bankStorage[item] < quantity) {
-                console.log(`Not enough ${item} in the bank.`);
+        function withdrawItem(itemName, quantity) {
+            let bankedItem = getBankStorage(itemName);
+
+            if (!bankedItem) {
+                console.log(`Not enough ${itemName} in the bank.`);
                 return;
             }
 
-            bankStorage[item] -= quantity;
-            player.inventory[item] = (player.inventory[item] || 0) + quantity;
 
-            if (bankStorage[item] <= 0) delete bankStorage[item]; // Remove if empty
+            // Handle "all" case and ensure we don’t overdraw
+            if (quantity === "all" || quantity > bankedItem.quantity) {
+                quantity = bankedItem.quantity;
+            }
 
+            setBankStorage(itemName, quantity, true); // Update storage
+
+            // Add the item to the player's inventory
+            addToInventory({ ...bankedItem, quantity });
             updateBankDisplay();
-            updateInventoryDisplay();
+            updateInventoryUI();
         }
+
 
         // Updates the bank UI
         function updateBankDisplay() {
             let bankUI = document.getElementById("bankItems");
-            // bankUI.innerHTML = "";
+            bankUI.innerHTML = "";
+
+            console.log(bankStorage);
 
             for (let item in bankStorage) {
+                console.log(item);
                 let itemElement = document.createElement("div");
                 itemElement.className = "bank-item";
-                itemElement.innerHTML = `<img src="spell-icon.png"> ${item} x${bankStorage[item]}`;
+                itemElement.innerHTML = `<img src="spell-icon.png"> ${bankStorage[item].name} x${bankStorage[item].quantity}`;
 
-                itemElement.addEventListener("click", () => withdrawItem(item, bankStorage[item])); // Left-click withdraw all
+                itemElement.addEventListener("click", () => withdrawItem(item, bankStorage[item].quantity)); // Left-click withdraw all
                 itemElement.addEventListener("contextmenu", (e) => {
                     e.preventDefault();
                     openContextMenu(e, item, "withdraw");
@@ -2952,7 +2991,7 @@
                 itemElement.innerHTML = `<img src="spell-icon.png"> ${item} x${player.inventory[item]}`;
 
                 itemElement.addEventListen
-                
+
                 er("click", () => depositItem(item, player.inventory[item])); // Left-click deposit all
                 itemElement.addEventListener("contextmenu", (e) => {
                     e.preventDefault();
@@ -2964,23 +3003,33 @@
         }
 
         // Opens right-click menu for Deposit/Withdraw options
-        function openContextMenu(event, item) {
+        function openContextMenu(event, item, withdrawing = false) {
             let contextMenu = document.getElementById("context-menu");
             let contextMenuOptions = document.getElementById("context-menu-options");
+            currentBankingItem = item;
 
             console.log(item);
 
             // Clear previous options
 
             if (banking) {
-                // Banking mode - Show deposit options
-                contextMenu.innerHTML = `
-            <li onclick="depositItem("${JSON.stringify(item)}, 1")">Deposit-1</li>
-            <li onclick="depositItem("${JSON.stringify(item)}", 5)">Deposit-5</li>
-            <li onclick="depositItem('${JSON.stringify(item)}', 10)">Deposit-10</li>
-            <li onclick="promptCustomAmount('${JSON.stringify(item)}', 'deposit')">Deposit-X</li>
-            <li onclick="depositItem('${JSON.stringify(item)}', player.inventory['${item}'])">Deposit-All</li>
+                if (withdrawing) {
+                    // Banking mode - Show deposit options
+                    contextMenu.innerHTML = `
+            <li onclick="withdrawItem('${item}', 1)">Withdraw-1</li>
+            <li onclick="withdrawItem('${item}', 5)">Withdraw-5</li>
+            <li onclick="withdrawItem('${item}', 10)">Withdraw-10</li>
+            <li onclick="withdrawItem('${item}', 'all')">Withdraw-All</li>
         `;
+                } else {
+                    // Banking mode - Show deposit options
+                    contextMenu.innerHTML = `
+            <li onclick="depositItem(1)">Deposit-1</li>
+            <li onclick="depositItem(5)">Deposit-5</li>
+            <li onclick="depositItem(10)">Deposit-10</li>
+            <li onclick="depositItem('all')">Deposit-All</li>
+        `;
+                }
             } else {
                 // Normal mode - Show drop option
                 contextMenu.innerHTML = `
