@@ -1569,7 +1569,7 @@
                 itemElement.classList.add("smith-item");
                 itemElement.innerHTML = `
             <div class="smith-item-name">${item.name}</div>
-            <button onclick="fletchItem('${item.name}', '${item.material}', ${item.cost})">Smith</button>
+            <button onclick="fletchItem('${item.name}', '${item.material}', '${item.secondary || ""}', ${item.cost})">Smith</button>
         `;
                 smithItemsContainer.appendChild(itemElement);
             });
