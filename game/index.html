@@ -1139,6 +1139,15 @@
                 contextMenu.appendChild(fletchOption);
             }
 
+
+            if (item.flammable) {
+                const startFireOption = document.createElement("div");
+                startFireOption.textContent = `Start fire`;
+                startFireOption.className = "context-menu-item";
+                startFireOption.onclick = () => startFire(player.position, item, 1);
+                contextMenu.appendChild(startFireOption);
+            }
+
             // Drop option (always available)
             const dropOption = document.createElement("div");
             dropOption.textContent = `Drop ${item.name}`;
@@ -1190,6 +1199,12 @@
             document.removeEventListener("click", closeContextMenu);
         }
 
+        function startFire(position, selectedWood, cost) {
+            createOpenLogFire({ x: position.x, y: position.y, z: position.z });
+            removeFromInventory(selectedWood, cost);
+            updateInventoryUI()
+            hidePopup();
+        }
 
         function dropItem() {
             const contextMenu = document.getElementById('context-menu');
@@ -1419,7 +1434,7 @@
                     });
                 }
 
-                // If object has 'isFire' property
+                // If object has 'fletch' property
                 if (selectedObject.userData.fletch) {
                     menuOptions.unshift({
                         label: `Fletch ${selectedObject.userData.name}`,
@@ -1428,7 +1443,6 @@
                         }
                     });
                 }
-
 
                 // If object has a custom button label (dynamic)
                 if (selectedObject.userData.customActionLabel && selectedObject.userData.customAction) {
@@ -1922,7 +1936,7 @@
                 const log = tree.name; // Use the tree's name (type) as the log's name
 
                 // Add the log to the inventory
-                addToInventory({ name: `${log} Log`, fletch: true, type: log });
+                addToInventory({ name: `${log} Log`, fletch: true, type: log, flammable: true });
 
                 createPopup('Inventory');
 
