@@ -558,6 +558,21 @@
         </div>
     </div>
 
+    <div class="popup-overlay-clear" id="fletchUI">
+        <div id="fletchUI" class="popup">
+            <div id="fletch-items"></div>
+            <button onclick="toggleFletchUI()" class="close-button">✖</button>
+        </div>
+    </div>
+
+    <div class="popup-overlay-clear" id="smithUI">
+        <div id="smithUI" class="popup">
+            <div id="smithItems"></div>
+            <button onclick="toggleSmithUI()" class="close-button">✖</button>
+        </div>
+    </div>
+
+
     <!-- Context Menu for item actions (hidden initially) -->
     <div id="context-menu" class="context-menu" style="display: none;">
         <ul>
@@ -1116,12 +1131,22 @@
                 openContextMenu(event, item);
             }
 
+            if (item.fletch) {
+                const fletchOption = document.createElement("div");
+                fletchOption.textContent = `Fletch ${item.name}`;
+                fletchOption.className = "context-menu-item";
+                fletchOption.onclick = () => fletch(item);
+                contextMenu.appendChild(fletchOption);
+            }
+
             // Drop option (always available)
             const dropOption = document.createElement("div");
             dropOption.textContent = `Drop ${item.name}`;
             dropOption.className = "context-menu-item";
             dropOption.onclick = () => dropItem(item);
             contextMenu.appendChild(dropOption);
+
+
 
             // Position and show menu
             contextMenu.style.display = "block";
@@ -1377,7 +1402,7 @@
                 // If object has 'isFire' property
                 if (selectedObject.userData.isFire || selectedObject.userData.isOven || selectedObject.userData.name === "Object_3") {
                     menuOptions.unshift({
-                        label: `Cook ${selectedObject.userData.name || "Item"}`,
+                        label: `Cook`,
                         action: () => {
                             cook(selectedObject.userData);
                         }
@@ -1387,12 +1412,23 @@
                 // If object has 'isFire' property
                 if (selectedObject.userData.isAnvil || selectedObject.userData.name === "Object_2") {
                     menuOptions.unshift({
-                        label: `Smith ${selectedObject.userData.name || "Item"}`,
+                        label: `Smith`,
                         action: () => {
                             smith(selectedObject.userData);
                         }
                     });
                 }
+
+                // If object has 'isFire' property
+                if (selectedObject.userData.fletch) {
+                    menuOptions.unshift({
+                        label: `Fletch ${selectedObject.userData.name}`,
+                        action: () => {
+                            fletch(selectedObject.userData);
+                        }
+                    });
+                }
+
 
                 // If object has a custom button label (dynamic)
                 if (selectedObject.userData.customActionLabel && selectedObject.userData.customAction) {
@@ -1422,6 +1458,138 @@
                 showContextMenu(event.clientX, event.clientY, menuOptions);
             }
         });
+
+        // Opens the Fletching UI
+        function fletch() {
+            const fletchUI = document.getElementById("fletchUI");
+            const fletchItemsContainer = document.getElementById("fletch-items");
+            fletchItemsContainer.innerHTML = ""; // Clear previous items
+
+            // List of fletchable items
+            const fletchableItems = [
+                { name: "Shortbow", material: "log", cost: 1 },
+                { name: "Longbow", material: "log", cost: 2 },
+                { name: "Arrow Shafts", material: "log", cost: 1 },
+                { name: "Arrows", material: "arrow shafts", secondary: "arrow heads", cost: 1 },
+                { name: "Crossbow", material: "log", secondary: "iron bar", cost: 1 }
+            ];
+
+            // Generate item grid
+            fletchableItems.forEach(item => {
+                const itemElement = document.createElement("div");
+                itemElement.classList.add("fletch-item");
+                itemElement.innerHTML = `
+            <div class="fletch-item-name">${item.name}</div>
+            <button onclick="fletchItem('${item.name}', '${item.material}', '${item.secondary || ""}', ${item.cost})">Fletch</button>
+        `;
+                fletchItemsContainer.appendChild(itemElement);
+            });
+
+            // Show the fletching UI
+            fletchUI.style.display = "block";
+        }
+
+        // Toggles the Fletching UI
+        function toggleFletchUI() {
+            const fletchUI = document.getElementById("fletchUI");
+            fletchUI.style.display = (fletchUI.style.display === "block") ? "none" : "block";
+        }
+
+        function fletchItem(itemName, material, secondary, cost) {
+            function getInventoryItemByMaterial(material) {
+                let foundItem = 0; // Default to 0 if no match is found
+
+                inventory.forEach(item => {
+                    console.log(item);
+                    if (item.name.toLowerCase().includes(material.toLowerCase())) {
+                        return foundItem = inventory[item]; // Store the first matching item quantity
+                    }
+                });
+
+                return foundItem;
+            }
+
+            // Check if player has enough primary material
+            if (getInventoryItemByMaterial(material).quantity < cost) {
+                console.log(`Not enough ${material} to fletch ${itemName}.`);
+                return;
+            }
+
+            // If secondary material is required, check for it
+            if (secondary && getInventoryItemByMaterial(secondary).quantity < cost) {
+                console.log(`Not enough ${secondary} to fletch ${itemName}.`);
+                return;
+            }
+
+            // Deduct materials
+            // updateInventoryItem(material, -cost);
+            removeFromInventory(getInventoryItemByMaterial(material), -cost)
+            if (secondary) {
+                // updateInventoryItem(secondary, -cost);
+                removeFromInventory(getInventoryItemByMaterial(secondary), -cost)
+            }
+
+            console.log(getInventoryItemByMaterial(material));
+
+            // Add the fletched item
+            addToInventory({ name: getInventoryItemByMaterial(material).type })
+
+            console.log(`Successfully fletched: ${itemName}`);
+            updateInventoryUI();
+        }
+
+
+
+        function updateInventoryItem(item, amount) {
+            if (!inventory[item]) inventory[item] = 0; // Ensure item exists
+            inventory[item] += amount;
+
+            if (inventory[item] <= 0) {
+                delete inventory[item]; // Remove from inventory if quantity drops to 0
+            }
+
+            updateInventoryUI();
+        }
+
+
+        // Opens the Smithing UI
+        function smith() {
+            const smithUI = document.getElementById("smithUI");
+            const smithItemsContainer = document.getElementById("smithItems");
+            smithItemsContainer.innerHTML = ""; // Clear previous items
+
+            // List of smithable items
+            const smithableItems = [
+                { name: "Arrow Heads", material: "iron bar", cost: 1 },
+                { name: "Platelegs", material: "iron bar", cost: 3 },
+                { name: "Chestplate", material: "iron bar", cost: 5 },
+                { name: "Boots", material: "iron bar", cost: 2 },
+                { name: "Gloves", material: "iron bar", cost: 1 },
+                { name: "Sword", material: "iron bar", cost: 3 },
+                { name: "Shield", material: "iron bar", cost: 4 }
+            ];
+
+            // Generate item grid
+            smithableItems.forEach(item => {
+                const itemElement = document.createElement("div");
+                itemElement.classList.add("smith-item");
+                itemElement.innerHTML = `
+            <div class="smith-item-name">${item.name}</div>
+            <button onclick="smithItem('${item.name}', '${item.material}', ${item.cost})">Smith</button>
+        `;
+                smithItemsContainer.appendChild(itemElement);
+            });
+
+            // Show the smithing UI
+            smithUI.style.display = "block";
+        }
+
+        // Toggles the smith UI
+        function toggleSmithUI() {
+            const smithUI = document.getElementById("smithUI");
+            smithUI.style.display = (smithUI.style.display === "block") ? "none" : "block";
+        }
+
 
         function smelt() {
 
@@ -1759,7 +1927,7 @@
                 const log = tree.name; // Use the tree's name (type) as the log's name
 
                 // Add the log to the inventory
-                addToInventory({ name: `${log} Log`, equipable: false });
+                addToInventory({ name: `${log} Log`, fletch: true, type: log });
 
                 // Drain agility after each mining action
                 drainAgility();
@@ -2708,7 +2876,7 @@
                     playerStats.agility = playerStats.maxAgility;
                 }
 
-                console.log(`Agility Regeneration: ${playerStats.agility}`);
+                // console.log(`Agility Regeneration: ${playerStats.agility}`);
             }
         }
 
