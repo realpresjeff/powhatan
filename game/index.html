@@ -1610,7 +1610,7 @@
             fletchUI.style.display = (fletchUI.style.display === "block") ? "none" : "block";
         }
 
-        function fletchItem(itemName, material, secondary, cost) {
+        function fletchItem(itemName, material, secondary, cost, type) {
             function getInventoryItemByMaterial(material) {
                 let foundItem = 0; // Default to 0 if no match is found
 
@@ -1644,7 +1644,7 @@
                 }
 
                 // Add the fletched item
-                addToInventory({ name: `${inventoryItem.type} ${itemName}`, type: inventoryItem.type })
+                addToInventory({ name: `${type && type || ""} ${inventoryItem.type} ${itemName}`, type: inventoryItem.type })
                 updateInventoryUI();
             }
         }
@@ -1715,7 +1715,7 @@
                     setTimeout(() => {
                         if (inventory[index].quantity > 0) {
                             removeFromInventory(item, 1);
-                            addToInventory({ ...item, name: barType, quantity: 1 });
+                            addToInventory({ ...item, name: barType, quantity: 1, type: barType });
 
                             smeltedItems.push({ ...item, name: barType });
                             console.log(`Smelted 1 ${item.name} → ${barType}`);
