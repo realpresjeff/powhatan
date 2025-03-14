@@ -2969,6 +2969,182 @@
             experience: 0,  // Current experience
         };
 
+        class Player {
+            constructor() {
+                // Initialize all skills with currLevel and experience.
+                this.skills = {
+                    craft: { currLevel: 50, experience: 0, maxLevel: 99 },
+                    agility: { currLevel: 10, experience: 0, maxLevel: 99 },
+                    strength: { currLevel: 8, experience: 0, maxLevel: 99 },
+                };
+
+                // Regeneration logic
+                this.regenerationRates = {
+                    agility: 0.2,
+                    strength: 0.2,
+                    craft: 0.2
+                };
+
+                this.skills = {
+                    craft: { level: 50, currLevel: 50, experience: 0, maxLevel: 99 },
+                    agility: { level: 10, currLevel: 10, experience: 0, maxLevel: 99 },
+                    strength: { level: 10, currLevel: 8, experience: 0, maxLevel: 99 },
+                };
+
+                this.regenerationIntervals = {}; // Store intervals for each skill
+
+                this.playerIsMining = false; // Track if the player is mining
+            }
+
+            // Function to calculate the level based on experience
+            calculateLevel(experience) {
+                return Math.min(Math.floor(experience / 10), 99);  // Example formula: experience / 10 to determine level (up to max of 99)
+            }
+
+            // Function to update the experience for a stat
+            updateExperience(skill, experienceGained) {
+                if (this.skills[skill]) {
+                    let skillData = this.skills[skill];
+                    skillData.experience += experienceGained;
+
+                    // Update the level based on new experience
+                    skillData.currLevel = this.calculateLevel(skillData.experience);
+                    console.log(`${skill} experience updated. New level: ${skillData.currLevel}`);
+                } else {
+                    console.error("Skill not found!");
+                }
+            }
+
+            // Method to get the max stat level
+            getMaxStat(skill) {
+                if (this.skills[skill]) {
+                    return this.skills[skill].maxLevel;
+                } else {
+                    console.error("Skill not found!");
+                    return 0;
+                }
+            }
+
+            // Method to get the current usable stat level
+            getCurrentStat(skill) {
+                if (this.skills[skill]) {
+                    let skillData = this.skills[skill];
+                    return Math.min(skillData.currLevel, skillData.maxLevel);
+                } else {
+                    console.error("Skill not found!");
+                    return 0;
+                }
+            }
+
+            // Generic function to drain any stat
+            drainStat(skill, amount) {
+                if (this.skills[skill]) {
+                    let skillData = this.skills[skill];
+                    skillData.currLevel = Math.max(skillData.currLevel - amount, 0);  // Ensure the stat doesn't drop below 0
+                    console.log(`${skill} drained by ${amount}. New ${skill} level: ${skillData.currLevel}`);
+                } else {
+                    console.error("Skill not found!");
+                }
+            }
+
+            // Function to regenerate any stat back to max over time
+            regenerateStat(skill) {
+                if (this.skills[skill] && !this.playerIsMining) {
+                    let skillData = this.skills[skill];
+                    const regenerationRate = this.regenerationRates[skill] || 0.2; // Use the defined regeneration rate for each skill
+
+                    // Ensure currLevel doesn't exceed level
+                    if (skillData.currLevel > skillData.level) {
+                        skillData.currLevel = skillData.level;
+                    }
+
+                    // Only regenerate if the current level is less than the max level
+                    if (skillData.currLevel < skillData.maxLevel && skillData.currLevel < skillData.level) {
+                        // Calculate the regeneration amount based on the max level
+                        let regenerationAmount = (skillData.maxLevel - skillData.currLevel) * regenerationRate;
+
+                        // Apply the regeneration
+                        skillData.currLevel += regenerationAmount;
+
+                        // Ensure the stat doesn't exceed the max level or level
+                        if (skillData.currLevel >= skillData.maxLevel) {
+                            skillData.currLevel = skillData.maxLevel; // Clamp to max level if it reaches or exceeds max
+                            console.log(`${skill} reached max level. Regeneration stopped.`);
+                        } else if (skillData.currLevel >= skillData.level) {
+                            skillData.currLevel = skillData.level; // Clamp to level if it exceeds level
+                            console.log(`${skill} reached level limit. Regeneration stopped.`);
+                            this.stopRegeneration(skill); // Stop the interval when currLevel equals level
+                        } else {
+                            console.log(`${skill} regenerated. New ${skill} level: ${skillData.currLevel}`);
+                        }
+                    } else {
+                        console.log(`${skill} is already at max level or at its level limit. No regeneration needed.`);
+                    }
+                } else {
+                    console.error("Skill not found or player is mining!");
+                }
+            }
+
+            // Function to start regeneration interval for a skill
+            startRegeneration(skill) {
+                // Ensure we are not already regenerating the skill
+                if (!this.regenerationIntervals[skill]) {
+                    this.regenerationIntervals[skill] = setInterval(() => this.regenerateStat(skill), 1000); // Regenerate every second
+                    console.log(`Started regeneration for ${skill}`);
+                }
+            }
+
+            // Function to stop regeneration interval for a skill
+            stopRegeneration(skill) {
+                if (this.regenerationIntervals[skill]) {
+                    clearInterval(this.regenerationIntervals[skill]);
+                    delete this.regenerationIntervals[skill]; // Clean up the interval reference
+                    console.log(`Stopped regeneration for ${skill}`);
+                }
+            }
+
+            // Getter and setter for currLevel and level (to maintain consistency)
+            setCurrLevel(skill, value) {
+                const skillData = this.skills[skill];
+                if (value > skillData.level) {
+                    skillData.currLevel = skillData.level;
+                } else {
+                    skillData.currLevel = value;
+                }
+            }
+
+            setLevel(skill, value) {
+                const skillData = this.skills[skill];
+                if (value < skillData.currLevel) {
+                    skillData.level = skillData.currLevel;
+                } else {
+                    skillData.level = value;
+                }
+            }
+
+
+            // Reset experience for a skill
+            resetExperience(skill) {
+                if (this.skills[skill]) {
+                    this.skills[skill].experience = 0;
+                    this.skills[skill].currLevel = 0;
+                    console.log(`${skill} experience reset. currLevel: 0`);
+                } else {
+                    console.error("Skill not found!");
+                }
+            }
+
+            // Display all player stats
+            displayStats() {
+                for (let skill in this.skills) {
+                    let skillData = this.skills[skill];
+                    console.log(`${skill}: currLevel ${skillData.currLevel}/${skillData.maxLevel}, Experience: ${skillData.experience}`);
+                }
+            }
+        }
+
+        const playerObj = new Player();
+
         // Helper function to calculate mining speed
         function calculateMiningSpeed() {
             const baseSpeed = 1000;  // Base speed of 1 second per mining action
@@ -3075,6 +3251,7 @@
         }
 
         function startStatRegeneration(func, interval = 1000) {
+            console.log('calt!')
             setInterval(func, interval);
         }
 
@@ -3131,19 +3308,22 @@
             //     return;
             // }
 
+            console.log(playerObj);
+
             const virginiaFish = ["Largemouth Bass", "Bluegill", "Brook Trout", "Channel Catfish", "Smallmouth Bass", "American Shad", "Longnose Gar"];
 
             const baseRate = 5; // Base seconds per catch
-            const agilityFactor = Math.max(1, 10 - Math.floor(playerStats.agility / 20)); // Faster with higher agility
-            const strengthFactor = Math.max(1, 10 - Math.floor(playerStats.strength / 20)); // Faster with higher strength
+            const agilityFactor = Math.max(1, 10 - Math.floor(playerObj.skills.agility.currLevel / 20)); // Faster with higher agility
+            const strengthFactor = Math.max(1, 10 - Math.floor(playerObj.skills.strength.currLevel / 20)); // Faster with higher strength
             const fishingSpeed = Math.max(1, baseRate - Math.floor((agilityFactor + strengthFactor) / 2)); // Balanced rate
             addMessage('Game', `Casting line...`);
 
             let fishingInterval = setInterval(() => {
-                if (playerStats.agility <= 0 || playerStats.strength <= 0) {
+                if (playerObj.skills.agility.currLevel <= 0 || playerObj.skills.strength.currLevel <= 0) {
                     addMessage('Game', "You're too exhausted to keep fishing. Rest to recover.");
                     clearInterval(fishingInterval);
-                    startAgilityRegeneration();
+                    playerObj.startRegeneration("agility");
+                    playerObj.startRegeneration("strength");
                     return;
                 }
 
@@ -3151,10 +3331,13 @@
                 addToInventory({ name: caughtFish, quantity: 1, pickupable: true, cookable: true, raw: true });
                 addMessage('Game', `You caught a ${caughtFish}!`);
 
-                drainAgility();
+                playerObj.drainStat("agility", 3);
+                playerObj.drainStat("strength", 3);
 
+
+                // drainAgility();
                 // drain strength
-                playerStats.strength = Math.max(0, playerStats.strength - 2);
+                // playerStats.strength = Math.max(0, playerStats.strength - 2);
 
             }, fishingSpeed * 1000);
         }
