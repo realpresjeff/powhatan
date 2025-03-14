@@ -3369,6 +3369,7 @@
             if (message) {
                 // socket.emit("message", { username, message });
                 addMessage(username, message);
+                displayAboveCharacter(username, message, player);
                 messageInput.value = "";
             }
         }
@@ -3381,23 +3382,77 @@
             messagesDiv.prepend(msgElement);
         }
 
-        // Show text above the character (mock function)
-        function displayAboveCharacter(username, message) {
-            const gameMessage = document.createElement("div");
-            gameMessage.classList.add("game-message");
-            gameMessage.innerHTML = `<span class="username">${username}:</span> ${message}`;
+        function displayAboveCharacter(username, message, character) {
+            console.log(character);
+            if (!character) return console.warn("Character model not found");
 
-            // Randomize position (for now, simulate character positioning)
-            gameMessage.style.left = Math.random() * window.innerWidth + "px";
-            gameMessage.style.top = Math.random() * window.innerHeight / 2 + "px";
+            console.log("Displaying text above character"); // Debugging
 
-            document.body.appendChild(gameMessage);
+            // Create a canvas for the text
+            const canvas = document.createElement("canvas");
+            canvas.backgroundColor = "transparent";
+            const ctx = canvas.getContext("2d");
+
+            const width = 256, height = 64;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Style the text
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = "white";
+            ctx.font = "24px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(`${username}: ${message}`, width / 2, height / 2);
+
+            // Convert canvas to a Three.js texture
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+
+            const textMaterial = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true
+            });
+
+            const textSprite = new THREE.Sprite(textMaterial);
+            textSprite.scale.set(10, 5, 5); // Adjust size for visibility
+
+            // Position the text slightly above the character
+            textSprite.position.set(character.position.x, 2.5, character.position.y);
+
+            // Ensure it renders on top of other objects
+            textSprite.renderOrder = 999;
+            textSprite.material.depthTest = false;
+
+            // Attach to the character model
+            scene.add(textSprite);
 
             // Remove after 3 seconds
             setTimeout(() => {
-                document.body.removeChild(gameMessage);
-            }, 3000);
+                scene.remove(textSprite);
+            }, 2000);
         }
+
+
+        function createTextCanvas(text) {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = 256;
+            canvas.height = 128;
+
+            // ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "24px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+            return canvas;
+        }
+
 
         // Send message on Enter key press
         messageInput.addEventListener("keypress", (e) => {
