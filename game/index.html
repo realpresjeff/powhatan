@@ -954,53 +954,78 @@
 
         document.getElementById("spells").addEventListener("click", toggleSpellbook);
 
+        let activeSpell = null;
         const spellList = document.getElementById("spellList");
+
         spells.forEach(spell => {
+            console.log(spell);
+
+            // Create list item container
             const listItemContainer = document.createElement("li");
-            listItemContainer.className = "spell active"
+            listItemContainer.className = "spell";
             listItemContainer.setAttribute("data-name", spell.name);
+
+            // Create spell item container
             const spellItem = document.createElement("div");
             listItemContainer.appendChild(spellItem);
+
+            // Create spell icon
             const icon = document.createElement("img");
             icon.src = "./assets/default_spell_icon.png";
             icon.alt = spell.name;
             spellItem.className = "default-icon";
             spellItem.appendChild(icon);
+
+            // Click event to select a spell
             spellItem.addEventListener("click", () => {
-                spellItem.classList.toggle("active");
+                // Remove 'active' class from all spell items
+                document.querySelectorAll(".spell").forEach(item => {
+                    item.classList.remove("active");
+                });
+
+                // Set the selected spell as active
+                activeSpell = spell;
+                listItemContainer.classList.add("active");
+
+                addMessage("Game", `Selected spell: ${spell.name}`);
             });
+
             spellList.appendChild(listItemContainer);
         });
+
 
         // Get elements
         const spellbookOverlay = document.getElementById("spellbookOverlay");
         const closeSpellbookButton = document.getElementById("close-spellbook");
 
+
         // Function to Load Spells
-        function loadSpells() {
-            spellList.innerHTML = ""; // Clear existing list
+        // function loadSpells() {
+        //     spellList.innerHTML = ""; // Clear existing list
 
-            spells.forEach(spell => {
-                const listItemContainer = document.createElement("li");
-                listItemContainer.className = "spell";
-                listItemContainer.setAttribute("data-name", spell.name);
+        //     spells.forEach(spell => {
+        //         const listItemContainer = document.createElement("li");
+        //         listItemContainer.className = "spell";
+        //         listItemContainer.setAttribute("data-name", spell.name);
 
-                const spellItem = document.createElement("div");
-                spellItem.className = "spell-icon";
+        //         const spellItem = document.createElement("div");
+        //         spellItem.className = "spell-icon";
 
-                const icon = document.createElement("img");
-                icon.src = spell.icon || "./assets/default_spell_icon.png";
-                icon.alt = spell.name;
+        //         const icon = document.createElement("img");
+        //         icon.src = spell.icon || "./assets/default_spell_icon.png";
+        //         icon.alt = spell.name;
 
-                spellItem.appendChild(icon);
-                listItemContainer.appendChild(spellItem);
-                spellList.appendChild(listItemContainer);
+        //         spellItem.appendChild(icon);
+        //         listItemContainer.appendChild(spellItem);
+        //         spellList.appendChild(listItemContainer);
 
-                spellItem.addEventListener("click", () => {
-                    listItemContainer.classList.toggle("active");
-                });
-            });
-        }
+        //         spellItem.addEventListener("click", () => {
+        //             activeSpell = spell;
+        //             listItemContainer.classList.toggle("active");
+        //             console.log(activeSpell)
+        //         });
+        //     });
+        // }
 
 
         // Scene setup
@@ -1994,7 +2019,7 @@
                 if (playerObj.skills.agility.currLevel < cost) {
                     clearInterval(cuttingInterval);
                     addMessage("Game", "You have run out of agility and can no longer cut.");
-                    if (playerObj.skills.agility.currLevel  < cost  || playerObj.skills.strength.currLevel < cost) {
+                    if (playerObj.skills.agility.currLevel < cost || playerObj.skills.strength.currLevel < cost) {
                         addMessage("Game", "You have run out of strength and can no longer cut.");
                         playerObj.regenerateStat('agility'); // Start the agility regeneration process
                         playerObj.regenerateStat('strength');
