@@ -3096,6 +3096,8 @@
                 this.combatMode = "attack"; // Default: Attack Mode
 
                 this.equippedItems = { leftHand: null, rightHand: null };
+
+                this.setCombatMode("attack");
             }
 
             toggleCombatMode(mode) {
@@ -3121,12 +3123,12 @@
             setCombatMode(mode) {
                 if (mode === "attack") {
                     this.combatMode = "attack";
-                    this.skills.strength.level += 5;
-                    this.skills.defense.level -= 2;
+                    this.skills.strength.level = this.defaultSkillsState.strength.level + 5;
+                    this.skills.defense.level = this.defaultSkillsState.defense.level - 2;
                 } else if (mode === "defend") {
                     this.skills.combatMode = "defend";
-                    this.skills.defense.level += 5;
-                    this.skills.strength.level -= 2;
+                    this.skills.defense.level = this.defaultSkillsState.strength.level + 5;
+                    this.skills.strength.level = this.defaultSkillsState.defense.level - 2;
                 }
                 this.displayStats();
                 console.log(`Combat mode set to: ${this.combatMode}`);
