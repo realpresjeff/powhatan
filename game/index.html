@@ -1651,6 +1651,8 @@
             <button onclick="fletchItem('${item.name}', '${item.material}', '${item.secondary || ""}', ${item.cost})">Smith</button>
         `;
                 smithItemsContainer.appendChild(itemElement);
+
+                playerObj.updateExperience("craft", 10);
             });
 
             // Show the smithing UI
@@ -1681,6 +1683,7 @@
 
                             smeltedItems.push({ ...item, name: barType });
                             console.log(`Smelted 1 ${item.name} → ${barType}`);
+                            playerObj.updateExperience("craft", 10);
                         }
                     }, smeltingSpeed * index); // Delay increases per item
                 }
@@ -2975,9 +2978,9 @@
                 };
 
                 this.skills = {
-                    craft: { level: 50, currLevel: 50, experience: 0, maxLevel: 99 },
-                    agility: { level: 10, currLevel: 10, experience: 0, maxLevel: 99 },
-                    strength: { level: 10, currLevel: 8, experience: 0, maxLevel: 99 },
+                    craft: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    agility: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    strength: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
                 };
 
                 this.regenerationIntervals = {}; // Store intervals for each skill
@@ -3076,6 +3079,8 @@
                 } else {
                     console.error("Skill not found or player is mining!");
                 }
+
+                this.displayStats();
             }
 
             // Function to start regeneration interval for a skill
@@ -3124,14 +3129,6 @@
                     console.log(`${skill} experience reset. currLevel: 0`);
                 } else {
                     console.error("Skill not found!");
-                }
-            }
-
-            // Display all player stats
-            displayStats() {
-                for (let skill in this.skills) {
-                    let skillData = this.skills[skill];
-                    console.log(`${skill}: currLevel ${skillData.currLevel}/${skillData.maxLevel}, Experience: ${skillData.experience}`);
                 }
             }
 
@@ -3377,13 +3374,16 @@
             let miningInterval = setInterval(() => {
                 // Stop mining if agility is 0 or max experience is reached
                 if (playerObj.skills.agility.currLevel === 0) {
+                    addMessage("Game", "You have run out of agility and can no longer mine.");
                     clearInterval(miningInterval);
-                    if (playerObj.skills.agility.currLevel === 0) {
-                        console.log("You have run out of agility and can no longer mine.");
-                        startAgilityRegeneration(); // Start the agility regeneration process
+                    playerObj.startRegeneration('agility');
+
+                    if (playerObj.skills.strength.currLevel === 0) {
+                        addMessage("Game", "You have run out of strength and can no longer mine.");
+                        playerObj.startRegeneration('strength');
                     }
                     if (hasMaxExperience()) {
-                        console.log("You have reached max experience!");
+                        addMessage("Game", "You have reached max experience!");
                     }
                     return;
                 }
@@ -3391,16 +3391,15 @@
                 // Simulate mining
                 addToInventory({ name: mine.type });
 
-                console.log(`Mined a ${mine.type}!`);
+                addMessage("Game", `Mined a ${mine.type}!`);
 
                 // Drain agility after each mining action
                 playerObj.drainStat("agility", 7);
                 playerObj.drainStat("strength", 4);
 
                 // Increment experience after each ore mined (you can customize how much experience is gained)
-                playerStats.experience += 1;
-
-                console.log(`Experience: ${playerStats.experience}, Agility: ${playerStats.agility}`);
+                playerObj.updateExperience("strength", 4);
+                playerObj.updateExperience("agility", 7);
             }, calculateMiningSpeed()); // Uses calculated mining speed based on player stats
         }
 
