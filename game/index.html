@@ -2594,15 +2594,16 @@
 
         function createOpenLogFire(position) {
             const fireGroup = new THREE.Mesh();
-            fireGroup.userData = { isFire: true }
+            const data = { isFire: true, name: "Log Fire" }
+            fireGroup.userData = data
 
             // Create logs
             const logMaterial = new THREE.MeshStandardMaterial({ color: "#8B4513" });
-            logMaterial.userData = { isFire: true }
+            logMaterial.userData = data
             for (let i = 0; i < 5; i++) {
                 const logGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 12);
                 const log = new THREE.Mesh(logGeometry, logMaterial);
-                log.userData = { isFire: true }
+                log.userData = data
                 log.rotation.z = Math.random() * Math.PI / 2;
                 log.rotation.y = Math.random() * Math.PI;
                 log.position.set(
@@ -3285,11 +3286,11 @@
             let cookedItems = [];
             let burntItems = [];
             let craftExpDrain = 500; // Craft XP drains per cook attempt
-            let baseSuccessRate = Math.min(95, Math.max(30, playerStats.craft / 1000000)); // 30% min, 95% max
+            let baseSuccessRate = Math.min(95, Math.max(30, playerObj.skills.craft / 1000000)); // 30% min, 95% max
 
             inventory.forEach(item => {
                 if (item.raw && item.cookable) {
-                    let successRate = Math.max(10, baseSuccessRate - (5000000 / (playerStats.craft + 1))); // XP drain affects success
+                    let successRate = Math.max(10, baseSuccessRate - (5000000 / (playerObj.skills.craft + 1))); // XP drain affects success
                     let success = Math.random() * 100 < successRate;
 
                     let cookedItem = {
@@ -3304,29 +3305,30 @@
 
                     if (success) {
                         cookedItems.push(cookedItem.name);
+                        playerObj.updateExperience("craft", 10);
                     } else {
                         burntItems.push(cookedItem.name);
+                        playerObj.updateExperience("craft", 1);
                     }
-
-                    playerStats.craft = Math.max(0, playerStats.craft - craftExpDrain); // Drain XP, can't go negative
                 }
             });
 
             if (cookedItems.length > 0 || burntItems.length > 0) {
-                console.log(`Using ${cookingMethod}, you cooked: ${cookedItems.join(", ")}`);
-                console.log(`Burnt items: ${burntItems.join(", ")}`);
+                addMessage('Game', `Using ${cookingMethod.name}, you cooked: ${cookedItems.join(", ")}`);
+                addMessage('Game', `Burnt items: ${burntItems.join(", ")}`);
+                console.log
             } else {
-                console.log("You have nothing raw to cook.");
+                addMessage('Game', "You have nothing raw to cook.");
             }
         }
 
         function fish() {
-            console.log(playerStats);
-            // if (playerStats.agility <= 1 || playerStats.strength <= 1) {
-            //     addMessage('Game', "You're too exhausted to keep fishing. Rest to recover.");
-            //     startAgilityRegeneration();
-            //     return;
-            // }
+            if (playerObj.skills.agility <= 1 || playerObj.skills.strength <= 1) {
+                addMessage('Game', "You're too exhausted to keep fishing. Rest to recover.");
+                playerObj.startRegeneration("agility");
+                playerObj.startRegeneration("strength");
+                return;
+            }
 
             console.log(playerObj);
 
@@ -3374,9 +3376,9 @@
             // Start mining interval
             let miningInterval = setInterval(() => {
                 // Stop mining if agility is 0 or max experience is reached
-                if (playerStats.agility === 0 || hasMaxExperience()) {
+                if (playerObj.skills.agility.currLevel === 0) {
                     clearInterval(miningInterval);
-                    if (playerStats.agility === 0) {
+                    if (playerObj.skills.agility.currLevel === 0) {
                         console.log("You have run out of agility and can no longer mine.");
                         startAgilityRegeneration(); // Start the agility regeneration process
                     }
@@ -3392,7 +3394,8 @@
                 console.log(`Mined a ${mine.type}!`);
 
                 // Drain agility after each mining action
-                drainAgility();
+                playerObj.drainStat("agility", 7);
+                playerObj.drainStat("strength", 4);
 
                 // Increment experience after each ore mined (you can customize how much experience is gained)
                 playerStats.experience += 1;
@@ -3400,25 +3403,6 @@
                 console.log(`Experience: ${playerStats.experience}, Agility: ${playerStats.agility}`);
             }, calculateMiningSpeed()); // Uses calculated mining speed based on player stats
         }
-
-        // function mineOre(mine) {
-        //     // if (!playerHasPickaxe()) {
-        //     //     console.log("You need a pickaxe to mine!");
-        //     //     return;
-        //     // }
-
-        //     let miningInterval = setInterval(() => {
-        //         // if (!playerIsMining || inventoryIsFull()) {
-        //         //     clearInterval(miningInterval);
-        //         //     return;
-        //         // }
-
-        //         addToInventory({ name: mine.type });
-
-        //         console.log(`Mined a ${mine.type}!`);
-        //     }, calculateMiningSpeed()); // Uses calculated mining speed based on player stats
-        // }
-
 
         function createMineGround(position, size) {
             const mineGroundGeometry = new THREE.PlaneGeometry(size.width, size.height, 8, 8);
