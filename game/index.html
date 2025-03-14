@@ -958,8 +958,6 @@
         const spellList = document.getElementById("spellList");
 
         spells.forEach(spell => {
-            console.log(spell);
-
             // Create list item container
             const listItemContainer = document.createElement("li");
             listItemContainer.className = "spell";
@@ -3036,11 +3034,56 @@
                 this.alive = true;
 
                 this.autoAttack = true;
+
+                // Combat Settings
+                this.combatMode = "attack"; // Default: Attack Mode
+
+                this.equippedItems = { leftHand: null, rightHand: null };
+            }
+
+            setCombatMode(mode) {
+                if (mode === "attack") {
+                    this.combatMode = "attack";
+                    this.skills.strength += 5;
+                    this.skills.defense -= 2;
+                } else if (mode === "defend") {
+                    this.skills.combatMode = "defend";
+                    this.skills.defense += 5;
+                    this.skills.strength -= 2;
+                }
+                console.log(`Combat mode set to: ${this.combatMode}`);
+            }
+
+            specialAttack() {
+                const leftHandItem = this.equippedItems.leftHand;
+                const rightHandItem = this.equippedItems.rightHand;
+
+                // Check if either equipped item has a special attack
+                if (leftHandItem?.specialAttack || rightHandItem?.specialAttack) {
+                    addMessage('Game', "No special attack available.");
+                    return;
+                }
+
+                addMessage('Game', "No special attack available.");
             }
 
             attack(target) {
                 console.log(target);
                 if (!this.alive) return;
+
+                if(activeSpell) {
+                    console.log(activeSpell);
+                    function calculateSpellDamage(player, target) {
+                        return (activeSpell.damage / player.skills.mage.level) * target.stats.mage / 100;
+                    }
+
+                    const damage = calculateSpellDamage(this, target);
+
+                    // activeSpell.cast(this);
+                    // activeSpell.drain
+                    // activeSpell.recoilDamage
+                }
+
                 const damage = Math.max(1, this.skills.strength.level - target.stats.defense);
                 addMessage('Game', `Player attacks for ${damage} damage!`);
                 target.takeDamage(damage, this);
@@ -3048,9 +3091,17 @@
 
             takeDamage(damage, attacker) {
                 if (!this.alive) return;
-                this.skills.hp.currLevel -= damage;
-                addMessage('Game', `Player took ${damage} damage! HP left: ${this.skills.hp.currLevel}`);
+                let damageTaken = damage;
 
+                // Modify damage based on combat mode
+                if (this.combatMode === "attack") {
+                    damageTaken *= 1.2; // Take 20% more damage
+                } else if (this.combatMode === "defend") {
+                    damageTaken *= 0.8; // Take 20% less damage
+                }
+
+                this.skills.hp.currLevel -= damageTaken;
+                addMessage('Game', `Player took ${damageTaken} damage! HP left: ${this.skills.hp.currLevel}`);
 
                 if (this.skills.hp.currLevel <= 0) {
                     this.die();
@@ -3065,7 +3116,7 @@
                 this.alive = false;
                 scene.remove(player);
                 addMessage('Game', "Player has died!");
-                setTimeout(() => this.respawn(), 3000); 
+                setTimeout(() => this.respawn(), 3000);
             }
 
             respawn() {
