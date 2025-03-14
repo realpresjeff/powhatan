@@ -1338,7 +1338,7 @@
 
             if (index !== -1) {
                 console.log(inventory[index])
-                if (inventory[index].quantity > 0 && inventory[index].quantity - quantity > 0) {
+                if (inventory[index].quantity > quantity) {
                     inventory[index].quantity = inventory[index].quantity - quantity; // Reduce quantity
                 } else {
                     inventory.splice(index, 1); // Remove item if quantity reaches 0
@@ -1644,7 +1644,7 @@
                 }
 
                 // Add the fletched item
-                addToInventory({ name: `${type && type || ""} ${inventoryItem.type} ${itemName}`, type: inventoryItem.type })
+                addToInventory({ name: `${type && type || ""} ${inventoryItem.type} ${itemName}`, type: inventoryItem.type, equipable: true, equipType: 'both_hands' })
                 updateInventoryUI();
             }
         }
@@ -1747,6 +1747,23 @@
             }
 
             console.log(item);
+
+            if(item.equipType === "both_hands") {
+                if(equippedItems["left-hand"]) {
+                    addToInventory(equippedItems["left-hand"]);
+                    delete equippedItems["left-hand"];
+                }
+
+                if (equippedItems["right-hand"]) {
+                    addToInventory(equippedItems["right-hand"]);
+                    delete equippedItems["right-hand"];
+                }
+
+                equippedItems["left-hand"] = item;
+                equippedItems["right-hand"] = item;
+
+                return removeFromInventory(item);
+            }
 
             // equip item
             equippedItems[item.equipType] = item;
