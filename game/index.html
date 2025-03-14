@@ -1978,6 +1978,7 @@
 
 
         function cutTree(tree) {
+            const cost = 8;
             // if (!playerHasAxe()) {
             //     console.log("You need an axe to cut down the tree!");
             //     return;
@@ -1988,14 +1989,13 @@
 
             let cuttingInterval = setInterval(() => {
                 // Stop mining if agility is 0 or max experience is reached
-                if (playerStats.agility === 0 || hasMaxExperience()) {
+                if (playerObj.skills.agility.currLevel < cost) {
                     clearInterval(cuttingInterval);
-                    if (playerStats.agility === 0) {
-                        console.log("You have run out of agility and can no longer mine.");
-                        startAgilityRegeneration(); // Start the agility regeneration process
-                    }
-                    if (hasMaxExperience()) {
-                        console.log("You have reached max experience!");
+                    addMessage("Game", "You have run out of agility and can no longer cut.");
+                    if (playerObj.skills.agility.currLevel  < cost  || playerObj.skills.strength.currLevel < cost) {
+                        addMessage("Game", "You have run out of strength and can no longer cut.");
+                        playerObj.regenerateStat('agility'); // Start the agility regeneration process
+                        playerObj.regenerateStat('strength');
                     }
                     return;
                 }
@@ -2006,15 +2006,16 @@
                 // Add the log to the inventory
                 addToInventory({ name: `${log} Log`, fletch: true, type: log, flammable: true });
 
-                createPopup('Inventory');
+                // createPopup('Inventory');
 
                 // Drain agility after each mining action
-                drainAgility();
-
-                console.log(`Cut down a ${tree.name} tree and got a ${log} log!`);
+                playerObj.drainStat('agility', cost);
+                playerObj.drainStat('strength', cost);
+                addMessage("Game", `Cut down a ${tree.name} tree and got a ${log} log!`);
 
                 // Increment experience after each ore mined (you can customize how much experience is gained)
-                playerStats.experience += 1;
+                playerObj.updateExperience('agility', cost / 2);
+                playerObj.updateExperience('strength', cost / 2)
             }, calculateMiningSpeed());  // Speed based on player stats
         }
 
