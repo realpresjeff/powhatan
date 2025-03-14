@@ -973,7 +973,7 @@
             icon.alt = spell.name;
             spellItem.className = "default-icon";
             spellItem.appendChild(icon);
-            
+
             // Click event to select a spell
             spellItem.addEventListener("click", () => {
                 // Check if the clicked spell is already active
@@ -1644,7 +1644,7 @@
                 }
 
                 // Add the fletched item
-                addToInventory({ name: `${inventoryItem.type} ${itemName}` })
+                addToInventory({ name: `${inventoryItem.type} ${itemName}`, type: inventoryItem.type })
                 updateInventoryUI();
             }
         }
