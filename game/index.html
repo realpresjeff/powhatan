@@ -704,6 +704,9 @@
             slot.addEventListener("click", function () {
                 const slotName = slot.dataset.slot;
                 if (equippedItems[slotName]) {
+                    if(equippedItems[slotName].equipType === "both_hands") {
+                        console.log('dupe bug')
+                    }
                     // Move to Inventory (Placeholder)
                     console.log(`Unequipped ${equippedItems[slotName]}`);
                     addToInventory(equippedItems[slotName].name ? equippedItems[slotName] : { name: equippedItems[slotName] });
@@ -1344,6 +1347,8 @@
                     inventory.splice(index, 1); // Remove item if quantity reaches 0
                 }
                 console.log(`Removed ${quantity} ${item.name} from inventory.`);
+
+                updateInventoryUI();
             } else {
                 console.log(`Item ${item.name} not found in inventory.`);
             }
@@ -1644,7 +1649,7 @@
                 }
 
                 // Add the fletched item
-                addToInventory({ name: `${type && type || ""} ${inventoryItem.type} ${itemName}`, type: inventoryItem.type, equipable: true, equipType: 'both_hands' })
+                addToInventory({ name: `${type && type || ""} ${inventoryItem.type} ${itemName}`, type: inventoryItem.type, equipable: true, equipType: 'both_hands', pickupable: true })
                 updateInventoryUI();
             }
         }
