@@ -685,6 +685,30 @@
             combatPopup.style.display = "flex";
         });
 
+        // Combat mode radio buttons
+        document.querySelectorAll('input[name="combatMode"]').forEach(input => {
+            input.addEventListener("change", (event) => {
+                // Set the player's combat mode based on the selected radio button
+                const selectedMode = event.target.value;
+                playerObj.toggleCombatMode(selectedMode);
+            });
+        });
+
+        // Auto attack checkbox
+        const autoAttackCheckbox = document.getElementById("autoAttack");
+        autoAttackCheckbox.addEventListener("change", (event) => {
+            // Enable or disable auto attack based on checkbox status
+            playerObj.toggleAutoAttack(event.target.checked);
+        });
+
+        // Special attack button
+        const specialAttackButton = document.getElementById("specialAttack");
+        specialAttackButton.addEventListener("click", () => {
+            // Trigger special attack if available
+            playerObj.triggerSpecialAttack();
+        });
+
+
         // Open Worn Items
         openWornButton.addEventListener("click", function () {
             wornPopup.style.display = "flex";
@@ -3074,16 +3098,37 @@
                 this.equippedItems = { leftHand: null, rightHand: null };
             }
 
+            toggleCombatMode(mode) {
+                this.combatMode = mode;
+                this.setCombatMode(mode)
+                console.log(`Combat mode set to: ${this.combatMode}`);
+            }
+
+            toggleAutoAttack(status) {
+                this.autoAttack = status;
+                console.log(`Auto attack is ${this.autoAttack ? "enabled" : "disabled"}`);
+            }
+
+            triggerSpecialAttack() {
+                if (this.isSpecialAttackAvailable) {
+                    console.log("Special attack triggered!");
+                    // Implement special attack logic here
+                } else {
+                    console.log("Special attack is not available.");
+                }
+            }
+
             setCombatMode(mode) {
                 if (mode === "attack") {
                     this.combatMode = "attack";
-                    this.skills.strength += 5;
-                    this.skills.defense -= 2;
+                    this.skills.strength.level += 5;
+                    this.skills.defense.level -= 2;
                 } else if (mode === "defend") {
                     this.skills.combatMode = "defend";
-                    this.skills.defense += 5;
-                    this.skills.strength -= 2;
+                    this.skills.defense.level += 5;
+                    this.skills.strength.level -= 2;
                 }
+                this.displayStats();
                 console.log(`Combat mode set to: ${this.combatMode}`);
             }
 
