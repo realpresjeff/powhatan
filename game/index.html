@@ -2287,6 +2287,7 @@
             }
 
             takeDamage(damage, attacker) {
+                console.log(attacker);
                 if (!this.alive) return;
                 this.stats.hp -= damage;
                 addMessage('Game', `Deer takes ${damage} damage!`);
@@ -3068,6 +3069,7 @@
             }
 
             respawn() {
+                this.alive = true;
                 this.skills = this.defaultSkillsState;
                 scene.add(player);
             }
