@@ -2984,6 +2984,35 @@
             return miningSpeed;
         }
 
+
+        // Function to drain strength as mining progresses
+        function drainStrength() {
+            const strengthDrainAmount = 1; // Amount of strength drained per ore mined
+            playerStats.strength -= strengthDrainAmount;
+
+            // Ensure strength doesn't drop below 0
+            if (playerStats.strength < 0) {
+                playerStats.strength = 0;
+            }
+        }
+
+        // Function to regenerate strength back to maxStrength over time
+        function regenerateStrength() {
+            const strengthRegenerationRate = 0.2; // Rate at which strength regenerates per interval (fraction of difference)
+
+            // Only regenerate strength if the player is not mining
+            if (!playerIsMining && playerStats.strength < playerStats.maxStrength) {
+                playerStats.strength += (playerStats.maxStrength - playerStats.strength) * strengthRegenerationRate;
+
+                // Ensure strength doesn't exceed maxStrength
+                if (playerStats.strength > playerStats.maxStrength) {
+                    playerStats.strength = playerStats.maxStrength;
+                }
+
+                console.log(`Strength Regeneration: ${playerStats.strength}`);
+            }
+        }
+
         // Function to drain agility as mining progresses
         function drainAgility() {
             const agilityDrainAmount = 1; // Amount of agility drained per ore mined
@@ -2995,9 +3024,37 @@
             }
         }
 
+        // Function to drain any stat 
+        function drainStat(stat) {
+            const statDrainAmount = 1; // Amount of stat drained per ore mined
+            playerStats[stat] -= statDrainAmount;
+
+            // Ensure stat doesn't drop below 0
+            if (playerStats[stat] < 0) {
+                playerStats[stat] = 0;
+            }
+        }
+
+        // Function to regenerate any stat back to max over time
+        function regenerateStat(stat, maxStat) {
+            const statRegenerationRate = 0.2; // Rate at which stat regenerates per interval (fraction of difference)
+
+            // Only regenerate stat if the player is not mining
+            if (!playerIsMining && playerStats[stat] < playerStats[maxStat]) {
+                playerStats[stat] += (playerStats[maxStat] - playerStats[stat]) * statRegenerationRate;
+
+                // Ensure strength doesn't exceed maxStat
+                if (playerStats[stat] > playerStats[maxStat]) {
+                    playerStats[stat] = playerStats[maxStat];
+                }
+
+                console.log(`Strength Regeneration: ${playerStats.strength}`);
+            }
+        }
+
         // Function to regenerate agility back to maxAgility over time
         function regenerateAgility() {
-            const agilityRegenerationRate = 0.1; // Rate at which agility regenerates per interval (fraction of difference)
+            const agilityRegenerationRate = 0.2; // Rate at which agility regenerates per interval (fraction of difference)
 
             // Only regenerate agility if the player is not mining
             if (!playerIsMining && playerStats.agility < playerStats.maxAgility) {
@@ -3008,13 +3065,17 @@
                     playerStats.agility = playerStats.maxAgility;
                 }
 
-                // console.log(`Agility Regeneration: ${playerStats.agility}`);
+                console.log(`Agility Regeneration: ${playerStats.agility}`);
             }
         }
 
         // Function to start the regeneration of agility (called when the player is not mining)
         function startAgilityRegeneration() {
             setInterval(regenerateAgility, 1000); // Regenerate agility every second
+        }
+
+        function startStatRegeneration(func, interval = 1000) {
+            setInterval(func, interval);
         }
 
         // Function to check if the player has reached max experience
@@ -3063,10 +3124,12 @@
         }
 
         function fish() {
-            if (playerStats.agility <= 0 || playerStats.strength <= 0) {
-                console.log("You're too exhausted to fish. Rest to recover.");
-                return;
-            }
+            console.log(playerStats);
+            // if (playerStats.agility <= 1 || playerStats.strength <= 1) {
+            //     addMessage('Game', "You're too exhausted to keep fishing. Rest to recover.");
+            //     startAgilityRegeneration();
+            //     return;
+            // }
 
             const virginiaFish = ["Largemouth Bass", "Bluegill", "Brook Trout", "Channel Catfish", "Smallmouth Bass", "American Shad", "Longnose Gar"];
 
@@ -3074,21 +3137,23 @@
             const agilityFactor = Math.max(1, 10 - Math.floor(playerStats.agility / 20)); // Faster with higher agility
             const strengthFactor = Math.max(1, 10 - Math.floor(playerStats.strength / 20)); // Faster with higher strength
             const fishingSpeed = Math.max(1, baseRate - Math.floor((agilityFactor + strengthFactor) / 2)); // Balanced rate
-
-            console.log(`Casting line... (Catching fish every ${fishingSpeed} seconds)`);
+            addMessage('Game', `Casting line...`);
 
             let fishingInterval = setInterval(() => {
                 if (playerStats.agility <= 0 || playerStats.strength <= 0) {
-                    console.log("You're too exhausted to keep fishing.");
+                    addMessage('Game', "You're too exhausted to keep fishing. Rest to recover.");
                     clearInterval(fishingInterval);
+                    startAgilityRegeneration();
                     return;
                 }
 
                 let caughtFish = virginiaFish[Math.floor(Math.random() * virginiaFish.length)];
                 addToInventory({ name: caughtFish, quantity: 1, pickupable: true, cookable: true, raw: true });
-                console.log(`You caught a ${caughtFish}!`);
+                addMessage('Game', `You caught a ${caughtFish}!`);
 
-                playerStats.agility = Math.max(0, playerStats.agility - 3);
+                drainAgility();
+
+                // drain strength
                 playerStats.strength = Math.max(0, playerStats.strength - 2);
 
             }, fishingSpeed * 1000);
@@ -3398,7 +3463,6 @@
             canvas.height = height;
 
             // Style the text
-            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.fillRect(0, 0, width, height);
 
             ctx.fillStyle = "white";
@@ -3416,10 +3480,10 @@
             });
 
             const textSprite = new THREE.Sprite(textMaterial);
-            textSprite.scale.set(10, 5, 5); // Adjust size for visibility
+            textSprite.scale.set(8, 5, 5); // Adjust size for visibility
 
             // Position the text slightly above the character
-            textSprite.position.set(character.position.x, 2.5, character.position.y);
+            textSprite.position.set(character.position.x, 1, character.position.y);
 
             // Ensure it renders on top of other objects
             textSprite.renderOrder = 999;
