@@ -704,7 +704,7 @@
             slot.addEventListener("click", function () {
                 const slotName = slot.dataset.slot;
                 if (equippedItems[slotName]) {
-                    if(equippedItems[slotName].equipType === "both_hands") {
+                    if (equippedItems[slotName].equipType === "both_hands") {
                         console.log('dupe bug')
                     }
                     // Move to Inventory (Placeholder)
@@ -1753,8 +1753,8 @@
 
             console.log(item);
 
-            if(item.equipType === "both_hands") {
-                if(equippedItems["left-hand"]) {
+            if (item.equipType === "both_hands") {
+                if (equippedItems["left-hand"]) {
                     addToInventory(equippedItems["left-hand"]);
                     delete equippedItems["left-hand"];
                 }
@@ -3122,6 +3122,22 @@
                     // activeSpell.cast(this);
                     // activeSpell.drain
                     // activeSpell.recoilDamage
+                }
+
+                if (equippedItems["left-hand"] && equippedItems["left-hand"].name.includes("bow") || equippedItems["right-hand"] && equippedItems["right-hand"].name.includes("bow")) {
+                    console.log("ranged")
+
+                    function calculateRangedDamage(player, target) {
+                        if (player.skills.archer.level === 0) return 0; // Prevent division by zero
+
+                        return (20 * (player.skills.archer.level / 100)) * (target.stats.archer / 100);
+                    }
+
+                    const damage = calculateRangedDamage(this, target);
+
+                    addMessage('Game', `Player shoots an arrow!`);
+
+                    return target.takeDamage(damage, this);
                 }
 
                 const damage = Math.max(1, this.skills.strength.level - target.stats.defense);
