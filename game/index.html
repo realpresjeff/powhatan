@@ -1266,6 +1266,7 @@
 
         function startFire(position, selectedWood, cost) {
             createOpenLogFire({ x: position.x, y: position.y, z: position.z });
+            playerObj.updateExperience('craft', cost * 4);
             removeFromInventory(selectedWood, cost);
             updateInventoryUI()
             hidePopup();
@@ -1562,6 +1563,7 @@
             <button onclick="fletchItem('${item.name}', '${item.material}', '${item.secondary || ""}', ${item.cost})">Fletch</button>
         `;
                 fletchItemsContainer.appendChild(itemElement);
+                playerObj.updateExperience('craft', item.cost * 4);
             });
 
             // Show the fletching UI
