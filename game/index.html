@@ -2236,8 +2236,8 @@
                 hp: 0,
                 strength: 0,
                 defense: 0,
-                magic: 0,
-                ranged: 0
+                mage: 0,
+                archer: 0
             }
 
             constructor(position) {
@@ -2245,8 +2245,8 @@
                 this.maxHp = 20;
                 this.stats.strength = 10;
                 this.stats.defense = 13;
-                this.stats.magic = 2;
-                this.stats.ranged = 0;
+                this.stats.mage = 2;
+                this.stats.archer = 0;
                 this.alive = true;
                 this.position = position;
                 this.model = this.createModel();
@@ -3071,13 +3071,20 @@
                 console.log(target);
                 if (!this.alive) return;
 
-                if(activeSpell) {
+                if (activeSpell) {
                     console.log(activeSpell);
-                    function calculateSpellDamage(player, target) {
-                        return (activeSpell.damage / player.skills.mage.level) * target.stats.mage / 100;
+
+                    function calculateSpellDamage(player, target, spell) {
+                        if (player.skills.mage.level === 0) return 0; // Prevent division by zero
+
+                        return (spell.damage * (player.skills.mage.level / 100)) * (target.stats.mage / 100);
                     }
 
-                    const damage = calculateSpellDamage(this, target);
+                    const damage = calculateSpellDamage(this, target, activeSpell);
+
+                    addMessage('Game', `Player casts ${activeSpell.name}!`);
+
+                    return target.takeDamage(damage, this);
 
                     // activeSpell.cast(this);
                     // activeSpell.drain
