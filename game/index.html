@@ -512,6 +512,10 @@
         .chat-input button:hover {
             background: #4752c4;
         }
+
+        #stats-list {
+            padding: 0;
+        }
     </style>
 </head>
 
@@ -540,26 +544,10 @@
             <div class="popup-content">
                 <button id="popup-close" class="close-button" onclick="closeStats()">✖</button>
                 <h2>Character Stats</h2>
-                <ul>
-                    <li>Magic: 200,546,787</li>
-                    <li>Archery: 7,434,876</li>
-                    <li>Strength: 3,768,423</li>
-                    <li>Defense: 4,768,234</li>
-                    <li>HP: 9,654,768</li>
-                    <li>Stamina: 7,543,657</li>
-                    <li>Blacksmithing: 2,489,894</li>
-                    <li>Mining: 6,438,938</li>
-                    <li>Construction: 3,230,395</li>
-                    <li>Craft: 2,020,043</li>
-                    <li>Fishing: 1,528,010</li>
-                    <li>Cooking: 1,232,360</li>
+                <ul id="stats-list">
                 </ul>
-
             </div>
-
-
         </div>
-
     </div>
 
     <!-- Combat Settings Popup -->
@@ -2994,6 +2982,8 @@
                 this.regenerationIntervals = {}; // Store intervals for each skill
 
                 this.playerIsMining = false; // Track if the player is mining
+
+                this.name = "Kyte9934"
             }
 
             // Function to calculate the level based on experience
@@ -3008,7 +2998,9 @@
                     skillData.experience += experienceGained;
 
                     // Update the level based on new experience
-                    skillData.currLevel = this.calculateLevel(skillData.experience);
+                    skillData.level = this.calculateLevel(skillData.experience);
+
+                    this.displayStats();
                     console.log(`${skill} experience updated. New level: ${skillData.currLevel}`);
                 } else {
                     console.error("Skill not found!");
@@ -3049,7 +3041,7 @@
 
             // Function to regenerate any stat back to max over time
             regenerateStat(skill) {
-                if (this.skills[skill] && !this.playerIsMining) {
+                if (this.skills[skill]) {
                     let skillData = this.skills[skill];
                     const regenerationRate = this.regenerationRates[skill] || 0.2; // Use the defined regeneration rate for each skill
 
@@ -3141,9 +3133,37 @@
                     console.log(`${skill}: currLevel ${skillData.currLevel}/${skillData.maxLevel}, Experience: ${skillData.experience}`);
                 }
             }
+
+            displayStats() {
+                // Get the stats container element
+                const statsContainer = document.getElementById("stats-list");
+
+                // Clear the current stats list
+                statsContainer.innerHTML = '';
+
+                // Create a heading with player's name
+                const playerName = document.createElement("h2");
+                playerName.textContent = `${this.name}`;
+                statsContainer.appendChild(playerName);
+
+                // Iterate over all skills to display their stats
+                for (const skill in this.skills) {
+                    const skillData = this.skills[skill];
+
+                    // Create a list item for each skill
+                    const skillItem = document.createElement("div");
+                    skillItem.innerHTML = `
+                <strong>${skill.charAt(0).toUpperCase() + skill.slice(1)}</strong>: 
+                Level ${skillData.currLevel}/${skillData.level}/${skillData.maxLevel} - 
+                Experience: ${skillData.experience}
+            `;
+                    statsContainer.appendChild(skillItem);
+                }
+            }
         }
 
         const playerObj = new Player();
+        playerObj.displayStats();
 
         // Helper function to calculate mining speed
         function calculateMiningSpeed() {
@@ -3334,6 +3354,8 @@
                 playerObj.drainStat("agility", 3);
                 playerObj.drainStat("strength", 3);
 
+                playerObj.updateExperience("agility", 75);
+                playerObj.updateExperience("strength", 75);
 
                 // drainAgility();
                 // drain strength
