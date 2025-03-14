@@ -1450,7 +1450,7 @@
                 if (selectedObject.userData.attackable) {
                     menuOptions.unshift({
                         label: `Attack ${selectedObject.userData.name || "Enemy"}`,
-                        action: () => playerAttack(deer, 1000),
+                        action: () => playerObj.attack(deer),
                     });
                 }
 
@@ -2245,7 +2245,7 @@
             constructor(position) {
                 this.stats.hp = 20;
                 this.maxHp = 20;
-                this.stats.strength = 30;
+                this.stats.strength = 10;
                 this.stats.defense = 13;
                 this.stats.magic = 2;
                 this.stats.ranged = 0;
@@ -2286,17 +2286,23 @@
                 return deerGroup;
             }
 
-            takeDamage(damage) {
+            takeDamage(damage, attacker) {
                 if (!this.alive) return;
                 this.stats.hp -= damage;
+                addMessage('Game', `Deer takes ${damage} damage!`);
+                this.attack(attacker);
                 if (this.stats.hp <= 0) {
                     this.die();
                 }
             }
 
-            attack() {
-
+            attack(target) {
+                if (!this.alive) return;
+                const damage = Math.max(1, this.stats.strength - target.skills.defense.level); // Basic attack formula
+                addMessage('Game', `Deer attacks player for ${damage} damage!`);
+                target.takeDamage(damage, this);
             }
+
 
             die() {
                 this.alive = false;
@@ -2992,11 +2998,6 @@
         class Player {
             constructor() {
                 // Initialize all skills with currLevel and experience.
-                this.skills = {
-                    craft: { currLevel: 50, experience: 0, maxLevel: 99 },
-                    agility: { currLevel: 10, experience: 0, maxLevel: 99 },
-                    strength: { currLevel: 8, experience: 0, maxLevel: 99 },
-                };
 
                 // Regeneration logic
                 this.regenerationRates = {
@@ -3005,10 +3006,24 @@
                     craft: 0.2
                 };
 
+                this.defaultSkillsState = {
+                    craft: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    agility: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    strength: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    archer: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    mage: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    defense: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    hp: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                }
+
                 this.skills = {
                     craft: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
                     agility: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
                     strength: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    archer: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    mage: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    defense: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    hp: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
                 };
 
                 this.regenerationIntervals = {}; // Store intervals for each skill
@@ -3016,6 +3031,45 @@
                 this.playerIsMining = false; // Track if the player is mining
 
                 this.name = "Kyte9934"
+
+                this.alive = true;
+
+                this.autoAttack = true;
+            }
+
+            attack(target) {
+                console.log(target);
+                if (!this.alive) return;
+                const damage = Math.max(1, this.skills.strength.level - target.stats.defense);
+                addMessage('Game', `Player attacks for ${damage} damage!`);
+                target.takeDamage(damage, this);
+            }
+
+            takeDamage(damage, attacker) {
+                if (!this.alive) return;
+                this.skills.hp.currLevel -= damage;
+                addMessage('Game', `Player took ${damage} damage! HP left: ${this.skills.hp.currLevel}`);
+
+
+                if (this.skills.hp.currLevel <= 0) {
+                    this.die();
+                }
+
+                if (this.autoAttack) {
+                    this.attack(attacker);
+                }
+            }
+
+            die() {
+                this.alive = false;
+                scene.remove(player);
+                addMessage('Game', "Player has died!");
+                setTimeout(() => this.respawn(), 3000); 
+            }
+
+            respawn() {
+                this.skills = this.defaultSkillsState;
+                scene.add(player);
             }
 
             // Function to calculate the level based on experience
@@ -3033,7 +3087,9 @@
                     skillData.level = this.calculateLevel(skillData.experience);
 
                     this.displayStats();
-                    console.log(`${skill} experience updated. New level: ${skillData.currLevel}`);
+                    addMessage('Game', `${skill} experience updated. New level: ${skillData.currLevel}`);
+
+
                 } else {
                     console.error("Skill not found!");
                 }
