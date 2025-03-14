@@ -973,20 +973,31 @@
             icon.alt = spell.name;
             spellItem.className = "default-icon";
             spellItem.appendChild(icon);
-
+            
             // Click event to select a spell
             spellItem.addEventListener("click", () => {
-                // Remove 'active' class from all spell items
-                document.querySelectorAll(".spell").forEach(item => {
-                    item.classList.remove("active");
-                });
+                // Check if the clicked spell is already active
+                if (activeSpell === spell) {
+                    // If the same spell is clicked again, set activeSpell to null and remove 'active' class
+                    activeSpell = null;
+                    document.querySelectorAll(".spell").forEach(item => {
+                        item.classList.remove("active");
+                    });
+                    addMessage("Game", `Deselected spell: ${spell.name}`);
+                } else {
+                    // Remove 'active' class from all spell items
+                    document.querySelectorAll(".spell").forEach(item => {
+                        item.classList.remove("active");
+                    });
 
-                // Set the selected spell as active
-                activeSpell = spell;
-                listItemContainer.classList.add("active");
+                    // Set the selected spell as active
+                    activeSpell = spell;
+                    listItemContainer.classList.add("active");
 
-                addMessage("Game", `Selected spell: ${spell.name}`);
+                    addMessage("Game", `Selected spell: ${spell.name}`);
+                }
             });
+
 
             spellList.appendChild(listItemContainer);
         });
