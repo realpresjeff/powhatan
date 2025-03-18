@@ -23,14 +23,15 @@
 
         #toolbar {
             position: absolute;
-            top: 10px;
-            left: 10px;
             z-index: 10;
             /* Make sure it's above the canvas */
             background: rgba(0, 0, 0, 0.5);
             padding: 10px;
             border-radius: 5px;
             color: white;
+            bottom: 10px;
+            right: 10px;
+            z-index: 9999;
         }
 
         #toolbar button {
@@ -51,20 +52,50 @@
         /* Popup container */
         .popup {
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 5%;
+            right: 15px;
+            /* left: 70%;
             right: 0;
-            bottom: 0;
+            bottom: 0; */
             background-color: rgba(0, 0, 0, 0.7);
             /* Semi-transparent background */
             /* display: none; */
             /* Initially hidden */
             justify-content: center;
             align-items: center;
-            z-index: 9999;
+            /* z-index: 9999; */
             display: flex;
             flex-direction: column;
             /* Ensure it overlays on top */
+
+            @media (width <=1250px) {
+                left: unset;
+            }
+        }
+
+        /* Popup Window */
+        .popup {
+            background: #2a1f14;
+            padding: 20px;
+            border-radius: 10px;
+            border: 3px solid #b4975a;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            width: 300px;
+            height: 70%;
+            /* position: relative; */
+        }
+
+        /* Close Button */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
         }
 
         /* Popup content */
@@ -74,7 +105,8 @@
             width: 70%;
             /* Adjust width as needed */
             max-width: 600px;
-            position: relative;
+            /* position: relative; */
+            overflow-x: scroll;
         }
 
         /* Close button */
@@ -88,6 +120,32 @@
             background-color: red;
             border-radius: 50%;
             padding: 5px 10px;
+        }
+
+        /* Popup Overlay (Hidden by Default) */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            /* z-index: 2000; */
+        }
+
+        .popup-overlay-clear {
+            position: fixed;
+            top: 0;
+            left: 0;
+            /* width: 100%;
+            height: 100%; */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            /* z-index: 1000; */
         }
 
         /* Menu Items */
@@ -210,7 +268,7 @@
             /* Hidden by default */
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            /* z-index: 1000; */
         }
 
         /* Show Spellbook when Active */
@@ -230,6 +288,8 @@
             box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7);
             text-align: center;
             width: 350px;
+            position: fixed;
+            right: 0;
         }
 
         /* Fade-in Animation */
@@ -252,6 +312,9 @@
             gap: 10px;
             justify-items: center;
             overflow: scroll;
+            margin: 0;
+            padding: 0;
+            width: 90%;
         }
 
         /* Spell Item */
@@ -323,60 +386,10 @@
             border-radius: 5px;
         }
 
-        /* Popup Overlay (Hidden by Default) */
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-
-        .popup-overlay-clear {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
         #bankUI {
             width: 50%;
             position: fixed;
             left: 40%;
-        }
-
-        /* Popup Window */
-        .popup {
-            background: #2a1f14;
-            padding: 20px;
-            border-radius: 10px;
-            border: 3px solid #b4975a;
-            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7);
-            text-align: center;
-            width: 300px;
-            position: relative;
-        }
-
-        /* Close Button */
-        .close-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            font-size: 20px;
-            color: white;
-            cursor: pointer;
         }
 
         .close-button:hover {
@@ -521,12 +534,12 @@
 </head>
 
 <body>
-    <div id="toolbar">
-        <button id="inventory">Inventory</button>
-        <button id="spells">Spellbook</button>
+    <div id="toolbar" onclick="event.stopPropagation();">
+        <button id="inventory">Items</button>
+        <button id="spells">Magic</button>
         <button id="stats">Stats</button>
         <button id="open-worn-items">Worn</button>
-        <button id="open-combat-settings">Combat Settings</button>
+        <button id="open-combat-settings">Settings</button>
     </div>
 
     <!-- Popup container (hidden initially) -->
@@ -534,17 +547,16 @@
         <div class="popup">
             <div class="popup-content">
                 <button id="popup-close" class="close-button">✖</button>
-                <span id="popup-text">Menu:</span>
+                <!-- <span id="popup-text">Menu:</span> -->
                 <ul id="menu-items"></ul>
             </div>
         </div>
     </div>
 
-    <div id="statsPopup" class="popup-overlay" onclick="event.stopPropagation();">
+    <div id="statsPopup" class="popup-overlay-clear" onclick="event.stopPropagation();">
         <div class="popup">
             <div class="popup-content">
                 <button id="popup-close" class="close-button" onclick="closeStats()">✖</button>
-                <h2>Character Stats</h2>
                 <ul id="stats-list">
                 </ul>
             </div>
@@ -552,10 +564,9 @@
     </div>
 
     <!-- Combat Settings Popup -->
-    <div class="popup-overlay" id="combatPopup" onclick="event.stopPropagation();">
+    <div class="popup-overlay-clear" id="combatPopup" onclick="event.stopPropagation();">
         <div class="popup">
             <button class="close-button" id="close-combat">✖</button>
-            <h2>Combat Settings</h2>
 
             <div class="combat-mode">
                 <label>
@@ -578,10 +589,9 @@
     </div>
 
     <!-- Worn Items Popup -->
-    <div class="popup-overlay" id="wornPopup" onclick="event.stopPropagation();">
+    <div class="popup-overlay-clear" id="wornPopup" onclick="event.stopPropagation();">
         <div class="popup">
             <button class="close-button" id="close-worn">✖</button>
-            <h2>Worn Items</h2>
 
             <div class="equipment-grid">
                 <div class="equipment-slot" data-slot="helmet" id="helmet">Helmet</div>
@@ -598,10 +608,9 @@
     </div>
 
     <!-- Spellbook Overlay (Hidden Initially) -->
-    <div class="popup-overlay" id="spellbookOverlay" onclick="event.stopPropagation();">
-        <div class="spellbook">
+    <div class="popup-overlay-clear" id="spellbookOverlay" onclick="event.stopPropagation();">
+        <div class="popup">
             <button id="close-spellbook" class="close-button" onclick="toggleSpellbook()">✖</button>
-            <h2>Spellbook</h2>
             <ul class="spells-container" id="spellList">
             </ul>
         </div>
@@ -638,9 +647,6 @@
         </div>
     </div>
 
-
-
-
     <!-- Context Menu for item actions (hidden initially) -->
     <div id="context-menu" class="context-menu" style="display: none;">
         <ul>
@@ -660,9 +666,8 @@
         </div>
     </div>
 
-
     <script>
-        const socket = io("http://ec2-18-205-27-62.compute-1.amazonaws.com:4000"); // Replace with your server URL
+        const socket = io("https://ec2-18-205-27-62.compute-1.amazonaws.com:4000"); // Replace with your server URL
 
         socket.on("connect", () => {
             console.log("Connected to the server!");
@@ -1732,10 +1737,10 @@
         // Function to show the popup
         function createPopup(content) {
             const popup = document.getElementById('popup');
-            const popupText = document.getElementById('popup-text');
+            // const popupText = document.getElementById('popup-text');
 
-            // Set the content for the popup
-            popupText.textContent = content;
+            // // Set the content for the popup
+            // popupText.textContent = content;
 
             // Display the popup and trigger the animation
             popup.style.display = 'flex';
@@ -1891,16 +1896,16 @@
         }
 
         // Stop clicks from reaching the canvas when interacting with the popup
-        document.getElementById('popup').addEventListener('click', function (event) {
-            // Prevent the click from propagating to the background (e.g., canvas)
-            event.stopPropagation();
-        });
+        // document.getElementById('popup').addEventListener('click', function (event) {
+        //     // Prevent the click from propagating to the background (e.g., canvas)
+        //     event.stopPropagation();
+        // });
 
         // Prevent clicks on the popup content from being passed to the canvas
-        document.querySelector('.popup-content').addEventListener('click', function (event) {
-            // This will stop the event from propagating to the background elements
-            event.stopPropagation();
-        });
+        // document.querySelector('.popup-content').addEventListener('click', function (event) {
+        //     // This will stop the event from propagating to the background elements
+        //     event.stopPropagation();
+        // });
 
 
         // Close the popup when the close button is clicked
