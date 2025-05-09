@@ -1,0 +1,23 @@
+{
+  "name": "Powhatan Reader",
+  "version": "0.0.1",
+  "description": "Translates between Powhatan, Chinese and English",
+  "manifest_version": 3,
+  "author": "Prince Ashton James Snow Morris Jefferson",
+  "background": {
+    "scripts": ["background.js"],
+    "service_worker": "background.js",
+    "persistent": false,
+    "type": "module"
+  },
+  "permissions": ["activeTab", "scripting", "sidePanel"],
+  "side_panel": {
+    "default_path": "./public/index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["./content-script.js"]
+    }
+  ]
+}
