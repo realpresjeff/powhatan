@@ -16,7 +16,8 @@
   "author": "King Ashton James Snow Morris Jefferson",
   "license": "MIT",
   "dependencies": {
-    "1car.us": "^0.0.9"
+    "1car.us": "^0.0.9",
+    "three": "^0.176.0"
   },
   "devDependencies": {
     "gh-pages": "^6.2.0",

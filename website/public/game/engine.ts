@@ -117,7 +117,7 @@ export class Engine {
 
     }
 
-    click_to_move() {
+    click_to_move(onItemFound = (item) => { }) {
         // Click-to-move setup (for player movement)
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
@@ -141,7 +141,8 @@ export class Engine {
                     const object = itemintersections[0].object;
 
                     if (object.userData.isRemovable) {
-                        addToInventory(object.userData);
+                        onItemFound(object.userData);
+                        // addToInventory(object.userData);
                         this.scene.remove(object);
                     }
                 }

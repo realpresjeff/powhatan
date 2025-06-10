@@ -3,7 +3,8 @@ import * as THREE from 'three';
 export interface InventoryProps {
     scene: THREE.Scene;
     player: THREE.Mesh;
-    camera: THREE.Camera
+    camera: THREE.Camera;
+    mouse: any;
 }
 
 export class Inventory {
@@ -11,12 +12,14 @@ export class Inventory {
     scene = null;
     player = null;
     camera = null;
+    mouse = null;
 
-    constructor({ scene, player, camera }: InventoryProps) {
+    constructor({ scene, player, camera, mouse }: InventoryProps) {
         this.updateInventoryUI();
         this.scene = scene;
         this.player = player;
         this.camera = camera;
+        this.mouse = mouse;
     }
 
     // Function to add an item to the inventory

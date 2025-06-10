@@ -4,9 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Powhatan Game</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <title>The Powhatan Game (Fally)</title>
+    <script src="https://unpkg.com/three@0.139.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.174.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -21,14 +23,15 @@
 
         #toolbar {
             position: absolute;
-            top: 10px;
-            left: 10px;
             z-index: 10;
             /* Make sure it's above the canvas */
             background: rgba(0, 0, 0, 0.5);
             padding: 10px;
             border-radius: 5px;
             color: white;
+            bottom: 10px;
+            right: 10px;
+            z-index: 9999;
         }
 
         #toolbar button {
@@ -49,30 +52,61 @@
         /* Popup container */
         .popup {
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 5%;
+            right: 15px;
+            /* left: 70%;
             right: 0;
-            bottom: 0;
+            bottom: 0; */
             background-color: rgba(0, 0, 0, 0.7);
             /* Semi-transparent background */
-            display: none;
+            /* display: none; */
             /* Initially hidden */
             justify-content: center;
             align-items: center;
-            z-index: 9999;
+            /* z-index: 9999; */
+            display: flex;
+            flex-direction: column;
             /* Ensure it overlays on top */
+
+            @media (width <=1250px) {
+                left: unset;
+            }
+        }
+
+        /* Popup Window */
+        .popup {
+            background: #2a1f14;
+            padding: 20px;
+            border-radius: 10px;
+            border: 3px solid #b4975a;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            width: 300px;
+            height: 70%;
+            /* position: relative; */
+        }
+
+        /* Close Button */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
         }
 
         /* Popup content */
         .popup-content {
-            background-color: #fff;
             padding: 20px;
             border-radius: 8px;
             width: 70%;
             /* Adjust width as needed */
             max-width: 600px;
-            position: relative;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            /* position: relative; */
+            overflow-x: scroll;
         }
 
         /* Close button */
@@ -86,6 +120,32 @@
             background-color: red;
             border-radius: 50%;
             padding: 5px 10px;
+        }
+
+        /* Popup Overlay (Hidden by Default) */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            /* z-index: 2000; */
+        }
+
+        .popup-overlay-clear {
+            position: fixed;
+            top: 0;
+            left: 0;
+            /* width: 100%;
+            height: 100%; */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            /* z-index: 1000; */
         }
 
         /* Menu Items */
@@ -110,6 +170,7 @@
             color: black;
             font-family: Arial, sans-serif;
             margin-bottom: 20px;
+            color: white;
         }
 
         .menu-item {
@@ -207,7 +268,7 @@
             /* Hidden by default */
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            /* z-index: 1000; */
         }
 
         /* Show Spellbook when Active */
@@ -227,6 +288,8 @@
             box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7);
             text-align: center;
             width: 350px;
+            position: fixed;
+            right: 0;
         }
 
         /* Fade-in Animation */
@@ -249,6 +312,9 @@
             gap: 10px;
             justify-items: center;
             overflow: scroll;
+            margin: 0;
+            padding: 0;
+            width: 90%;
         }
 
         /* Spell Item */
@@ -319,54 +385,265 @@
             text-align: center;
             border-radius: 5px;
         }
+
+        #bankUI {
+            width: 50%;
+            position: fixed;
+            left: 40%;
+        }
+
+        .close-button:hover {
+            color: red;
+        }
+
+        /* Combat Mode Selection */
+        .combat-mode {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .combat-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Equipment Grid */
+        .equipment-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            justify-items: center;
+            margin-top: 10px;
+        }
+
+        /* Equipment Slot */
+        .equipment-slot {
+            width: 80px;
+            height: 80px;
+            background: #4b382a;
+            border: 2px solid #b4975a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .equipment-slot:hover {
+            background: #5c4835;
+        }
+
+        .equipped-item img {
+            height: 50px;
+            width: 50px;
+        }
+
+        .menu {
+            position: absolute;
+            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid white;
+            padding: 5px;
+            color: white;
+            z-index: 100;
+        }
+
+        .menu button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Fixed Chat Container */
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 50%;
+            height: 30%;
+            background: #2c2f33;
+            opacity: 0.5;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            border: 2px solid #23272a;
+        }
+
+        /* Messages */
+        .messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column-reverse;
+            /* Show newest messages at the bottom */
+            font-size: 14px;
+        }
+
+        .message {
+            background: #424549;
+            padding: 5px 10px;
+            margin: 3px 0;
+            border-radius: 5px;
+            word-wrap: break-word;
+        }
+
+        /* Input Field */
+        .chat-input {
+            display: flex;
+            border-top: 2px solid #23272a;
+            background: #40444b;
+        }
+
+        .chat-input input {
+            flex: 1;
+            border: none;
+            padding: 8px;
+            background: #40444b;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input button {
+            background: #5865f2;
+            color: white;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .chat-input button:hover {
+            background: #4752c4;
+        }
+
+        #stats-list {
+            padding: 0;
+        }
     </style>
 </head>
 
 <body>
-    <div id="toolbar">
-        <button id="inventory">Inventory</button>
-        <button id="spells">Spellbook</button>
+    <div id="toolbar" onclick="event.stopPropagation();">
+        <button id="inventory">Items</button>
+        <button id="spells">Magic</button>
         <button id="stats">Stats</button>
-        <button id="worn">Worn</button>
-        <button id="combat">Combat Settings</button>
+        <button id="open-worn-items">Worn</button>
+        <button id="open-combat-settings">Settings</button>
     </div>
 
     <!-- Popup container (hidden initially) -->
-    <div id="popup" class="popup" style="display: none;">
-        <div class="popup-content">
-            <span id="popup-close" class="popup-close">X</span>
-            <span id="popup-text">Menu:</span>
-            <ul id="menu-items"></ul>
+    <div id="popup" class="popup-overlay-clear" style="display: none;">
+        <div class="popup">
+            <div class="popup-content">
+                <button id="popup-close" class="close-button">✖</button>
+                <!-- <span id="popup-text">Menu:</span> -->
+                <ul id="menu-items"></ul>
+            </div>
         </div>
     </div>
 
-    <div id="statsPopup" class="stats-popup" onclick="event.stopPropagation();">
-        <h2>Character Stats</h2>
-        <ul>
-            <li>Magic: 200,546,787</li>
-            <li>Archery: 7,434,876</li>
-            <li>Strength: 3,768,423</li>
-            <li>Defense: 4,768,234</li>
-            <li>HP: 9,654,768</li>
-            <li>Stamina: 7,543,657</li>
-            <li>Blacksmithing: 2,489,894</li>
-            <li>Mining: 6,438,938</li>
-            <li>Construction: 3,230,395</li>
-            <li>Craft: 2,020,043</li>
-            <li>Fishing: 1,528,010</li>
-            <li>Cooking: 1,232,360</li>
-        </ul>
-        <button class="close-button" onclick="closeStats()">Close</button>
+    <div id="statsPopup" class="popup-overlay-clear" onclick="event.stopPropagation();">
+        <div class="popup">
+            <div class="popup-content">
+                <button id="popup-close" class="close-button" onclick="closeStats()">✖</button>
+                <ul id="stats-list">
+                </ul>
+            </div>
+        </div>
     </div>
 
+    <!-- Combat Settings Popup -->
+    <div class="popup-overlay-clear" id="combatPopup" onclick="event.stopPropagation();">
+        <div class="popup">
+            <button class="close-button" id="close-combat">✖</button>
+
+            <div class="combat-mode">
+                <label>
+                    <input type="radio" name="combatMode" value="attack" checked>
+                    Attack
+                </label>
+                <label>
+                    <input type="radio" name="combatMode" value="defend">
+                    Defend
+                </label>
+            </div>
+
+            <div class="combat-options">
+                <label>
+                    <input type="checkbox" id="autoAttack"> Auto Attack
+                </label>
+                <button id="specialAttack">Special Attack</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Worn Items Popup -->
+    <div class="popup-overlay-clear" id="wornPopup" onclick="event.stopPropagation();">
+        <div class="popup">
+            <button class="close-button" id="close-worn">✖</button>
+
+            <div class="equipment-grid">
+                <div class="equipment-slot" data-slot="helmet" id="helmet">Helmet</div>
+                <div class="equipment-slot" data-slot="torso" id="torso">Torso</div>
+                <div class="equipment-slot" data-slot="pants" id="pants">Pants</div>
+                <div class="equipment-slot" data-slot="left-hand" id="left-hand">Left Hand</div>
+                <div class="equipment-slot" data-slot="right-hand" id="right-hand">Right Hand</div>
+                <div class="equipment-slot" data-slot="left-shoe" id="left-shoe">Left Shoe</div>
+                <div class="equipment-slot" data-slot="right-shoe" id="right-shoe">Right Shoe</div>
+                <div class="equipment-slot" data-slot="ring" id="ring">Ring</div>
+                <div class="equipment-slot" data-slot="necklace" id="necklace">Necklace</div>
+            </div>
+        </div>
+    </div>
 
     <!-- Spellbook Overlay (Hidden Initially) -->
-    <div class="spellbook-overlay" id="spellbookOverlay">
-        <div class="spellbook">
+    <div class="popup-overlay-clear" id="spellbookOverlay" onclick="event.stopPropagation();">
+        <div class="popup">
             <button id="close-spellbook" class="close-button" onclick="toggleSpellbook()">✖</button>
-            <h2>Spellbook</h2>
             <ul class="spells-container" id="spellList">
             </ul>
+        </div>
+    </div>
+
+    <div class="popup-overlay-clear" id="bankUI">
+        <div id="bankUI" class="popup">
+            <div id="bankItems"></div>
+            <button onclick="closeBank()" class="close-button">✖</button>
+        </div>
+    </div>
+
+    <div class="popup-overlay-clear" id="fletchUI">
+        <div id="fletchUI" class="popup">
+            <div id="fletch-items"></div>
+            <button onclick="toggleFletchUI()" class="close-button">✖</button>
+        </div>
+    </div>
+
+    <div class="popup-overlay-clear" id="smithUI">
+        <div id="smithUI" class="popup">
+            <div id="smithItems"></div>
+            <button onclick="toggleSmithUI()" class="close-button">✖</button>
+        </div>
+    </div>
+
+    <!-- Username Popup -->
+    <div class="popup-overlay" id="usernamePopup" onclick="event.stopPropagation();">
+        <div class="popup">
+            <button class="close-button" id="close-popup">✖</button>
+            <h2>Enter Username</h2>
+            <input type="text" id="usernameInput" placeholder="Enter your username" />
+            <button id="submitUsername">Submit</button>
         </div>
     </div>
 
@@ -377,8 +654,3515 @@
         </ul>
     </div>
 
-    <script>
+    <div id="contextMenu" class="menu">
+        <button onclick="doAction()">Cancel</button>
+    </div>
 
+    <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io("https://ec2-18-205-27-62.compute-1.amazonaws.com:4000"); // Replace with your server URL
+
+        socket.on("connect", () => {
+            console.log("Connected to the server!");
+        });
+
+        socket.emit("message", "Hello from the browser!");
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const popup = document.getElementById("usernamePopup");
+            const closeButton = document.getElementById("close-popup");
+            const submitButton = document.getElementById("submitUsername");
+            const usernameInput = document.getElementById("usernameInput");
+
+            // Show the popup when the game starts
+            popup.style.display = "flex";
+
+            submitButton.addEventListener("click", () => {
+                const username = usernameInput.value.trim();
+                if (username) {
+                    // Update the Player class with the username
+                    playerObj.username = username;
+
+                    players[username] = {};
+
+                    // Emit login message
+                    socket.emit("message", { username, type: "chat_message", message: "logged in." });
+
+                    socket.emit("message", { username, type: "logged_in" });
+
+                    socket.emit("currentPlayers", { username });
+
+                    socket.emit("message", { type: "mesh", meshData: { attackable: true, username, ...playerObj.skills, takeDamage: (damage, attacker) => playerObj.takeDamage(damage, attacker) } });
+
+                    // Hide popup
+                    popup.style.display = "none";
+                } else {
+                    alert("Please enter a valid username.");
+                }
+            });
+
+            closeButton.addEventListener("click", () => {
+                alert("You must enter a username before continuing.");
+            });
+        });
+
+
+        // Get elements
+        const combatPopup = document.getElementById("combatPopup");
+        const wornPopup = document.getElementById("wornPopup");
+        const openCombatButton = document.getElementById("open-combat-settings");
+        const openWornButton = document.getElementById("open-worn-items");
+        const closeCombatButton = document.getElementById("close-combat");
+        const closeWornButton = document.getElementById("close-worn");
+        const equipmentSlots = document.querySelectorAll(".equipment-slot");
+
+        // Sample Equipment Data
+        const equippedItems = {
+            helmet: null,
+            torso: null,
+            pants: null,
+            "left-hand": { name: "Sword", equipable: true, equipType: 'left-hand' },
+            "right-hand": null,
+            "left-shoe": { name: "Leather Boot", equipable: true, equipType: 'left-shoe' },
+            "right-shoe": { name: "Leather Boot", equipable: true, equipType: 'right-shoe' },
+            ring: null,
+            necklace: { name: "Silver Pendant", equipable: true, equipType: 'necklace' }
+        };
+
+        // Function to Load Worn Equipment
+        function loadWornItems() {
+            equipmentSlots.forEach(slot => {
+                const slotName = slot.dataset.slot;
+                slot.textContent = equippedItems[slotName] ? equippedItems[slotName].name : "Empty";
+            });
+        }
+
+        // Open Combat Settings
+        openCombatButton.addEventListener("click", function () {
+            combatPopup.style.display = "flex";
+        });
+
+        // Combat mode radio buttons
+        document.querySelectorAll('input[name="combatMode"]').forEach(input => {
+            input.addEventListener("change", (event) => {
+                // Set the player's combat mode based on the selected radio button
+                const selectedMode = event.target.value;
+                playerObj.toggleCombatMode(selectedMode);
+            });
+        });
+
+        // Auto attack checkbox
+        const autoAttackCheckbox = document.getElementById("autoAttack");
+        autoAttackCheckbox.addEventListener("change", (event) => {
+            // Enable or disable auto attack based on checkbox status
+            playerObj.toggleAutoAttack(event.target.checked);
+        });
+
+        // Special attack button
+        const specialAttackButton = document.getElementById("specialAttack");
+        specialAttackButton.addEventListener("click", () => {
+            // Trigger special attack if available
+            playerObj.triggerSpecialAttack();
+        });
+
+
+        // Open Worn Items
+        openWornButton.addEventListener("click", function () {
+            wornPopup.style.display = "flex";
+            loadWornItems();
+        });
+
+        // Close Popups
+        closeCombatButton.addEventListener("click", function () {
+            combatPopup.style.display = "none";
+        });
+        closeWornButton.addEventListener("click", function () {
+            wornPopup.style.display = "none";
+        });
+
+        // Unequip Items on Click
+        equipmentSlots.forEach(slot => {
+            slot.addEventListener("click", function () {
+                const slotName = slot.dataset.slot;
+                if (equippedItems[slotName]) {
+                    if (equippedItems[slotName].equipType === "both_hands") {
+                        console.log('dupe bug')
+                    }
+                    // Move to Inventory (Placeholder)
+                    console.log(`Unequipped ${equippedItems[slotName]}`);
+                    addToInventory(equippedItems[slotName].name ? equippedItems[slotName] : { name: equippedItems[slotName] });
+                    equippedItems[slotName] = null;
+                    slot.textContent = "Empty";
+                }
+            });
+        });
+
+        const spells = [
+            {
+                name: "Cursed Flame",
+                damage: 100,
+                recoilDamage: 20,
+                drain: 50,
+                description: "A powerful flame spell that damages enemies but also harms the caster with recoil.",
+                type: "Fire Magic",
+                racialOrigin: ["European", "Native American"],
+                requirements: [
+                    { name: "Cherokee Spirit Herb", type: "Magic Material", stackable: true, quantity: 2, tradeable: true }
+                ],
+                cast: function (caster) {
+                    console.log(`${caster.name} casted ${this.name} and took ${this.recoilDamage} recoil damage!`);
+                    caster.hp -= this.recoilDamage;
+                    caster.mp -= this.drain;
+                }
+            },
+            {
+                name: "Prayer to the Spirits",
+                restoreAmount: 50,
+                drain: 10,
+                description: "A prayer to the ancestral spirits to regain lost magic power.",
+                restores: "Magic",
+                racialOrigin: ["Native American", "African"],
+                cast: function (caster) {
+                    console.log(`${caster.name} prays to the spirits and restores ${this.restoreAmount} MP.`);
+                    caster.mp += this.restoreAmount;
+                    caster.mp -= this.drain;
+                }
+            },
+            {
+                name: "Ritual of the Ancients",
+                restoreAmount: 100,
+                drain: 20,
+                restores: "Magic",
+                description: "A sacred ritual that can restore a significant amount of magic power.",
+                racialOrigin: ["Native American", "European"],
+                cast: function (caster) {
+                    console.log(`${caster.name} performs the Ritual of the Ancients, restoring ${this.restoreAmount} MP.`);
+                    caster.mp += this.restoreAmount;
+                    caster.mp -= this.drain;
+                }
+            },
+            {
+                name: "Sacred Herb Tea",
+                restoreAmount: 30,
+                drain: 5,
+                description: "A potion brewed from sacred herbs that restores magic power.",
+                racialOrigin: ["Native American", "European"],
+                cast: function (caster) {
+                    console.log(`${caster.name} drinks Sacred Herb Tea, restoring ${this.restoreAmount} MP.`);
+                    caster.mp += this.restoreAmount;
+                    caster.mp -= this.drain;
+                }
+            },
+            {
+                name: "Wind Whisper",
+                damage: 0,
+                drain: 15,
+                description: "A wind-based spell that summons a gentle breeze to carry messages over long distances.",
+                type: "Nature Magic",
+                racialOrigin: ["Powhatan", "Native American"],
+                requirements: [{ name: "Powhatan Shaman Stone", type: "Magic Material", stackable: true, quantity: 1, tradeable: true }]
+            },
+            {
+                name: "Flame of the Earth",
+                damage: 25,
+                drain: 30,
+                description: "Summons a burst of fire from the earth to attack enemies, burning them over time.",
+                type: "Fire Magic",
+                racialOrigin: ["Cherokee", "Native American"],
+                requirements: [{ name: "Cherokee Spirit Herb", type: "Magic Material", stackable: true, quantity: 2, tradeable: true }]
+            },
+            {
+                name: "Spirit Shield",
+                damage: 0,
+                drain: 40,
+                description: "A protective barrier formed from ancestral spirits, absorbing damage from attacks.",
+                type: "Defensive Magic",
+                maxDamageAbsorbed: 50,
+                currentAbsorption: 50,
+                racialOrigin: ["European", "Native American"],
+                requirements: [{ name: "Monacan Moonstone", type: "Magic Material", stackable: false, quantity: 1, tradeable: true }]
+            },
+            {
+                name: "Lightning Strike",
+                damage: 40,
+                drain: 60,
+                description: "Calls down a powerful bolt of lightning to smite enemies from the skies.",
+                type: "Storm Magic",
+                racialOrigin: ["Taino", "Native American"],
+                requirements: [{ name: "Taino Ritual Mask (Puerto Rico)", type: "Magic Material", stackable: false, quantity: 1, tradeable: true }]
+            },
+            {
+                name: "Healing Waters",
+                healAmount: 50,
+                target: "HP",
+                drain: 10,
+                description: "Heals wounds and restores vitality by summoning the pure waters of the sacred rivers.",
+                type: "Healing Magic",
+                racialOrigin: ["Taino", "Native American"],
+                requirements: [{ name: "Taino Mahogany (Dominican Republic)", type: "Woodcutting Material", stackable: true, quantity: 1, tradeable: true }]
+            },
+            {
+                name: "Fireball",
+                damage: 50,
+                drain: 50,
+                description: "A spell that launches a fireball towards enemies, exploding on impact.",
+                type: "Fire Magic",
+                racialOrigin: ["French", "European"],
+                requirements: [{ name: "French Flint and Steel", type: "Fire Making Tool", stackable: false, tradeable: true }]
+            },
+            {
+                name: "Blessing of the Wind",
+                damage: 0,
+                drain: 20,
+                target: "Agility",
+                description: "Increases the speed of allies by summoning a magical wind to carry them faster.",
+                type: "Buff Magic",
+                racialOrigin: ["European", "Native American"],
+                requirements: [{ name: "Dutch Tinderbox", type: "Fire Making Tool", stackable: false, tradeable: true }]
+            },
+            {
+                name: "Sword of the Ancients",
+                damage: 70,
+                drain: 45,
+                description: "Summons an ethereal sword that strikes enemies with great force.",
+                type: "Weapon Summoning",
+                racialOrigin: ["European"],
+                requirements: [{ name: "Dutch Iron Ore", type: "Smithing Material", stackable: true, quantity: 2, tradeable: true }]
+            },
+            {
+                name: "Healing Light",
+                healAmount: 40,  // Amount healed added
+                drain: 15,
+                target: "HP",
+                description: "A light-based healing spell that slowly regenerates health over time.",
+                type: "Healing Magic",
+                racialOrigin: ["French", "European"],
+                requirements: [{ name: "French Steel Ingot", type: "Smithing Material", stackable: true, quantity: 1, tradeable: true }]
+            },
+            {
+                name: "Thunderclap",
+                damage: 30,
+                drain: 40,
+                description: "Summons a loud thunderclap to stun enemies and cause light damage.",
+                type: "Storm Magic",
+                racialOrigin: ["Native American", "African"],
+                requirements: [{ name: "Pilgrim Pine Wood", type: "Woodcutting Material", stackable: true, quantity: 1, tradeable: true }]
+            },
+            {
+                name: "Voodoo Curse",
+                damage: 20,
+                drain: 30,
+                description: "Curses an enemy, causing them to take damage over time and lose health.",
+                type: "Dark Magic",
+                racialOrigin: ["Zambo"],
+                requirements: [{ name: "Zambo Spirit Dust", type: "Magic Material", stackable: true, quantity: 1, tradeable: true }]
+            },
+            {
+                name: "Healing Waters",
+                healAmount: 50,  // Amount healed added
+                drain: 10,
+                target: "HP",
+                description: "Summons healing waters to restore health and cleanse allies of toxins and curses.",
+                type: "Healing Magic",
+                racialOrigin: ["African"],
+                requirements: [{ name: "Manding Healing Crystal", type: "Magic Material", stackable: true, quantity: 1, tradeable: true }]
+            },
+            {
+                name: "Summon Lion's Roar",
+                damage: 60,
+                drain: 50,
+                description: "Summons the powerful roar of a lion, disorienting and damaging nearby enemies.",
+                type: "Summoning Magic",
+                racialOrigin: ["African"],
+                requirements: [{ name: "Manding Spirit Herb", type: "Magic Material", stackable: true, quantity: 1, tradeable: true }]
+            },
+            {
+                name: "Earthquake",
+                damage: 40,
+                drain: 60,
+                description: "Shakes the earth beneath your enemies, causing massive damage to a wide area.",
+                type: "Earth Magic",
+                racialOrigin: ["African"],
+                requirements: [{ name: "Manding Spirit Herb", type: "Magic Material", stackable: true, quantity: 2, tradeable: true }]
+            },
+            {
+                name: "Ancestral Shield",
+                damage: 0,
+                drain: 50,
+                maxDamageAbsorbed: 50,
+                currentAbsorption: 50,
+                description: "Summons the protection of ancestral spirits, creating a shield that absorbs damage.",
+                type: "Defensive Magic",
+                racialOrigin: ["Zambo", "African"],
+                requirements: [{ name: "Zambo Spirit Dust", type: "Magic Material", stackable: true, quantity: 2, tradeable: true }]
+            },
+            {
+                name: "Fire Arrow",
+                damage: 40,
+                drain: 45,
+                description: "Shoots an arrow imbued with magical fire, dealing damage and burning enemies.",
+                type: "Fire Magic",
+                racialOrigin: ["Native American"],
+                requirements: [
+                    { name: "Cherokee Turkey Feathers", type: "Fletching Material", stackable: true, quantity: 1, tradeable: true },
+                    { name: "French Flint and Steel", type: "Fire Making Tool", stackable: false, tradeable: true }
+                ]
+            },
+            {
+                name: "Healing Winds",
+                healAmount: 30,  // Amount healed added
+                drain: 10,
+                target: "HP",
+                description: "Summons gentle winds to heal and soothe your allies, restoring health over time.",
+                type: "Healing Magic",
+                racialOrigin: ["European", "Native American"],
+                cast: function () {
+                    if (playerObj.skills.mage.currLevel >= 10) {
+                        addMessage("Game", `${playerObj.username} casts Healing Winds and restores ${this.healAmount} health.`);
+                        playerObj.regenerateStat("hp", this.healAmount);
+                        playerObj.drainStat("mage", this.drain);
+                    } else {
+                        addMessage("Game", `${playerObj.skills.mage.currLevel}/${playerObj.skills.mage.level} Mage left. Spell fails!`);
+                    }
+                }
+            }
+        ];
+
+        function showStats() {
+            document.getElementById("statsPopup").style.display = "block";
+        }
+        function closeStats() {
+            document.getElementById("statsPopup").style.display = "none";
+        }
+
+        function toggleSpellbook() {
+            const popup = document.getElementById("spellbookOverlay");
+            popup.style.display = popup.style.display === "block" ? "none" : "block";
+        }
+
+        document.getElementById("spells").addEventListener("click", toggleSpellbook);
+
+        let activeSpell = null;
+        const spellList = document.getElementById("spellList");
+
+        spells.forEach(spell => {
+            // Create list item container
+            const listItemContainer = document.createElement("li");
+            listItemContainer.className = "spell";
+            listItemContainer.setAttribute("data-name", spell.name);
+
+            // Create spell item container
+            const spellItem = document.createElement("div");
+            listItemContainer.appendChild(spellItem);
+
+            // Create spell icon
+            const icon = document.createElement("img");
+            icon.src = "./assets/default_spell_icon.png";
+            icon.alt = spell.name;
+            spellItem.className = "default-icon";
+            spellItem.appendChild(icon);
+
+            // Click event to select a spell
+            spellItem.addEventListener("click", () => {
+                // Check if the clicked spell is already active
+                if (activeSpell === spell) {
+                    // If the same spell is clicked again, set activeSpell to null and remove 'active' class
+                    activeSpell = null;
+                    document.querySelectorAll(".spell").forEach(item => {
+                        item.classList.remove("active");
+                    });
+                    spell.cast && spell.cast(this);
+                    addMessage("Game", `Deselected spell: ${spell.name}`);
+                } else {
+                    // Remove 'active' class from all spell items
+                    document.querySelectorAll(".spell").forEach(item => {
+                        item.classList.remove("active");
+                    });
+
+                    // Set the selected spell as active
+                    activeSpell = spell;
+                    listItemContainer.classList.add("active");
+
+                    addMessage("Game", `Selected spell: ${spell.name}`);
+                }
+            });
+
+
+            spellList.appendChild(listItemContainer);
+        });
+
+
+        // Get elements
+        const spellbookOverlay = document.getElementById("spellbookOverlay");
+        const closeSpellbookButton = document.getElementById("close-spellbook");
+
+
+        // Function to Load Spells
+        // function loadSpells() {
+        //     spellList.innerHTML = ""; // Clear existing list
+
+        //     spells.forEach(spell => {
+        //         const listItemContainer = document.createElement("li");
+        //         listItemContainer.className = "spell";
+        //         listItemContainer.setAttribute("data-name", spell.name);
+
+        //         const spellItem = document.createElement("div");
+        //         spellItem.className = "spell-icon";
+
+        //         const icon = document.createElement("img");
+        //         icon.src = spell.icon || "./assets/default_spell_icon.png";
+        //         icon.alt = spell.name;
+
+        //         spellItem.appendChild(icon);
+        //         listItemContainer.appendChild(spellItem);
+        //         spellList.appendChild(listItemContainer);
+
+        //         spellItem.addEventListener("click", () => {
+        //             activeSpell = spell;
+        //             listItemContainer.classList.toggle("active");
+        //             console.log(activeSpell)
+        //         });
+        //     });
+        // }
+
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(10, 20, 10);
+        scene.add(light);
+
+        // Ground (map)
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+
+        class Player {
+            constructor() {
+                // Initialize all skills with currLevel and experience.
+
+                // Regeneration logic
+                this.regenerationRates = {
+                    agility: 0.2,
+                    strength: 0.2,
+                    craft: 0.2
+                };
+
+                this.defaultSkillsState = {
+                    craft: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    agility: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    strength: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    archer: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    mage: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    defense: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    hp: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                }
+
+                this.skills = {
+                    craft: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    agility: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    strength: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    archer: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    mage: { level: 10, currLevel: 10, experience: 100, maxLevel: 99 },
+                    defense: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                    hp: { level: 10, currLevel: 8, experience: 100, maxLevel: 99 },
+                };
+
+                this.regenerationIntervals = {}; // Store intervals for each skill
+
+                this.playerIsMining = false; // Track if the player is mining
+
+                this.username = ""
+
+                this.alive = true;
+
+                this.autoAttack = true;
+
+                // Combat Settings
+                this.combatMode = "attack"; // Default: Attack Mode
+
+                this.equippedItems = { leftHand: null, rightHand: null };
+
+                this.setCombatMode("attack");
+            }
+
+            toggleCombatMode(mode) {
+                this.combatMode = mode;
+                this.setCombatMode(mode)
+                console.log(`Combat mode set to: ${this.combatMode}`);
+            }
+
+            toggleAutoAttack(status) {
+                this.autoAttack = status;
+                console.log(`Auto attack is ${this.autoAttack ? "enabled" : "disabled"}`);
+            }
+
+            triggerSpecialAttack() {
+                if (this.isSpecialAttackAvailable) {
+                    console.log("Special attack triggered!");
+                    // Implement special attack logic here
+                } else {
+                    console.log("Special attack is not available.");
+                }
+            }
+
+            setCombatMode(mode) {
+                if (mode === "attack") {
+                    this.combatMode = "attack";
+                    this.skills.strength.level = this.defaultSkillsState.strength.level + 5;
+                    this.skills.defense.level = this.defaultSkillsState.defense.level - 2;
+                } else if (mode === "defend") {
+                    this.skills.combatMode = "defend";
+                    this.skills.defense.level = this.defaultSkillsState.strength.level + 5;
+                    this.skills.strength.level = this.defaultSkillsState.defense.level - 2;
+                }
+                this.displayStats();
+                console.log(`Combat mode set to: ${this.combatMode}`);
+            }
+
+            specialAttack() {
+                const leftHandItem = this.equippedItems.leftHand;
+                const rightHandItem = this.equippedItems.rightHand;
+
+                // Check if either equipped item has a special attack
+                if (leftHandItem?.specialAttack || rightHandItem?.specialAttack) {
+                    addMessage('Game', "No special attack available.");
+                    return;
+                }
+
+                addMessage('Game', "No special attack available.");
+            }
+
+            attack(target) {
+                console.log(target);
+                if (!this.alive) return;
+
+                if (activeSpell) {
+                    console.log(activeSpell);
+
+                    function calculateSpellDamage(player, target, spell) {
+                        if (player.skills.mage.level === 0) return 0; // Prevent division by zero
+
+                        return (spell.damage * (player.skills.mage.level / 100)) * (target.stats.mage / 100);
+                    }
+
+                    const damage = calculateSpellDamage(this, target, activeSpell);
+
+                    addMessage('Game', `Player casts ${activeSpell.name}!`);
+
+                    return target.takeDamage(damage, this);
+
+
+                    // activeSpell.drain
+                    // activeSpell.recoilDamage
+                }
+
+                if (equippedItems["left-hand"] && equippedItems["left-hand"].name.includes("bow") || equippedItems["right-hand"] && equippedItems["right-hand"].name.includes("bow")) {
+                    console.log("ranged")
+
+                    function calculateRangedDamage(player, target) {
+                        if (player.skills.archer.level === 0) return 0; // Prevent division by zero
+
+                        return (20 * (player.skills.archer.level / 100)) * (target.stats.archer / 100);
+                    }
+
+                    const damage = calculateRangedDamage(this, target);
+
+                    addMessage('Game', `Player shoots an arrow!`);
+
+                    return target.takeDamage(damage, this);
+                }
+
+                const damage = Math.max(1, this.skills.strength.level - target.stats.defense);
+                addMessage('Game', `Player attacks for ${damage} damage!`);
+                target.takeDamage(damage, this);
+            }
+
+            takeDamage(damage, attacker) {
+                if (!this.alive) return;
+                let damageTaken = damage;
+
+                // Modify damage based on combat mode
+                if (this.combatMode === "attack") {
+                    damageTaken *= 1.2; // Take 20% more damage
+                } else if (this.combatMode === "defend") {
+                    damageTaken *= 0.8; // Take 20% less damage
+                }
+
+                this.skills.hp.currLevel -= damageTaken;
+                addMessage('Game', `Player took ${damageTaken} damage! HP left: ${this.skills.hp.currLevel}`);
+
+                if (this.skills.hp.currLevel <= 0) {
+                    this.die();
+                }
+
+                console.log('took damage');
+
+                if (this.autoAttack) {
+                    console.log('fasdf')
+                    this.attack(attacker);
+                }
+            }
+
+            die() {
+                this.alive = false;
+                scene.remove(player);
+                addMessage('Game', "Player has died!");
+                setTimeout(() => this.respawn(), 3000);
+            }
+
+            respawn() {
+                this.alive = true;
+                this.skills = this.defaultSkillsState;
+                setTimeout(() => scene.add(player), 3000);
+            }
+
+            // Function to calculate the level based on experience
+            calculateLevel(experience) {
+                return Math.min(Math.floor(experience / 10), 99);  // Example formula: experience / 10 to determine level (up to max of 99)
+            }
+
+            // Function to update the experience for a stat
+            updateExperience(skill, experienceGained) {
+                if (this.skills[skill]) {
+                    let skillData = this.skills[skill];
+                    skillData.experience += experienceGained;
+
+                    // Update the level based on new experience
+                    skillData.level = this.calculateLevel(skillData.experience);
+
+                    this.displayStats();
+                    addMessage('Game', `${skill} experience updated. New level: ${skillData.currLevel}`);
+
+
+                } else {
+                    console.error("Skill not found!");
+                }
+            }
+
+            // Method to get the max stat level
+            getMaxStat(skill) {
+                if (this.skills[skill]) {
+                    return this.skills[skill].maxLevel;
+                } else {
+                    console.error("Skill not found!");
+                    return 0;
+                }
+            }
+
+            // Method to get the current usable stat level
+            getCurrentStat(skill) {
+                if (this.skills[skill]) {
+                    let skillData = this.skills[skill];
+                    return Math.min(skillData.currLevel, skillData.maxLevel);
+                } else {
+                    console.error("Skill not found!");
+                    return 0;
+                }
+            }
+
+            // Generic function to drain any stat
+            drainStat(skill, amount) {
+                if (this.skills[skill]) {
+                    let skillData = this.skills[skill];
+                    skillData.currLevel = Math.max(skillData.currLevel - amount, 0);  // Ensure the stat doesn't drop below 0
+                    console.log(`${skill} drained by ${amount}. New ${skill} level: ${skillData.currLevel}`);
+                } else {
+                    console.error("Skill not found!");
+                }
+            }
+
+            // Function to regenerate any stat back to max over time
+            regenerateStat(skill, amount = 0) {
+                if (this.skills[skill]) {
+                    let skillData = this.skills[skill];
+                    const regenerationRate = this.regenerationRates[skill] || 0.2; // Use the defined regeneration rate for each skill
+
+                    if (amount) {
+                        skillData.currLevel += amount;
+                        console.log(`${skill} manually regenerated by ${amount}. New level: ${skillData.currLevel}`);
+                    }
+
+                    // Ensure currLevel doesn't exceed level
+                    if (skillData.currLevel > skillData.level) {
+                        skillData.currLevel = skillData.level;
+                    }
+
+                    // Only regenerate if the current level is less than the max level
+                    if (skillData.currLevel < skillData.maxLevel && skillData.currLevel < skillData.level) {
+                        // Calculate the regeneration amount based on the max level
+                        let regenerationAmount = (skillData.maxLevel - skillData.currLevel) * regenerationRate;
+
+                        // Apply the regeneration
+                        skillData.currLevel += regenerationAmount;
+
+                        // Ensure the stat doesn't exceed the max level or level
+                        if (skillData.currLevel >= skillData.maxLevel) {
+                            skillData.currLevel = skillData.maxLevel; // Clamp to max level if it reaches or exceeds max
+                            console.log(`${skill} reached max level. Regeneration stopped.`);
+                        } else if (skillData.currLevel >= skillData.level) {
+                            skillData.currLevel = skillData.level; // Clamp to level if it exceeds level
+                            console.log(`${skill} reached level limit. Regeneration stopped.`);
+                            this.stopRegeneration(skill); // Stop the interval when currLevel equals level
+                        } else {
+                            console.log(`${skill} regenerated. New ${skill} level: ${skillData.currLevel}`);
+                        }
+                    } else {
+                        console.log(`${skill} is already at max level or at its level limit. No regeneration needed.`);
+                    }
+                } else {
+                    console.error("Skill not found or player is mining!");
+                }
+
+                this.displayStats();
+            }
+
+            // Function to start regeneration interval for a skill
+            startRegeneration(skill) {
+                // Ensure we are not already regenerating the skill
+                if (!this.regenerationIntervals[skill]) {
+                    this.regenerationIntervals[skill] = setInterval(() => this.regenerateStat(skill), 1000); // Regenerate every second
+                    console.log(`Started regeneration for ${skill}`);
+                }
+            }
+
+            // Function to stop regeneration interval for a skill
+            stopRegeneration(skill) {
+                if (this.regenerationIntervals[skill]) {
+                    clearInterval(this.regenerationIntervals[skill]);
+                    delete this.regenerationIntervals[skill]; // Clean up the interval reference
+                    console.log(`Stopped regeneration for ${skill}`);
+                }
+            }
+
+            // Getter and setter for currLevel and level (to maintain consistency)
+            setCurrLevel(skill, value) {
+                const skillData = this.skills[skill];
+                if (value > skillData.level) {
+                    skillData.currLevel = skillData.level;
+                } else {
+                    skillData.currLevel = value;
+                }
+            }
+
+            setLevel(skill, value) {
+                const skillData = this.skills[skill];
+                if (value < skillData.currLevel) {
+                    skillData.level = skillData.currLevel;
+                } else {
+                    skillData.level = value;
+                }
+            }
+
+
+            // Reset experience for a skill
+            resetExperience(skill) {
+                if (this.skills[skill]) {
+                    this.skills[skill].experience = 0;
+                    this.skills[skill].currLevel = 0;
+                    console.log(`${skill} experience reset. currLevel: 0`);
+                } else {
+                    console.error("Skill not found!");
+                }
+            }
+
+            displayStats() {
+                // Get the stats container element
+                const statsContainer = document.getElementById("stats-list");
+
+                // Clear the current stats list
+                statsContainer.innerHTML = '';
+
+                // Create a heading with player's name
+                const playerName = document.createElement("h2");
+                playerName.textContent = `${this.name}`;
+                statsContainer.appendChild(playerName);
+
+                // Iterate over all skills to display their stats
+                for (const skill in this.skills) {
+                    const skillData = this.skills[skill];
+
+                    // Create a list item for each skill
+                    const skillItem = document.createElement("div");
+                    skillItem.innerHTML = `
+                <strong>${skill.charAt(0).toUpperCase() + skill.slice(1)}</strong>: 
+                Level ${skillData.currLevel}/${skillData.level}/${skillData.maxLevel} - 
+                Experience: ${skillData.experience}
+            `;
+                    statsContainer.appendChild(skillItem);
+                }
+            }
+        }
+
+        let players = {};
+        let items = {};
+
+        const playerObj = new Player();
+        playerObj.displayStats();
+
+        // Player character (simple cube)
+        const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
+        const playerMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+        const player = new THREE.Mesh(playerGeometry, playerMaterial);
+        player.userData = { username: playerObj.username, attackable: true, ...playerObj.skills, takeDamage: (damage, attacker) => playerObj.takeDamage(damage, attacker) }
+        player.position.y = 1;
+        scene.add(player);
+
+        function createNewPlayer(data) {
+            const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
+            const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 });
+            const player = new THREE.Mesh(playerGeometry, playerMaterial);
+            player.userData = { ...data, takeDamage: (damage, attacker) => playerObj.takeDamage(damage, attacker) }
+            player.position.y = 1;
+            scene.add(player);
+            return player;
+        }
+
+        socket.on("message", (data) => {
+            if (data.type === "chat_message") {
+                addMessage(data.username, data.message);
+
+            }
+
+            if (data.type === "logged_in") {
+                players[data.username] = {}
+            }
+
+            if (data.type === "mesh") {
+                if (data.meshData.username !== playerObj.username) {
+                    const newPlayer = createNewPlayer(data.meshData);
+                    players = { ...players, [data.meshData.username]: newPlayer };
+                }
+            }
+
+            if (data.type === "item_mesh") {
+                // Drop the item on the ground at a random position (keep y-axis at the ground level)
+                const itemGeometry = new THREE.BoxGeometry(1, 1, 1); // Simple item geometry (a cube)
+                const itemMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red color for the dropped item
+                const item = new THREE.Mesh(itemGeometry, itemMaterial);
+
+                // Set the position of the dropped item
+                item.position.set(data.meshData.position.x, 0.5, data.meshData.position.z); // Adjust height to make sure it appears above the ground
+                item.userData = { ...data.meshData };
+                items = { ...items, [item.uuid]: item }
+                scene.add(item);
+            }
+
+            if (data.type === "remove_item_mesh") {
+                console.log(data);
+                console.log(items);
+                console.log(data.item.object === items[data.item.object.uuid])
+                scene.remove(items[data.item.object.userData.uuid]);
+            }
+
+            if (data.type === "player_moved") {
+                if (data.username !== playerObj.username) {
+                    players[data.username].position.set(data.position.x, data.position.y, data.position.z);
+                }
+            }
+        });
+
+        socket.on("currentPlayers", (data) => {
+            Object.values(players).forEach(playerData => {
+                const newPlayer = createNewPlayer(playerData);
+                players = { ...players, [playerData.username]: newPlayer };
+            });
+        });
+
+        socket.on("removePlayer", (data) => {
+            const playerToRemove = players[data.username]; // Get player from local storage
+            if (playerToRemove) {
+                scene.remove(playerToRemove); // Remove from scene
+                delete players[data.username]; // Remove from memory
+            }
+        });
+
+        // Camera settings
+        let cameraAngle = 0; // Angle around the player
+        let cameraDistance = 15; // Camera distance from player
+        const cameraHeight = 10;
+        let cameraVerticalOffset = 0; // Vertical offset for panning up and down
+        const minCameraHeight = 1; // Minimum height of the camera (stop panning down below this level)
+
+        // Update camera position to orbit around the player
+        function updateCameraPosition() {
+            const offsetX = Math.sin(cameraAngle) * cameraDistance;
+            const offsetZ = Math.cos(cameraAngle) * cameraDistance;
+
+            camera.position.set(
+                player.position.x + offsetX,
+                player.position.y + cameraHeight + cameraVerticalOffset,
+                player.position.z + offsetZ
+            );
+
+            // Prevent camera from going below the ground
+            if (camera.position.y < minCameraHeight) {
+                camera.position.y = minCameraHeight; // Stop panning down
+                cameraVerticalOffset = 0; // Prevent further downward panning
+            }
+
+            camera.lookAt(player.position);
+        }
+        updateCameraPosition();
+
+        // Handle keyboard input for camera rotation
+        document.addEventListener("keydown", (event) => {
+            const rotationSpeed = 0.1; // Increased rotation speed
+            const verticalSpeed = 0.1; // Increased vertical speed to match horizontal speed
+            if (event.key === "ArrowLeft") {
+                cameraAngle -= rotationSpeed; // Reverse the direction: Rotate right
+            } else if (event.key === "ArrowRight") {
+                cameraAngle += rotationSpeed; // Reverse the direction: Rotate left
+            } else if (event.key === "ArrowUp") {
+                cameraVerticalOffset += verticalSpeed; // Increased vertical panning speed
+            } else if (event.key === "ArrowDown") {
+                if (camera.position.y > minCameraHeight) {
+                    cameraVerticalOffset -= verticalSpeed; // Increased vertical panning speed
+                }
+            }
+            updateCameraPosition();
+        });
+
+        // Mouse input for zooming (scrolling to zoom)
+        document.addEventListener('wheel', (event) => {
+            cameraDistance += event.deltaY * 0.05; // Adjust zoom speed (now modifies distance from player)
+            cameraDistance = Math.max(5, Math.min(cameraDistance, 30)); // Limiting zoom in and out range
+            updateCameraPosition();
+        });
+
+        // Click-to-move setup (for player movement)
+        const raycaster = new THREE.Raycaster();
+
+        raycaster.far = 500;
+        const mouse = new THREE.Vector2();
+        let targetPosition = player.position.clone();
+        let isMoving = false;
+        const moveSpeed = 0.1;
+
+        document.addEventListener('click', (event) => {
+            if (event.button === 0) { // Left-click to move
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects([ground]);
+                // console.log(intersects);
+
+                if (intersects.length > 0) {
+                    targetPosition = intersects[0].point;
+                    targetPosition.y = player.position.y; // Keep player on ground level
+                    isMoving = true;
+
+                    socket.emit("message", { username: playerObj.username, position: targetPosition, isMoving, type: "player_moved" });
+                }
+
+                const itemintersections = raycaster.intersectObjects(scene.children);
+
+                if (itemintersections.length > 1) {
+                    const object = itemintersections[0].object;
+
+                    if (object.userData.pickupable === true) {
+                        addToInventory(object.userData);
+                        socket.emit("message", { item: object, type: "remove_item_mesh" });
+                        console.log(object)
+
+                        // scene.remove(object);
+                    }
+                }
+            }
+        });
+
+        let inventory = [{ name: "pickaxe", equipable: true, equipType: "both_hands", quantity: 1, pickupable: true }, { name: "steel helmet", equipable: true, equipType: "helmet", quantity: 1, pickupable: true }, { name: "iron ore", quantity: 5, type: "iron", pickupable: true }]; // Array to store picked-up items
+
+        // Function to add an item to the inventory
+        function addToInventory(item) {
+            // Check if the item already exists in the inventory
+            const existingItem = inventory.find(i => i.name === item.name);
+
+            if (existingItem) {
+                // If item exists, increase the quantity
+                existingItem.quantity += item.quantity || 1;
+            } else {
+                // If item doesn't exist, add the new item to the inventory
+                inventory.push({ ...item, quantity: item.quantity || 1 });
+            }
+            updateInventoryUI();
+        }
+
+        // Function to update the popup menu with inventory items onInit
+        updateInventoryUI();
+
+        // Function to update the popup menu with inventory items (called after adding/removing items)
+        function updateInventoryUI() {
+            const menuItems = document.getElementById("menu-items");
+            menuItems.innerHTML = ""; // Clear existing items
+
+            inventory.forEach((item) => {
+                if (item) {
+                    const li = document.createElement("li");
+                    li.classList.add("menu-item");
+                    li.textContent = `${item.name} x${item.quantity}`;  // Display quantity alongside item name
+                    li.style.backgroundColor = `#${item.color || 'FFFFFF'}`;  // Optional color for item
+                    li.oncontextmenu = (event) => showInventoryContextMenu(event, item);
+                    menuItems.appendChild(li);
+                }
+            });
+        }
+
+        // Smooth movement function (player movement)
+        function movePlayer() {
+            if (isMoving) {
+                player.position.lerp(targetPosition, moveSpeed);
+                if (player.position.distanceTo(targetPosition) < 0.1) {
+                    isMoving = false;
+                }
+            }
+        }
+
+        // Function to show the popup
+        function createPopup(content) {
+            const popup = document.getElementById('popup');
+            // const popupText = document.getElementById('popup-text');
+
+            // // Set the content for the popup
+            // popupText.textContent = content;
+
+            // Display the popup and trigger the animation
+            popup.style.display = 'flex';
+        }
+
+        function showInventoryContextMenu(event, item) {
+            event.preventDefault(); // Prevent default right-click menu
+
+            const contextMenu = document.getElementById("context-menu");
+            contextMenu.innerHTML = ""; // Clear previous options
+
+            // Equip option (only for equipable items)
+            if (item.equipable) {
+                const equipOption = document.createElement("div");
+                equipOption.textContent = `Equip ${item.name}`;
+                equipOption.className = "context-menu-item";
+                equipOption.onclick = () => equipItem(item);
+                contextMenu.appendChild(equipOption);
+            }
+
+            if (banking) {
+                openContextMenu(event, item);
+            }
+
+            if (item.fletch) {
+                const fletchOption = document.createElement("div");
+                fletchOption.textContent = `Fletch ${item.name}`;
+                fletchOption.className = "context-menu-item";
+                fletchOption.onclick = () => fletch(item);
+                contextMenu.appendChild(fletchOption);
+            }
+
+
+            if (item.flammable) {
+                const startFireOption = document.createElement("div");
+                startFireOption.textContent = `Start fire`;
+                startFireOption.className = "context-menu-item";
+                startFireOption.onclick = () => startFire(player.position, item, 1);
+                contextMenu.appendChild(startFireOption);
+            }
+
+            // Drop option (always available)
+            const dropOption = document.createElement("div");
+            dropOption.textContent = `Drop ${item.name}`;
+            dropOption.className = "context-menu-item";
+            dropOption.onclick = () => dropItem(item);
+            contextMenu.appendChild(dropOption);
+
+
+
+            // Position and show menu
+            contextMenu.style.display = "block";
+            contextMenu.style.left = `${event.pageX}px`;
+            contextMenu.style.top = `${event.pageY}px`;
+
+            // Store selected item
+            contextMenu.selectedItem = item;
+
+            // Hide menu when clicking anywhere else
+            document.addEventListener("click", closeContextMenu);
+            const popup = document.querySelector('#popup');
+            console.log(popup)
+            popup.addEventListener("click", closeContextMenu)
+            contextMenu.addEventListener("click", closeContextMenu);
+        }
+
+        // Function to close the context menu
+        function closeContextMenu(event) {
+            const contextMenu = document.getElementById('context-menu');
+
+            // Check if the click was inside the menu
+            contextMenu.style.display = 'none';
+            document.removeEventListener("click", closeContextMenu); // Remove event listener to avoid unnecessary calls
+
+        }
+
+        // Function to handle menu option selection
+        function onMenuOptionClick(action) {
+            const contextMenu = document.getElementById('context-menu');
+
+            // Handle different actions (e.g., Equip, Drop, etc.)
+            if (action === "equip") {
+                equipItem(contextMenu.selectedItem);
+            } else if (action === "drop") {
+                removeFromInventory(contextMenu.selectedItem);
+            }
+
+            // Hide the menu after selection
+            contextMenu.style.display = "none";
+            document.removeEventListener("click", closeContextMenu);
+        }
+
+        function startFire(position, selectedWood, cost) {
+            createOpenLogFire({ x: position.x, y: position.y, z: position.z });
+            playerObj.updateExperience('craft', cost * 4);
+            removeFromInventory(selectedWood, cost);
+            updateInventoryUI()
+            hidePopup();
+        }
+
+        function dropItem() {
+            const contextMenu = document.getElementById('context-menu');
+
+            // Get the selected item
+            let selectedItem = contextMenu.selectedItem;
+
+            if (selectedItem) {
+                // Remove the selected item from the inventory array
+                inventory = inventory.filter(item => item !== selectedItem && item !== undefined);
+
+                console.log(inventory);
+
+                socket.emit("message", { type: "item_mesh", meshData: { ...selectedItem, position: player.position } });
+            }
+
+            // Hide the context menu after the item is dropped
+            contextMenu.style.display = 'none';
+            updateInventoryUI();
+        }
+
+        function removeFromInventory(item, quantity = 1) {
+            console.log(inventory);
+            let index = inventory.findIndex(i => i.name === item.name);
+
+            if (index !== -1) {
+                console.log(inventory[index])
+                if (inventory[index].quantity > quantity) {
+                    inventory[index].quantity = inventory[index].quantity - quantity; // Reduce quantity
+                } else {
+                    inventory.splice(index, 1); // Remove item if quantity reaches 0
+                }
+                console.log(`Removed ${quantity} ${item.name} from inventory.`);
+
+                updateInventoryUI();
+            } else {
+                console.log(`Item ${item.name} not found in inventory.`);
+            }
+        }
+
+
+        // Hide the context menu if clicked outside of it
+        document.addEventListener('click', function (event) {
+            const contextMenu = document.getElementById('context-menu');
+            if (!contextMenu.contains(event.target) && !event.target.classList.contains('menu-item')) {
+                contextMenu.style.display = 'none';
+            }
+        });
+
+        // Function to hide the popup
+        function hidePopup() {
+            const popup = document.getElementById('popup');
+            popup.style.display = 'none'; // Hide the popup
+        }
+
+        // Stop clicks from reaching the canvas when interacting with the popup
+        // document.getElementById('popup').addEventListener('click', function (event) {
+        //     // Prevent the click from propagating to the background (e.g., canvas)
+        //     event.stopPropagation();
+        // });
+
+        // Prevent clicks on the popup content from being passed to the canvas
+        // document.querySelector('.popup-content').addEventListener('click', function (event) {
+        //     // This will stop the event from propagating to the background elements
+        //     event.stopPropagation();
+        // });
+
+
+        // Close the popup when the close button is clicked
+        document.getElementById('popup-close').addEventListener('click', hidePopup);
+
+
+        // In-world UI buttons for opening popups
+        document.getElementById('inventory').addEventListener('click', () => {
+            createPopup('Inventory');
+        });
+
+        document.getElementById('stats').addEventListener('click', () => {
+            showStats();
+        });
+
+        // Prevent the "Drop item" button click from affecting the canvas
+        document.getElementById('drop-item-button').addEventListener('click', function (event) {
+            // Stop the event propagation so it doesn't trigger canvas interactions
+            event.stopPropagation();
+
+            // Logic to drop the item here (this can be your function to drop the item)
+        });
+
+
+        // Function to handle the "Drop item" button click
+        document.getElementById('drop-item-button').addEventListener('click', function (event) {
+            event.stopPropagation();  // Prevent event propagation
+        });
+
+        function showContextMenu(x, y, options) {
+            const menu = document.getElementById("contextMenu");
+            menu.innerHTML = ""; // Clear previous menu items
+
+            options.forEach(({ label, action }) => {
+                const menuItem = document.createElement("div");
+                menuItem.className = "context-menu-item";
+                menuItem.textContent = label;
+                menuItem.onclick = () => {
+                    action();
+                    menu.style.display = "none";
+                };
+                menu.appendChild(menuItem);
+            });
+
+            menu.style.top = `${y}px`;
+            menu.style.left = `${x}px`;
+            menu.style.display = "block";
+        }
+
+        // Hide menu when clicking elsewhere
+        document.addEventListener("click", () => {
+            document.getElementById("contextMenu").style.display = "none";
+        });
+
+
+        // Example action function
+        function doAction() {
+            const menu = document.getElementById("contextMenu");
+            console.log("Performing action on:", menu.dataset.objectId);
+            menu.style.display = "none";
+        }
+
+        document.addEventListener("contextmenu", (event) => {
+            if (event.target.closest(".popup")) return; // Allow default context menu for popups
+
+            event.preventDefault(); // Prevent browser context menu
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+
+            if (intersects.length > 0) {
+                const selectedObject = intersects[0].object;
+                console.log(intersects)
+                console.log("Right-clicked on:", selectedObject);
+
+                const menuOptions = [{ label: 'Cancel', action: () => document.getElementById("contextMenu").style.display = "none" }];
+
+                // If object has 'attackable' property
+                if (selectedObject.userData.attackable) {
+                    menuOptions.unshift({
+                        label: `Attack ${selectedObject.userData.name || "Enemy"}`,
+                        action: () => playerObj.attack(deer),
+                    });
+                }
+
+                // If object has 'pickupable' property
+                if (selectedObject.userData.pickupable === true && selectedObject.userData.name) {
+                    menuOptions.unshift({
+                        label: `Pick up ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            addToInventory(selectedObject.userData);
+                            scene.remove(selectedObject);
+                        }
+                    });
+                }
+
+                // If object has 'pickupable' property
+                if (selectedObject.userData.isOre) {
+                    menuOptions.unshift({
+                        label: `Mine ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            mineOre(selectedObject.userData);
+                            scene.remove(selectedObject);
+                        }
+                    });
+                }
+
+                if (selectedObject.userData.bank) {
+                    menuOptions.unshift({
+                        label: "Bank",
+                        action: () => {
+                            openBank(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'isFire' property
+                if (selectedObject.userData.isSmelt) {
+                    menuOptions.unshift({
+                        label: `Smelt ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            smelt(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'isFire' property
+                if (selectedObject.userData.isFishingSpot) {
+                    menuOptions.unshift({
+                        label: `Fish the ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            fish(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'isFire' property
+                if (selectedObject.userData.isFire || selectedObject.userData.isOven || selectedObject.userData.name === "Object_3") {
+                    menuOptions.unshift({
+                        label: `Cook`,
+                        action: () => {
+                            cook(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'isFire' property
+                if (selectedObject.userData.isAnvil || selectedObject.userData.name === "Object_2") {
+                    menuOptions.unshift({
+                        label: `Smith`,
+                        action: () => {
+                            smith(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'fletch' property
+                if (selectedObject.userData.fletch) {
+                    menuOptions.unshift({
+                        label: `Fletch ${selectedObject.userData.name}`,
+                        action: () => {
+                            fletch(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has a custom button label (dynamic)
+                if (selectedObject.userData.customActionLabel && selectedObject.userData.customAction) {
+                    menuOptions.unshift({
+                        label: selectedObject.userData.customActionLabel,
+                        action: selectedObject.userData.customAction,
+                    });
+                }
+
+                // If object has a custom button label (dynamic)
+                if (selectedObject.userData.isTree) {
+                    menuOptions.unshift({
+                        label: `Cut down ${selectedObject.userData.name}`,
+                        action: () => {
+                            cutTree(selectedObject.userData)
+                        },
+                    });
+                }
+
+                if (selectedObject.userData.smelt) {
+                    menuOptions.push({
+                        label: `Smelt`,
+                        action: () => smelt(selectedObject.userData),
+                    });
+                }
+
+                showContextMenu(event.clientX, event.clientY, menuOptions);
+            }
+        });
+
+        // Opens the Fletching UI
+        function fletch() {
+            const fletchUI = document.getElementById("fletchUI");
+            const fletchItemsContainer = document.getElementById("fletch-items");
+            fletchItemsContainer.innerHTML = ""; // Clear previous items
+
+            // List of fletchable items
+            const fletchableItems = [
+                { name: "Shortbow", material: "log", cost: 1 },
+                { name: "Longbow", material: "log", cost: 2 },
+                { name: "Arrow Shafts", material: "log", cost: 1 },
+                { name: "Arrows", material: "arrow shafts", secondary: "arrow heads", cost: 1 },
+                { name: "Crossbow", material: "log", secondary: "iron bar", cost: 1 }
+            ];
+
+            // Generate item grid
+            fletchableItems.forEach(item => {
+                const itemElement = document.createElement("div");
+                itemElement.classList.add("fletch-item");
+                itemElement.innerHTML = `
+            <div class="fletch-item-name">${item.name}</div>
+            <button onclick="fletchItem('${item.name}', '${item.material}', '${item.secondary || ""}', ${item.cost})">Fletch</button>
+        `;
+                fletchItemsContainer.appendChild(itemElement);
+                playerObj.updateExperience('craft', item.cost * 4);
+            });
+
+            // Show the fletching UI
+            fletchUI.style.display = "block";
+        }
+
+        // Toggles the Fletching UI
+        function toggleFletchUI() {
+            const fletchUI = document.getElementById("fletchUI");
+            fletchUI.style.display = (fletchUI.style.display === "block") ? "none" : "block";
+        }
+
+        function fletchItem(itemName, material, secondary, cost, type) {
+            function getInventoryItemByMaterial(material) {
+                let foundItem = 0; // Default to 0 if no match is found
+
+                inventory.map(item => {
+                    if (item.name.toLowerCase().includes(material.toLowerCase())) {
+                        return foundItem = item; // Store the first matching item quantity
+                    }
+                });
+
+                return foundItem;
+            }
+
+            const inventoryItem = getInventoryItemByMaterial(material);
+            const secondaryItem = getInventoryItemByMaterial(secondary);
+
+            // Check if player has enough primary material
+            if (inventoryItem && inventoryItem.quantity < cost) {
+                return console.log(`Not enough ${material} to fletch ${itemName}.`);
+            }
+
+            // If secondary material is required, check for it
+            else if (secondaryItem && secondary && secondaryItem.quantity < cost) {
+                return console.log(`Not enough ${secondary} to fletch ${itemName}.`);
+            }
+
+            else if (inventoryItem) {
+                // Deduct materials
+                removeFromInventory(inventoryItem, cost)
+                if (secondary) {
+                    removeFromInventory(secondaryItem, cost)
+                }
+
+                // Add the fletched item
+                addToInventory({ name: `${type && type || ""} ${inventoryItem.type} ${itemName}`, type: inventoryItem.type, equipable: true, equipType: 'both_hands', pickupable: true })
+                updateInventoryUI();
+            }
+        }
+
+        function updateInventoryItem(item, amount) {
+            if (!inventory[item]) inventory[item] = 0; // Ensure item exists
+            inventory[item] += amount;
+
+            if (inventory[item] <= 0) {
+                delete inventory[item]; // Remove from inventory if quantity drops to 0
+            }
+
+            updateInventoryUI();
+        }
+
+
+        // Opens the Smithing UI
+        function smith() {
+            const smithUI = document.getElementById("smithUI");
+            const smithItemsContainer = document.getElementById("smithItems");
+            smithItemsContainer.innerHTML = ""; // Clear previous items
+
+            // List of smithable items
+            const smithableItems = [
+                { name: "Arrow Heads", material: "bar", cost: 1 },
+                { name: "Platelegs", material: "bar", cost: 3 },
+                { name: "Chestplate", material: "bar", cost: 5 },
+                { name: "Boots", material: "bar", cost: 2 },
+                { name: "Gloves", material: "bar", cost: 1 },
+                { name: "Sword", material: "bar", cost: 3 },
+                { name: "Shield", material: "bar", cost: 4 }
+            ];
+
+            // Generate item grid
+            smithableItems.forEach(item => {
+                const itemElement = document.createElement("div");
+                itemElement.classList.add("smith-item");
+                itemElement.innerHTML = `
+            <div class="smith-item-name">${item.name}</div>
+            <button onclick="fletchItem('${item.name}', '${item.material}', '${item.secondary || ""}', ${item.cost})">Smith</button>
+        `;
+                smithItemsContainer.appendChild(itemElement);
+
+                playerObj.updateExperience("craft", 10);
+            });
+
+            // Show the smithing UI
+            smithUI.style.display = "block";
+
+            createPopup('Inventory');
+        }
+
+        // Toggles the smith UI
+        function toggleSmithUI() {
+            const smithUI = document.getElementById("smithUI");
+            smithUI.style.display = (smithUI.style.display === "block") ? "none" : "block";
+        }
+
+
+        function smelt() {
+            let smeltingSpeed = Math.max(500 - (playerStats.agility / 1000) - (playerStats.craft / 500), 100); // Min speed: 100ms
+            let smeltedItems = [];
+
+            inventory.forEach((item, index) => {
+                if (item.name.includes("ore")) {
+                    let barType = item.name.replace("ore", "bar").trim(); // Convert "iron ore" → "iron bar"
+
+                    setTimeout(() => {
+                        if (inventory[index].quantity > 0) {
+                            removeFromInventory(item, 1);
+                            addToInventory({ ...item, name: barType, quantity: 1, type: barType });
+
+                            smeltedItems.push({ ...item, name: barType });
+                            console.log(`Smelted 1 ${item.name} → ${barType}`);
+                            playerObj.updateExperience("craft", 10);
+                        }
+                    }, smeltingSpeed * index); // Delay increases per item
+                }
+            });
+
+            return smeltedItems;
+        }
+
+        function equipItem(item) {
+            console.log(item.equipType);
+            console.log(`Equipping ${item.name} in slot: ${item.equipType}`);
+
+            // const slot = getEquipmentSlot(item.equipType);
+            // console.log(slot);
+            // if (!slot) return console.warn("No valid slot for this item.");
+
+            // const wornSlot = document.getElementById(slot);
+            // if (!wornSlot) return console.warn(`Worn slot element not found: ${slot}`);
+
+            // Unequip existing item first
+            if (equippedItems[item.equipType]) {
+                console.log(`Unequipping ${equippedItems[slot].name} from ${slot}`);
+                addToInventory(equippedItems[slot]);
+                delete equippedItems[slot];
+            }
+
+            console.log(item);
+
+            if (item.equipType === "both_hands") {
+                if (equippedItems["left-hand"]) {
+                    addToInventory(equippedItems["left-hand"]);
+                    delete equippedItems["left-hand"];
+                }
+
+                if (equippedItems["right-hand"]) {
+                    addToInventory(equippedItems["right-hand"]);
+                    delete equippedItems["right-hand"];
+                }
+
+                equippedItems["left-hand"] = item;
+                equippedItems["right-hand"] = item;
+
+                return removeFromInventory(item);
+            }
+
+            // equip item
+            equippedItems[item.equipType] = item;
+            console.log(equippedItems)
+            removeFromInventory(item);
+            // updateWornPopup();
+        }
+
+        function getEquipmentSlot(equipType) {
+            return equippedItems[equipType] || null;
+        }
+
+        function updateWornPopup() {
+            console.log("Updating worn popup UI...");
+
+            const wornSlots = [
+                "helmet", "torso", "pants", "left-hand", "right-hand",
+                "left-shoe", "right-shoe", "ring", "necklace"
+            ];
+
+            wornSlots.forEach(slot => {
+                const slotElement = document.getElementById(slot);
+                if (!slotElement) return console.warn(`Slot not found: ${slot}`);
+
+                slotElement.innerHTML = ""; // Clear previous content
+
+
+                const equippedItem = equippedItems[slot]; // Function to retrieve equipped item (see below)
+
+                if (equippedItem) {
+                    const equippedItemDiv = document.createElement("div");
+                    equippedItemDiv.classList.add("equipped-item");
+                    equippedItemDiv.userData = equippedItem;
+
+                    // Create item icon
+                    const icon = document.createElement("img");
+                    icon.src = equippedItem.icon ? equippedItem.icon : "./assets/default_spell_icon.png";
+                    icon.alt = equippedItem.name;
+                    icon.classList.add("equipped-icon");
+
+                    equippedItemDiv.appendChild(icon);
+
+                    // Click to unequip
+                    equippedItemDiv.addEventListener("click", () => {
+                        unequipItem(slot);
+                    });
+
+                    slotElement.appendChild(equippedItemDiv);
+                } else {
+                    console.log(`No item equipped in ${slot}`);
+                }
+            });
+        }
+
+
+        (function updateWornPopup() {
+            console.log("Updating worn popup UI...");
+
+            const wornSlots = [
+                "helmet", "torso", "pants", "left-hand", "right-hand",
+                "left-shoe", "right-shoe", "ring", "necklace"
+            ];
+
+            wornSlots.forEach(slot => {
+                const slotElement = document.getElementById(slot);
+                if (!slotElement) return console.warn(`Slot not found: ${slot}`);
+
+                slotElement.innerHTML = ""; // Clear previous content
+
+                const equippedItem = getEquipmentSlot(slot); // Function to retrieve equipped item (see below)
+
+                if (equippedItem) {
+                    const equippedItemDiv = document.createElement("div");
+                    equippedItemDiv.classList.add("equipped-item");
+                    equippedItemDiv.userData = equippedItem;
+
+                    // Create item icon
+                    const icon = document.createElement("img");
+                    icon.src = equippedItem.icon ? equippedItem.icon : "./assets/default_spell_icon.png";
+                    icon.alt = equippedItem.name;
+                    icon.classList.add("equipped-icon");
+
+                    equippedItemDiv.appendChild(icon);
+
+                    // Click to unequip
+                    equippedItemDiv.addEventListener("click", () => {
+                        unequipItem(slot);
+                    });
+
+                    slotElement.appendChild(equippedItemDiv);
+                } else {
+                    slotElement.textContent = "Empty"
+                    console.log(`No item equipped in ${slot}`);
+                }
+            });
+        }())
+
+        function createTree(type, position, hasFruit) {
+            // Create a parent mesh to wrap all tree parts
+            const wrapperMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ visible: false }));
+
+            // Define tree data
+            const data = { isTree: true, type: type, name: type.charAt(0).toUpperCase() + type.slice(1) };
+            wrapperMesh.userData = data; // Add userData to the parent mesh
+
+            let trunkMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Brown
+            let leavesMaterial = new THREE.MeshStandardMaterial({ color: "#228B22" }); // Green
+
+            trunkMaterial.userData = data;
+            leavesMaterial.userData = data;
+
+            // Create trunk
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.5, 0.8, 5, 8),
+                trunkMaterial
+            );
+            trunk.position.set(0, 2.5, 0);
+            trunk.userData = data;
+            wrapperMesh.add(trunk); // Add trunk to the parent mesh
+
+            // Create leaves (adjust shape based on tree type)
+            let leaves;
+            if (type === "pine") {
+                leaves = new THREE.Mesh(
+                    new THREE.ConeGeometry(3, 6, 8),
+                    leavesMaterial
+                );
+            } else {
+                leaves = new THREE.Mesh(
+                    new THREE.SphereGeometry(3, 8, 8),
+                    leavesMaterial
+                );
+            }
+
+            leaves.position.set(0, 6, 0);
+            leaves.userData = data;
+            wrapperMesh.add(leaves); // Add leaves to the parent mesh
+
+            // Set the position of the parent mesh
+            wrapperMesh.position.set(position.x, position.y, position.z);
+
+            // If the tree has fruit, generate and add fruit to the scene
+            if (hasFruit) {
+                // Generate random number of fruits (1-5)
+                const fruitCount = Math.floor(Math.random() * 5) + 1;
+                const fruits = [];
+
+                const randomizedX = (Math.random() - 0.5) * 2.4; // Keeps fruit close to the tree on X-axis
+                const randomizedZ = (Math.random() - 0.5) * 4;   // Allows for wider spread on Z-axis
+                const weight = 0.3; // Adjust this to fine-tune the distribution
+
+                for (let i = 0; i < fruitCount; i++) {
+                    const offsetX = (Math.random() - 0.5) * 2; // Random offset around tree
+                    const offsetZ = (Math.random() - 0.5) * 2;
+
+                    const fruit = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.3, 8, 8),
+                        new THREE.MeshStandardMaterial({ color: "#FFA500" }) // Orange color for persimmons
+                    );
+
+                    fruit.position.set(position.x + randomizedX - weight, 0, position.z + randomizedZ - weight);
+                    fruit.userData = { isFruit: true, tree: wrapperMesh, name: "Persimmon", pickupable: true };
+
+                    scene.add(fruit);
+                    fruits.push(fruit);
+                }
+            }
+
+            // Add the parent mesh (tree) to the scene
+            scene.add(wrapperMesh);
+
+            return wrapperMesh;
+        }
+
+        class Tree {
+            constructor(type, position, hasFruit) {
+                this.type = type;
+                this.position = position;
+                this.hasFruit = hasFruit;
+                this.treeParent = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ visible: false }));
+
+                // Tree data
+                const data = { isTree: true, type: type, name: type.charAt(0).toUpperCase() + type.slice(1) };
+                this.treeParent.userData = data;
+
+                // Materials
+                this.trunkMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Brown for trunk
+                this.leavesMaterial = new THREE.MeshStandardMaterial({ color: "#228B22" }); // Green for leaves
+                this.trunkMaterial.userData = data;
+                this.leavesMaterial.userData = data;
+
+                // Create trunk
+                this.trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.5, 0.8, 5, 8),
+                    this.trunkMaterial
+                );
+                this.trunk.position.set(0, 2.5, 0);
+                this.trunk.userData = data;
+                this.treeParent.add(this.trunk);
+
+                // Create leaves based on tree type
+                this.leaves = this.createLeaves();
+
+                // Position the tree parent mesh
+                this.treeParent.position.set(this.position.x, this.position.y, this.position.z);
+
+                // If tree has fruit, add fruits
+                if (this.hasFruit) {
+                    this.createFruits();
+                }
+
+                // Add the tree parent mesh to the scene
+                scene.add(this.treeParent);
+            }
+
+            createLeaves() {
+                let leaves;
+                if (this.type === "pine") {
+                    leaves = new THREE.Mesh(
+                        new THREE.ConeGeometry(3, 6, 8),
+                        this.leavesMaterial
+                    );
+                } else {
+                    leaves = new THREE.Mesh(
+                        new THREE.SphereGeometry(3, 8, 8),
+                        this.leavesMaterial
+                    );
+                }
+                leaves.position.set(0, 6, 0);
+                leaves.userData = this.treeParent.userData;
+                this.treeParent.add(leaves);
+                return leaves;
+            }
+
+            createFruits() {
+                // Generate random number of fruits (1-5)
+                const fruitCount = Math.floor(Math.random() * 5) + 1;
+                const fruits = [];
+
+                const randomizedX = (Math.random() - 0.5) * 2.4;
+                const randomizedZ = (Math.random() - 0.5) * 4;
+                const weight = 0.3;
+
+                for (let i = 0; i < fruitCount; i++) {
+                    const offsetX = (Math.random() - 0.5) * 2;
+                    const offsetZ = (Math.random() - 0.5) * 2;
+
+                    const fruit = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.3, 8, 8),
+                        new THREE.MeshStandardMaterial({ color: "#FFA500" }) // Orange color for fruits
+                    );
+
+                    fruit.position.set(this.position.x + randomizedX - weight, 0, this.position.z + randomizedZ - weight);
+                    fruit.userData = { isFruit: true, tree: this.treeParent, name: "Persimmon" };
+
+                    scene.add(fruit);
+                    fruits.push(fruit);
+                }
+            }
+
+            onClick() {
+                alert('Tree clicked!');
+            }
+        }
+
+
+        function cutTree(tree) {
+            const cost = 8;
+            // if (!playerHasAxe()) {
+            //     console.log("You need an axe to cut down the tree!");
+            //     return;
+            // }
+
+            // Calculate cutting speed based on player's strength and agility
+            const cuttingSpeed = calculateCuttingSpeed(); // This will be similar to calculateMiningSpeed
+
+            let cuttingInterval = setInterval(() => {
+                // Stop mining if agility is 0 or max experience is reached
+                if (playerObj.skills.agility.currLevel < cost) {
+                    clearInterval(cuttingInterval);
+                    addMessage("Game", "You have run out of agility and can no longer cut.");
+                    if (playerObj.skills.agility.currLevel < cost || playerObj.skills.strength.currLevel < cost) {
+                        addMessage("Game", "You have run out of strength and can no longer cut.");
+                        playerObj.regenerateStat('agility'); // Start the agility regeneration process
+                        playerObj.regenerateStat('strength');
+                    }
+                    return;
+                }
+
+                // Calculate the log based on the tree type
+                const log = tree.name; // Use the tree's name (type) as the log's name
+
+                // Add the log to the inventory
+                addToInventory({ name: `${log} Log`, fletch: true, type: log, flammable: true });
+
+                // createPopup('Inventory');
+
+                // Drain agility after each mining action
+                playerObj.drainStat('agility', cost);
+                playerObj.drainStat('strength', cost);
+                addMessage("Game", `Cut down a ${tree.name} tree and got a ${log} log!`);
+
+                // Increment experience after each ore mined (you can customize how much experience is gained)
+                playerObj.updateExperience('agility', cost / 2);
+                playerObj.updateExperience('strength', cost / 2)
+            }, calculateMiningSpeed());  // Speed based on player stats
+        }
+
+        // Helper function to calculate cutting speed based on strength and agility
+        function calculateCuttingSpeed() {
+            const baseSpeed = 1000;  // Base time in ms for one cut
+            const agilityFactor = 10; // Agility decreases the speed (faster cutting)
+            const strengthFactor = 20; // Strength decreases the speed (faster cutting)
+
+            // Calculate cutting speed based on player's agility and strength
+            const speed = baseSpeed - (playerStats.agility * agilityFactor) - (playerStats.strength * strengthFactor);
+
+            // Ensure speed doesn't go below a certain threshold to avoid cutting too fast
+            return Math.max(speed, 200);  // Minimum speed of 200ms per cut
+        }
+
+        const trees = [
+            new Tree('pine', { x: 30, y: 0, z: 0 }, true),
+            createTree("pine", { x: -5, y: 0, z: -5 }),
+            createTree("pine", { x: 3, y: 0, z: 2 }),
+            createTree("maple", { x: 7, y: 0, z: -3 }),
+            createTree("hickory", { x: -8, y: 0, z: 6 }),
+            createTree("persimmon", { x: -18, y: 0, z: 3 }, true)
+        ];
+
+        console.log(trees);
+
+        function createWater(position, size) {
+            const waterGeometry = new THREE.PlaneGeometry(size.width, size.height, 32, 32);
+            const waterMaterial = new THREE.MeshStandardMaterial({
+                color: "#1E90FF", // Deep Blue
+                transparent: true,  // Allow light to pass through
+                opacity: 0.8,  // Slight transparency for a more natural look
+                side: THREE.DoubleSide
+            });
+
+            const water = new THREE.Mesh(waterGeometry, waterMaterial);
+            water.rotation.x = -Math.PI / 2; // Make it horizontal
+            water.position.set(position.x, position.y + 0.01, position.z); // Lift slightly above ground
+
+            water.receiveShadow = true; // Make it interact better with light
+            water.userData = { isWater: true };
+
+            scene.add(water);
+            return water;
+        }
+
+        function createFishingSpot(position) {
+            const bubbles = new THREE.Mesh();
+            const data = { isFishingSpot: true, fish: true, name: "Chesapeake Bay" };
+
+            for (let i = 0; i < 5; i++) {
+                const bubble = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.2, 8, 8),
+                    new THREE.MeshStandardMaterial({ color: "white", transparent: true, opacity: 0.8 })
+                );
+
+                bubble.userData = { isFishingSpot: true, fish: true, name: "Chesapeake Bay" };
+
+                bubble.position.set(
+                    position.x + (Math.random() - 0.5) * 0.5,
+                    position.y + Math.random() * 0.5,
+                    position.z + (Math.random() - 0.5) * 0.5
+                );
+
+                bubbles.add(bubble);
+            }
+
+            bubbles.userData = data;
+            scene.add(bubbles);
+
+            // Animate bubbles
+            function animateBubbles() {
+                bubbles.children.forEach((bubble, index) => {
+                    bubble.position.y += Math.sin(performance.now() / 1000 + index) * 0.005;
+                });
+                requestAnimationFrame(animateBubbles);
+            }
+
+            animateBubbles();
+
+            return bubbles;
+        }
+
+        // function fish(fishingSpot) {
+        //     if (!playerHasFishingRod()) {
+        //         console.log("You need a fishing rod to fish!");
+        //         return;
+        //     }
+
+        //     console.log("Fishing...");
+
+        //     setTimeout(() => {
+        //         if (Math.random() < 0.5) { // 50% success rate
+        //             console.log("You caught a fish!");
+        //             addToInventory({ name: "Fish", type: "food" });
+        //         } else {
+        //             console.log("The fish got away...");
+        //         }
+        //     }, 3000); // Simulate time delay for fishing
+        // }
+
+        function playerHasFishingRod() {
+            return inventory.some(item => item.name === "Fishing Rod");
+        }
+
+        const waters = [];
+        const fishingSpots = [];
+
+        function generateEnvironment() {
+            // 🌊 Generate Water & Fishing Spots
+            // Create small water bodies (1x1 or 2x2)
+            waters.push(createWater({ x: 25, y: 0, z: 10 }, { width: 50, height: 10 }));
+
+            // Add a couple of fishing spots in the small water
+            fishingSpots.push(createFishingSpot({ x: 10, y: 0, z: 14 }));
+
+            // ⛏️ Generate Natural Coal Mine
+            createCoalMine({ x: 42.5, y: 0, z: -10 });
+
+            createOpenLogFire({ x: 20, y: 0, z: -10 });
+
+            // create a longhouse
+            const myLonghouse = createLonghouse({ x: -40, y: 0, z: 0 }, 20, 35, 10); // 30ft long, 15ft wide, 10ft tall
+            // createBrickOven({ x: -35, y: 0, z: 0 });
+            createBank({ x: -45, y: 0, z: -10 });
+
+            // create a smith shop
+            const smithshop = createLonghouse({ x: 20, y: 0, z: -40 }, 20, 15, 5); // 30ft long, 15ft wide, 10ft tall
+            createAnvil({ x: 15, y: 0, z: -40 });
+            createSmelt({ x: 25, y: 0, z: -43 })
+
+            const teePee = createBuilding({ x: 0, y: 0, z: 40 }, 10, 8, 5, true, false);
+
+            const europeanBuilding = createBuilding({ x: 40, y: 0, z: 40 }, 15, 20, 5, false, true);
+        }
+
+        // Call this once when setting up the world
+        generateEnvironment();
+
+        function createBank(position) {
+            const bag = new THREE.Group();
+            bag.userData = { bank: true };
+
+            // **Bag Body**
+            const bagGeometry = new THREE.CylinderGeometry(2, 2.5, 5, 16); // Tapered shape
+            bagGeometry.userData = { bank: true };
+            const bagTexture = new THREE.TextureLoader().load('textures/burlap.jpg');
+            bagTexture.wrapS = bagTexture.wrapT = THREE.RepeatWrapping;
+            bagTexture.repeat.set(2, 2);
+            const bagMaterial = new THREE.MeshStandardMaterial({
+                map: bagTexture,
+                color: "#C2A878",
+                roughness: 1,
+            });
+            const bagBody = new THREE.Mesh(bagGeometry, bagMaterial);
+            bagBody.userData = { bank: true }
+            bagBody.position.set(0, 2.5, 0);
+            bag.add(bagBody);
+
+            // **Bag Top (Tied Look)**
+            const topGeometry = new THREE.SphereGeometry(1.5, 16, 12);
+            topGeometry.userData = { bank: true };
+            topGeometry.scale(1, 0.7, 1); // Squashed for tied look
+            const topMaterial = new THREE.MeshStandardMaterial({
+                color: "#9C6B30",
+                roughness: 1,
+            });
+            const bagTop = new THREE.Mesh(topGeometry, topMaterial);
+            bagTop.userData = { bank: true }
+            bagTop.position.set(0, 5, 0);
+            bag.add(bagTop);
+
+            // **Rope Tie**
+            const ropeGeometry = new THREE.TorusGeometry(1.6, 0.1, 8, 16);
+            ropeGeometry.userData = { bank: true };
+            const ropeMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B", roughness: 0.9 });
+            const rope = new THREE.Mesh(ropeGeometry, ropeMaterial);
+            rope.rotation.x = Math.PI / 2;
+            rope.position.set(0, 4.7, 0);
+            bag.add(rope);
+
+            // **Positioning Fix**
+            bag.position.set(position.x, position.y, position.z);
+            scene.add(bag);
+
+            return bag;
+        }
+
+
+        class Deer {
+            stats = {
+                hp: 0,
+                strength: 0,
+                defense: 0,
+                mage: 0,
+                archer: 0
+            }
+
+            constructor(position) {
+                this.stats.hp = 20;
+                this.maxHp = 20;
+                this.stats.strength = 10;
+                this.stats.defense = 13;
+                this.stats.mage = 2;
+                this.stats.archer = 0;
+                this.alive = true;
+                this.position = position;
+                this.model = this.createModel();
+                scene.add(this.model);
+                this.walkInterval = null;
+                this.startWalking();
+                this.aggressionInterval = setInterval(() => this.checkForEnemies(), 1000);
+            }
+
+            checkForEnemies() {
+                if (!this.alive) return;
+                const attackRange = 10;
+                const enemies = scene.children.filter(entity => entity.userData?.attackable && entity !== this.model);
+
+                for (const enemy of enemies) {
+                    const distance = this.model.position.distanceTo(enemy.position);
+                    if (distance <= attackRange) {
+                        // this.attack(enemy.userData);
+                        return;
+                    }
+                }
+            }
+
+            startWalking() {
+                this.walkInterval = setInterval(() => {
+                    if (!this.alive) return;
+                    this.walk();
+                }, 2000); // Walk every 2 seconds
+            }
+
+            stopWalking() {
+                if (this.walkInterval) {
+                    clearInterval(this.walkInterval);
+                    this.walkInterval = null;
+                }
+            }
+
+            walk() {
+                const randomX = (Math.random() - 0.5) * 2; // Move between -1 and 1 on x-axis
+                const randomZ = (Math.random() - 0.5) * 2; // Move between -1 and 1 on z-axis
+
+                this.position.x += randomX;
+                this.position.z += randomZ;
+
+                this.model.position.set(this.position.x, this.position.y, this.position.z);
+            }
+
+            createModel() {
+                const deerGroup = new THREE.Mesh();
+                const deerData = { attackable: true, name: "Deer", stats: this.stats }
+                deerGroup.userData = deerData
+
+                // Body (Simplified)
+                const bodyMaterial = new THREE.MeshStandardMaterial({ color: "brown" });
+                bodyMaterial.userData = deerData
+                const body = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 1), bodyMaterial);
+                body.userData = deerData
+                body.position.set(0, 1, 0);
+                deerGroup.add(body);
+
+                // Head
+                const head = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), bodyMaterial);
+                head.userData = deerData
+                head.position.set(1.5, 1.5, 0);
+                deerGroup.add(head);
+
+                // Legs
+                const legMaterial = new THREE.MeshStandardMaterial({ color: "darkbrown" });
+                for (let i = 0; i < 4; i++) {
+                    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2), legMaterial);
+                    leg.position.set(i < 2 ? -1 : 1, 0, i % 2 === 0 ? -0.5 : 0.5);
+                    deerGroup.add(leg);
+                }
+
+                deerGroup.position.set(this.position.x, this.position.y, this.position.z);
+                return deerGroup;
+            }
+
+            takeDamage(damage, attacker) {
+                console.log(attacker);
+                if (!this.alive) return;
+                this.stats.hp -= damage;
+                addMessage('Game', `Deer takes ${damage} damage!`);
+                this.attack(attacker);
+                if (this.stats.hp <= 0) {
+                    this.die();
+                }
+            }
+
+            attack(target) {
+                if (!this.alive) return;
+                console.log(target);
+                const damage = Math.max(1, this.stats.strength - target.defense.level); // Basic attack formula
+                addMessage('Game', `Deer attacks player for ${damage} damage!`);
+                target.takeDamage(damage, this);
+            }
+
+
+            die() {
+                this.alive = false;
+                scene.remove(this.model);
+                this.drop();
+                setTimeout(() => this.respawn(), 5000); // Respawns after 50 seconds
+            }
+
+            respawn() {
+                this.stats.hp = this.maxHp;
+                this.alive = true;
+                this.model = this.createModel();
+                scene.add(this.model);
+            }
+
+            drop() {
+                const drops = {
+                    "Coins": 100,
+                    "Bones": 1,
+                    "Deer Hide": 1,
+                    "Deer Meat": 1
+                };
+
+                Object.keys(drops).forEach(item => {
+                    this.spawnLoot(item, drops[item]);
+                });
+
+                console.log("Deer dropped loot on the ground!");
+            }
+
+            spawnLoot(itemName, quantity) {
+                const loot = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.5, 0.5, 0.5), // Small box to represent loot
+                    new THREE.MeshStandardMaterial({ color: "gold" }) // Default gold color
+                );
+
+                loot.position.set(this.position.x, 0.5, this.position.z); // Drops at the deer's location
+                loot.userData = { name: itemName, quantity: quantity, pickupable: true };
+
+                scene.add(loot);
+
+                // Allow player to collect loot on interaction
+                setTimeout(() => {
+                    loot.userData.pickupable = true;
+                }, 1000); // Loot becomes collectible after 1 second
+            }
+        }
+
+        // Initialize a deer
+        const deer = new Deer({ x: 5, y: 0, z: -5 });
+
+        // Example of attacking the deer (attach this to player combat logic)
+        function playerAttack(deer, playerDamage) {
+            if (deer.alive) {
+                deer.takeDamage(playerDamage);
+                console.log(`Player hit the deer for ${playerDamage} damage!`);
+            } else {
+                console.log("The deer is dead.");
+            }
+        }
+
+        // Example attack simulation
+        // setTimeout(() => playerAttack(deer, 10), 10000)
+
+        class Human {
+            constructor(position) {
+                this.races = ["Indian", "African", "European", "Zambo", "Mestizo", "Pardo", "Mulatto"];
+                this.race = this.races[Math.floor(Math.random() * this.races.length)];
+
+                // Generate random stats
+                this.hp = Math.floor(Math.random() * 50) + 50; // 50-100 HP
+                this.maxHp = this.hp;
+                this.strength = Math.floor(Math.random() * 20) + 10; // 10-30
+                this.defense = Math.floor(Math.random() * 15) + 5; // 5-20
+                this.magic = Math.floor(Math.random() * 10); // 0-10
+                this.ranged = Math.floor(Math.random() * 15); // 0-15
+                this.alive = true;
+                this.position = position;
+                this.model = this.createModel();
+
+                scene.add(this.model);
+            }
+
+            createModel() {
+                const humanGroup = new THREE.Group();
+                const skinColors = {
+                    "Indian": 0x8d5524,
+                    "African": 0x3d1e10,
+                    "European": 0xffdbac,
+                    "Zambo": 0x5c3a1e,
+                    "Mestizo": 0xc68642,
+                    "Pardo": 0x9c7248,
+                    "Mulatto": 0xaf6e51
+                };
+
+                // Body Material
+                const bodyMaterial = new THREE.MeshStandardMaterial({ color: skinColors[this.race] });
+
+                // Body
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.5), bodyMaterial);
+                body.userData = { attackable: true }
+                body.position.set(0, 1, 0);
+                humanGroup.add(body);
+
+                // Head
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.5), bodyMaterial);
+                head.userData = { attackable: true }
+                head.position.set(0, 2.5, 0);
+                humanGroup.add(head);
+
+                // Arms
+                for (let i = -1; i <= 1; i += 2) {
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.5), bodyMaterial);
+                    arm.position.set(i * 0.6, 1.75, 0);
+                    humanGroup.add(arm);
+                }
+
+                // Legs
+                for (let i = -1; i <= 1; i += 2) {
+                    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2), bodyMaterial);
+                    leg.position.set(i * 0.3, 0, 0);
+                    humanGroup.add(leg);
+                }
+
+                humanGroup.position.set(this.position.x, this.position.y, this.position.z);
+                return humanGroup;
+            }
+
+            takeDamage(damage) {
+                if (!this.alive) return;
+                this.hp -= damage;
+                if (this.hp <= 0) {
+                    this.die();
+                }
+            }
+
+            die() {
+                this.alive = false;
+                console.log(`${this.race} human has died.`);
+                scene.remove(this.model);
+                setTimeout(() => this.respawn(), 50000); // Respawns after 50 seconds
+            }
+
+            respawn() {
+                this.hp = this.maxHp;
+                this.alive = true;
+                this.model = this.createModel();
+                scene.add(this.model);
+                console.log(`${this.race} human has respawned.`);
+            }
+        }
+
+        // Create a random human at a given position
+        const human = new Human({ x: 2, y: 0, z: -2 });
+
+        // Example: Attacking the human NPC
+        function playerAttack(human, playerDamage) {
+            if (human.alive) {
+                human.takeDamage(playerDamage);
+                console.log(`Player hit the ${human.race} human for ${playerDamage} damage!`);
+            } else {
+                console.log("The human is dead.");
+            }
+        }
+
+        // Simulated attacks
+        // playerAttack(human, 20);
+        // setTimeout(() => playerAttack(human, 30), 3000);
+
+        function calculateLevel(experience) {
+            return Math.floor(100 * (1 - Math.exp(-experience / 20000000)));
+        }
+
+        function calculateMaxHit(strengthLevel, weaponBonus = 50, baseDamage = 5) {
+            return Math.floor((strengthLevel * weaponBonus) / 100 + baseDamage);
+        }
+
+        function calculateDamageTaken(maxHit, defense) {
+            const damageReduction = defense / (defense + 50);
+            return Math.floor(maxHit * (1 - damageReduction));
+        }
+
+        // **New: Calculate Miss Rate (Higher agility & accuracy reduces miss chance)**
+        function calculateMissRate(attackerAgility, attackerLevel, defenderDefense) {
+            const hitChance = Math.min(0.95, Math.max(0.1, (attackerLevel + attackerAgility) / (attackerLevel + attackerAgility + defenderDefense + 50)));
+            return Math.random() > hitChance; // True means missed
+        }
+
+        // **New: Attack Speed (Lower agility = slower attacks)**
+        function calculateAttackSpeed(agility) {
+            return Math.max(1.5, 5 - agility / 20); // 5s for low agility, 1.5s for high
+        }
+
+        // **New: Magic Drain (Each spell uses up magic stamina, based on total XP)**
+        function calculateMagicDrain(totalMagicXP, spellCost) {
+            return Math.max(0, totalMagicXP - spellCost); // Ensures it doesn't go negative
+        }
+
+        // **New: Cast Failure Rate (Lower XP = More Failed Casts)**
+        function calculateCastFailureRate(magicLevel, spellDifficulty) {
+            const successChance = Math.min(0.98, Math.max(0.2, magicLevel / (magicLevel + spellDifficulty + 50)));
+            return Math.random() > successChance; // True means spell failed
+        }
+
+        // **Example Combat Flow**
+        function attack(attacker, defender) {
+            if (calculateMissRate(attacker.agility, attacker.strength, defender.defense)) {
+                console.log(`${attacker.name} missed the attack!`);
+                return;
+            }
+
+            const maxHit = calculateMaxHit(attacker.strength);
+            const damage = calculateDamageTaken(maxHit, defender.defense);
+            defender.hp -= damage;
+
+            console.log(`${attacker.name} hit ${defender.name} for ${damage} damage!`);
+        }
+
+        // **Example Magic Cast**
+        function castSpell(caster, spellCost, spellDifficulty) {
+            if (caster.magicStamina < spellCost) {
+                console.log(`${caster.name} does not have enough magic stamina!`);
+                return;
+            }
+
+            if (calculateCastFailureRate(caster.magic, spellDifficulty)) {
+                console.log(`${caster.name} failed to cast the spell!`);
+                return;
+            }
+
+            caster.magicStamina = calculateMagicDrain(caster.magicStamina, spellCost);
+            console.log(`${caster.name} successfully casts the spell!`);
+        }
+
+        // **Example Usage**
+        // const player = { name: "Player", hp: 100, strength: 999999999, defense: 50, agility: 80, magic: 75, magicStamina: 5000000 };
+        // const deer = { name: "Deer", hp: 20, strength: 30, defense: 13, agility: 25 };
+
+        // attack(player, deer);
+        // castSpell(player, 30000, 20);
+
+
+        function simulateFight(playerExperience, deer) {
+            const playerLevel = calculateLevel(playerExperience);
+            const playerMaxHit = calculateMaxHit(playerLevel);
+            const playerDamage = calculateDamageTaken(playerMaxHit, deer.defense);
+
+            const deerMaxHit = calculateMaxHit(deer.strength, 20, 2);
+            const deerDamage = calculateDamageTaken(deerMaxHit, playerLevel);
+
+            console.log(`Player Level: ${playerLevel}`);
+            console.log(`Player Max Hit: ${playerMaxHit}`);
+            console.log(`Player Damage to Deer: ${playerDamage}`);
+
+            console.log(`Deer Max Hit: ${deerMaxHit}`);
+            console.log(`Deer Damage to Player: ${deerDamage}`);
+
+            if (playerDamage >= deer.hp) {
+                console.log("Player wins! The deer is defeated.");
+            } else {
+                console.log("The deer survives the first hit and might counterattack!");
+            }
+        }
+
+        // Example: Simulate a fight with a player having 999 million strength XP
+        // simulateFight(999000000, deer);
+
+
+        function createSmelt(position) {
+            const smelt = new THREE.Mesh();
+            smelt.userData = { isSmelt: true }
+
+            // Furnace body (a tapered cylinder to resemble a clay/stone bloomery)
+            const furnaceGeometry = new THREE.CylinderGeometry(3, 4, 6, 16, 1);
+            furnaceGeometry.userData = { isSmelt: true }
+            const furnaceMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B", roughness: 0.8 }); // Clay/stone look
+            furnaceMaterial.userData = { isSmelt: true }
+            const furnace = new THREE.Mesh(furnaceGeometry, furnaceMaterial);
+            furnace.userData = { isSmelt: true }
+            furnace.position.set(0, 3, 0);
+            smelt.add(furnace);
+
+            // Furnace opening (arched door where iron/slag is extracted)
+            const openingGeometry = new THREE.BoxGeometry(1.5, 2, 0.5);
+            const openingMaterial = new THREE.MeshStandardMaterial({ color: "black", transparent: true, opacity: 0.5 });
+            const opening = new THREE.Mesh(openingGeometry, openingMaterial);
+            opening.position.set(0, 1.5, 2.01);
+            smelt.add(opening);
+
+            // Chimney hole at the top
+            const chimneyGeometry = new THREE.CylinderGeometry(1, 1, 1, 8);
+            const chimneyMaterial = new THREE.MeshStandardMaterial({ color: "black", roughness: 0.7 });
+            const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
+            chimney.position.set(0, 6.5, 0);
+            smelt.add(chimney);
+
+            // Charcoal/ore pile near furnace
+            const oreGeometry = new THREE.SphereGeometry(1, 8, 8);
+            const oreMaterial = new THREE.MeshStandardMaterial({ color: "#3B3B3B" });
+            const orePile = new THREE.Mesh(oreGeometry, oreMaterial);
+            orePile.position.set(2, 0.5, 2);
+            smelt.add(orePile);
+
+            smelt.position.set(position.x, position.y, position.z);
+            scene.add(smelt);
+            console.log(smelt);
+            return smelt;
+        }
+
+        function createAnvil(position) {
+            const anvil = new THREE.Group();
+            anvil.userData = { isAnvil: true }
+
+            anvil.position.set(position.x, position.y, position.z);
+
+            const loader = new THREE.GLTFLoader();
+            loader.load('assets/anvil_three.glb', function (gltf) {
+                anvil.add(gltf.scene);
+            }, undefined, function (error) {
+                console.error("Error loading model:", error);
+            });
+
+            scene.add(anvil);
+            return anvil;
+        }
+
+        function createOpenLogFire(position) {
+            const fireGroup = new THREE.Mesh();
+            const data = { isFire: true, name: "Log Fire" }
+            fireGroup.userData = data
+
+            // Create logs
+            const logMaterial = new THREE.MeshStandardMaterial({ color: "#8B4513" });
+            logMaterial.userData = data
+            for (let i = 0; i < 5; i++) {
+                const logGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 12);
+                const log = new THREE.Mesh(logGeometry, logMaterial);
+                log.userData = data
+                log.rotation.z = Math.random() * Math.PI / 2;
+                log.rotation.y = Math.random() * Math.PI;
+                log.position.set(
+                    position.x + Math.random() * 1 - 0.5,
+                    position.y + 0.2,
+                    position.z + Math.random() * 1 - 0.5
+                );
+                fireGroup.add(log);
+            }
+
+            // Create embers
+            const emberMaterial = new THREE.MeshStandardMaterial({ emissive: "#FF4500" });
+            emberMaterial.userData = { isFire: true }
+            const emberGeometry = new THREE.SphereGeometry(0.4, 8, 8);
+            const embers = new THREE.Mesh(emberGeometry, emberMaterial);
+            embers.userData = { isFire: true }
+            embers.position.set(position.x, position.y + 0.1, position.z);
+            fireGroup.add(embers);
+
+            // Fire particles
+            const fireParticles = new THREE.Mesh();
+            fireParticles.userData = { isFire: true }
+            const fireMaterial = new THREE.MeshStandardMaterial({ emissive: "#FF6347", transparent: true, opacity: 0.8 });
+            fireMaterial.userData = { isFire: true }
+            for (let i = 0; i < 10; i++) {
+                const flame = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), fireMaterial);
+                flame.position.set(position.x, position.y + 0.5 + Math.random() * 0.5, position.z);
+                fireParticles.add(flame);
+            }
+            fireGroup.add(fireParticles);
+
+            // Fire light
+            const fireLight = new THREE.PointLight("#FFA500", 1.5, 5);
+            fireLight.userData = { isFire: true }
+            fireLight.position.set(position.x, position.y + 1, position.z);
+            fireGroup.add(fireLight);
+
+            // Flicker animation
+            function animateFire() {
+                fireParticles.children.forEach(particle => {
+                    particle.position.y += Math.random() * 0.02;
+                    particle.material.opacity = 0.5 + Math.random() * 0.5;
+                });
+                fireLight.intensity = 1 + Math.random() * 0.5;
+                requestAnimationFrame(animateFire);
+            }
+            animateFire();
+
+            scene.add(fireGroup);
+            return fireGroup;
+        }
+
+        // function createBrickOven(position, size = 4) {
+        //     const oven = new THREE.Group();
+        //     oven.userData = { isOven: true };
+
+        //     // Brick Material
+        //     const brickMaterial = new THREE.MeshStandardMaterial({ color: "#B22222" }); // Reddish-brown bricks
+
+        //     // Base (Rectangular brick foundation)
+        //     const baseGeometry = new THREE.BoxGeometry(size, size / 2, size);
+        //     const base = new THREE.Mesh(baseGeometry, brickMaterial);
+        //     base.position.set(position.x, position.y + size / 4, position.z);
+        //     oven.add(base);
+
+        //     // Dome (Clay oven top)
+        //     const domeGeometry = new THREE.SphereGeometry(size / 2, 16, 16, 0, Math.PI);
+        //     const dome = new THREE.Mesh(domeGeometry, brickMaterial);
+        //     dome.position.set(position.x, position.y + size / 2 + size / 4, position.z);
+        //     oven.add(dome);
+
+        //     // Arch Entrance (Cutout for the opening)
+        //     const entranceGeometry = new THREE.CylinderGeometry(size / 4, size / 4, size / 2, 16, 1, true, 0, Math.PI);
+        //     const entrance = new THREE.Mesh(entranceGeometry, brickMaterial);
+        //     entrance.rotation.x = Math.PI / 2;
+        //     entrance.position.set(position.x, position.y + size / 2, position.z + size / 3);
+        //     oven.add(entrance);
+
+        //     // Chimney (Small cylinder for smoke exit)
+        //     const chimneyGeometry = new THREE.CylinderGeometry(size / 8, size / 8, size / 2, 12);
+        //     const chimney = new THREE.Mesh(chimneyGeometry, brickMaterial);
+        //     chimney.position.set(position.x, position.y + size, position.z - size / 3);
+        //     oven.add(chimney);
+
+        //     const loader = new THREE.GLTFLoader();
+        //     loader.load('assets/brick_ovenfurnace_triangulate_game_asset.glb', function (gltf) {
+        //         oven.add(gltf.scene);
+        //     }, undefined, function (error) {
+        //         console.error("Error loading model:", error);
+        //     });
+
+
+        //     // Save references
+        //     oven.userData = { isOven: true };
+
+        //     scene.add(oven);
+        //     return oven;
+        // }
+
+        function createLonghouse(position, length = 20, width = 10, height = 8) {
+            const longhouse = new THREE.Group();
+
+            // Wall Material
+            const wallMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Wooden brown
+
+            // Side Walls
+            const sideWallGeometry = new THREE.BoxGeometry(1, height, width);
+            const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+            leftWall.position.set(position.x - length / 2, position.y + height / 2, position.z);
+            longhouse.add(leftWall);
+
+            const rightWall = leftWall.clone();
+            rightWall.position.set(position.x + length / 2, position.y + height / 2, position.z);
+            longhouse.add(rightWall);
+
+            // Front & Back Walls (without door using separate parts)
+            const wallWidth = length / 2 - 2; // Leave space for a 4ft door
+            const frontLeftWall = new THREE.Mesh(new THREE.BoxGeometry(wallWidth, height, 1), wallMaterial);
+            frontLeftWall.position.set(position.x - wallWidth / 2 - 2, position.y + height / 2, position.z + width / 2);
+            longhouse.add(frontLeftWall);
+
+            const frontRightWall = frontLeftWall.clone();
+            frontRightWall.position.set(position.x + wallWidth / 2 + 2, position.y + height / 2, position.z + width / 2);
+            longhouse.add(frontRightWall);
+
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(length, height, 1), wallMaterial);
+            backWall.position.set(position.x, position.y + height / 2, position.z - width / 2);
+            longhouse.add(backWall);
+
+            // Floor (Dirt)
+            const floorMaterial = new THREE.MeshStandardMaterial({ color: "#8B4513" }); // Dirt brown
+            const floorGeometry = new THREE.PlaneGeometry(length, width);
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(position.x, position.y, position.z);
+            longhouse.add(floor);
+
+            // Roof (Thatch, fully covers structure)
+            const roofMaterial = new THREE.MeshStandardMaterial({ color: "#D2B48C", side: THREE.DoubleSide });
+            const roofGeometry = new THREE.CylinderGeometry(length / 2 + 1, length / 2 + 1, width + 2, 8, 1, true, 0, Math.PI);
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.rotation.z = Math.PI / 2;
+            roof.position.set(position.x, position.y + height * .80, position.z); // Positioned to fully cover
+
+            roofGeometry.rotateX(THREE.MathUtils.degToRad(90));  // Rotate geometry, not the object
+
+            roof.userData = { isRoof: true };
+            longhouse.add(roof);
+
+            // Save references
+            longhouse.userData = { isLonghouse: true, roof: roof };
+
+            scene.add(longhouse);
+            return longhouse;
+        }
+
+        function createBuilding(position, length = 20, width = 10, height = 8, hasCircularWalls = false, hasTriangularRoof = false) {
+            const longhouse = new THREE.Group();
+
+            // Wall Material
+            const wallMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Wooden brown
+
+            // Side Walls
+            const sideWallGeometry = new THREE.BoxGeometry(1, height, width);
+            const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+            leftWall.position.set(position.x - length / 2, position.y + height / 2, position.z);
+            longhouse.add(leftWall);
+
+            const rightWall = leftWall.clone();
+            rightWall.position.set(position.x + length / 2, position.y + height / 2, position.z);
+            longhouse.add(rightWall);
+
+            // Front & Back Walls (without door using separate parts)
+            const wallWidth = length / 2 - 2; // Leave space for a 4ft door
+            const frontLeftWall = new THREE.Mesh(new THREE.BoxGeometry(wallWidth, height, 1), wallMaterial);
+            frontLeftWall.position.set(position.x - wallWidth / 2 - 2, position.y + height / 2, position.z + width / 2);
+            longhouse.add(frontLeftWall);
+
+            const frontRightWall = frontLeftWall.clone();
+            frontRightWall.position.set(position.x + wallWidth / 2 + 2, position.y + height / 2, position.z + width / 2);
+            longhouse.add(frontRightWall);
+
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(length, height, 1), wallMaterial);
+            backWall.position.set(position.x, position.y + height / 2, position.z - width / 2);
+            longhouse.add(backWall);
+
+            // Floor (Dirt)
+            const floorMaterial = new THREE.MeshStandardMaterial({ color: "#8B4513" }); // Dirt brown
+            const floorGeometry = new THREE.PlaneGeometry(length, width);
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(position.x, position.y, position.z);
+            longhouse.add(floor);
+
+            const roofMaterial = new THREE.MeshStandardMaterial({ color: "#D2B48C", side: THREE.DoubleSide });
+
+            // Choose Roof Geometry Based on hasTriangularRoof
+            if (hasTriangularRoof) {
+                // Triangular Roof
+                const roofGeometry = new THREE.ConeGeometry(width / 2, height, 3); // Triangular roof (cone)
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.set(position.x, position.y + height * 0.8, position.z);
+                roof.userData = { isRoof: true };
+                longhouse.add(roof);
+                longhouse.userData = { isLonghouse: true, roof: roof };
+            } else {
+                // Regular Roof (Thatch, fully covers structure)
+                const roofGeometry = new THREE.CylinderGeometry(width / 2 + 1, width / 2 + 1, length + 2, 8, 1, true, 0, Math.PI);
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.rotation.z = Math.PI / 2;
+                roof.position.set(position.x, position.y + height * 0.8, position.z);
+                roof.userData = { isRoof: true };
+                longhouse.add(roof);
+                longhouse.userData = { isLonghouse: true, roof: roof };
+            }
+
+            // Save references
+            scene.add(longhouse);
+            return longhouse;
+        }
+
+        const herbTypes = [
+            { name: "Creasey Greens", color: "#4CAF50" }, // Traditional plant from Powhatan, VA
+            { name: "Wild Mint", color: "#3B873E" },
+            { name: "Chamomile", color: "#FFD700" },
+            { name: "Lavender", color: "#8A2BE2" }
+        ];
+
+        // Generate a random herb
+        function createHerb(position) {
+            const herbType = herbTypes[Math.floor(Math.random() * herbTypes.length)];
+
+            const herbGeometry = new THREE.SphereGeometry(0.3, 6, 6); // Small plant-like object
+            const herbMaterial = new THREE.MeshStandardMaterial({ color: herbType.color });
+            const herb = new THREE.Mesh(herbGeometry, herbMaterial);
+
+            herb.position.set(position.x, position.y, position.z);
+            herb.userData = { isHerb: true, name: herbType.name, pickupable: true };
+
+            scene.add(herb);
+            return herb;
+        }
+
+        // Function to remove herb & schedule respawn
+        function forageHerb(herb) {
+            console.log(`Picked up ${herb.userData.name}`);
+
+            // Remove from scene
+            scene.remove(herb);
+
+            // Schedule respawn (random 1-2 min)
+            const respawnTime = Math.random() * 60000 + 60000; // Between 60s - 120s
+            setTimeout(() => {
+                const newHerb = createHerb(herb.position);
+                console.log(`${newHerb.userData.name} has respawned!`);
+            }, respawnTime);
+        }
+
+        const worldSize = {
+            width: ground.scale.x * 10, // Adjusting based on ground size
+            height: ground.scale.z * 10
+        };
+
+        // Generate herbs (random locations)
+        for (let i = 0; i < 5; i++) {
+            const position = {
+                x: Math.random() * worldSize.width - worldSize.width / 2,
+                y: 0,
+                z: Math.random() * worldSize.height - worldSize.height / 2
+            };
+            createHerb(position);
+        }
+
+        function createCoalMine(position) {
+            const mine = new THREE.Mesh();
+            mine.userData = { isOre: true, type: "coal", name: "Coal" };
+
+            // 🪨 Base Rock Formation (Cave Walls)
+            for (let i = 0; i < 6; i++) {
+                const rock = new THREE.Mesh(
+                    new THREE.SphereGeometry(Math.random() * 2 + 1.5, 8, 8),
+                    new THREE.MeshStandardMaterial({ color: "#3A3A3A" }) // Dark gray coal rocks
+                );
+
+                const offsetX = (Math.random() - 0.5) * 6;
+                const offsetZ = (Math.random() - 0.5) * 6;
+                const offsetY = Math.random() * 3;
+
+                rock.position.set(position.x + offsetX, position.y + offsetY, position.z + offsetZ);
+                rock.rotation.y = Math.random() * Math.PI;
+
+                rock.userData = { isOre: true, name: "Coal", type: "coal" };
+                mine.add(rock);
+            }
+
+            // 🔽 Mine Entrance (A darker cave opening)
+            const entrance = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.5, 3.5, 4, 8),
+                new THREE.MeshStandardMaterial({ color: "#2C2C2C", side: THREE.DoubleSide }) // Even darker rock
+            );
+            entrance.position.set(position.x, position.y + 1, position.z);
+            entrance.rotation.x = Math.PI / 2;
+            entrance.userData = { isEntrance: true, type: "coal", name: "Coal Mine Entrance" };
+            mine.add(entrance);
+
+            createMineGround(position, { height: 15, width: 15 })
+
+            // ⛏️ Coal Deposits inside the mine
+            function spawnCoal() {
+                const coal = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.5, 8, 8),
+                    new THREE.MeshStandardMaterial({ color: "#222222" }) // Pure black for coal
+                );
+
+                const offsetX = (Math.random() - 0.5) * 3;
+                const offsetZ = (Math.random() - 0.5) * 3;
+                coal.position.set(position.x + offsetX, position.y + 1, position.z + offsetZ);
+
+                coal.userData = { isOre: true, type: "coal", name: "Coal Deposit" };
+                scene.add(coal);
+
+                return coal;
+            }
+
+            let coalDeposits = [];
+            for (let i = 0; i < 4; i++) {
+                coalDeposits.push(spawnCoal());
+            }
+
+            // 🌱 Coal Respawn Mechanic
+            function respawnCoal(coal) {
+                setTimeout(() => {
+                    if (!scene.children.includes(coal)) {
+                        const newCoal = spawnCoal();
+                        coalDeposits.push(newCoal);
+                    }
+                }, Math.random() * 120000 + 60000); // Respawn between 1-3 minutes
+            }
+
+            // 🏗️ Add to scene
+            scene.add(mine);
+            return mine;
+        }
+
+        // Example player stats with max agility and experience
+        let playerStats = {
+            craft: 50,
+            agility: 10,  // Initial agility level
+            strength: 8,  // Strength level
+            maxAgility: 10, // Max agility level
+            maxExperience: 100, // Max experience level
+            experience: 0,  // Current experience
+        };
+
+
+        // Helper function to calculate mining speed
+        function calculateMiningSpeed() {
+            const baseSpeed = 1000;  // Base speed of 1 second per mining action
+            const agilityFactor = 0.05;  // Agility impact on speed
+            const strengthFactor = 0.03;  // Strength impact on speed
+
+            // Calculate mining speed where higher agility and strength reduce the time between actions
+            let miningSpeed = baseSpeed - (playerStats.agility * agilityFactor * baseSpeed) - (playerStats.strength * strengthFactor * baseSpeed);
+
+            // Ensure mining speed doesn't go below a minimum threshold (e.g., 200ms)
+            miningSpeed = Math.max(miningSpeed, 200); // Minimum speed (200ms)
+
+            return miningSpeed;
+        }
+
+
+        // Function to drain strength as mining progresses
+        function drainStrength() {
+            const strengthDrainAmount = 1; // Amount of strength drained per ore mined
+            playerStats.strength -= strengthDrainAmount;
+
+            // Ensure strength doesn't drop below 0
+            if (playerStats.strength < 0) {
+                playerStats.strength = 0;
+            }
+        }
+
+        // Function to regenerate strength back to maxStrength over time
+        function regenerateStrength() {
+            const strengthRegenerationRate = 0.2; // Rate at which strength regenerates per interval (fraction of difference)
+
+            // Only regenerate strength if the player is not mining
+            if (!playerIsMining && playerStats.strength < playerStats.maxStrength) {
+                playerStats.strength += (playerStats.maxStrength - playerStats.strength) * strengthRegenerationRate;
+
+                // Ensure strength doesn't exceed maxStrength
+                if (playerStats.strength > playerStats.maxStrength) {
+                    playerStats.strength = playerStats.maxStrength;
+                }
+
+                console.log(`Strength Regeneration: ${playerStats.strength}`);
+            }
+        }
+
+        // Function to drain agility as mining progresses
+        function drainAgility() {
+            const agilityDrainAmount = 1; // Amount of agility drained per ore mined
+            playerStats.agility -= agilityDrainAmount;
+
+            // Ensure agility doesn't drop below 0
+            if (playerStats.agility < 0) {
+                playerStats.agility = 0;
+            }
+        }
+
+        // Function to drain any stat 
+        function drainStat(stat) {
+            const statDrainAmount = 1; // Amount of stat drained per ore mined
+            playerStats[stat] -= statDrainAmount;
+
+            // Ensure stat doesn't drop below 0
+            if (playerStats[stat] < 0) {
+                playerStats[stat] = 0;
+            }
+        }
+
+        // Function to regenerate any stat back to max over time
+        function regenerateStat(stat, maxStat) {
+            const statRegenerationRate = 0.2; // Rate at which stat regenerates per interval (fraction of difference)
+
+            // Only regenerate stat if the player is not mining
+            if (!playerIsMining && playerStats[stat] < playerStats[maxStat]) {
+                playerStats[stat] += (playerStats[maxStat] - playerStats[stat]) * statRegenerationRate;
+
+                // Ensure strength doesn't exceed maxStat
+                if (playerStats[stat] > playerStats[maxStat]) {
+                    playerStats[stat] = playerStats[maxStat];
+                }
+
+                console.log(`Strength Regeneration: ${playerStats.strength}`);
+            }
+        }
+
+        // Function to regenerate agility back to maxAgility over time
+        function regenerateAgility() {
+            const agilityRegenerationRate = 0.2; // Rate at which agility regenerates per interval (fraction of difference)
+
+            // Only regenerate agility if the player is not mining
+            if (!playerIsMining && playerStats.agility < playerStats.maxAgility) {
+                playerStats.agility += (playerStats.maxAgility - playerStats.agility) * agilityRegenerationRate;
+
+                // Ensure agility doesn't exceed maxAgility
+                if (playerStats.agility > playerStats.maxAgility) {
+                    playerStats.agility = playerStats.maxAgility;
+                }
+
+                console.log(`Agility Regeneration: ${playerStats.agility}`);
+            }
+        }
+
+        // Function to start the regeneration of agility (called when the player is not mining)
+        function startAgilityRegeneration() {
+            setInterval(regenerateAgility, 1000); // Regenerate agility every second
+        }
+
+        function startStatRegeneration(func, interval = 1000) {
+            console.log('calt!')
+            setInterval(func, interval);
+        }
+
+        // Function to check if the player has reached max experience
+        function hasMaxExperience() {
+            return playerStats.experience >= playerStats.maxExperience;
+        }
+
+        function cook(cookingMethod) {
+            console.log(cookingMethod);
+            let cookedItems = [];
+            let burntItems = [];
+            let craftExpDrain = 500; // Craft XP drains per cook attempt
+            let baseSuccessRate = Math.min(95, Math.max(30, playerObj.skills.craft / 1000000)); // 30% min, 95% max
+
+            inventory.forEach(item => {
+                if (item.raw && item.cookable) {
+                    let successRate = Math.max(10, baseSuccessRate - (5000000 / (playerObj.skills.craft + 1))); // XP drain affects success
+                    let success = Math.random() * 100 < successRate;
+
+                    let cookedItem = {
+                        name: success ? `Cooked ${item.name}` : `Burnt ${item.name}`,
+                        raw: false,
+                        pickupable: true,
+                        cookable: success && item.cookable // Cooked items might stay cookable
+                    };
+
+                    removeFromInventory(item, 1);
+                    addToInventory(cookedItem);
+
+                    if (success) {
+                        cookedItems.push(cookedItem.name);
+                        playerObj.updateExperience("craft", 10);
+                    } else {
+                        burntItems.push(cookedItem.name);
+                        playerObj.updateExperience("craft", 1);
+                    }
+                }
+            });
+
+            if (cookedItems.length > 0 || burntItems.length > 0) {
+                addMessage('Game', `Using ${cookingMethod.name}, you cooked: ${cookedItems.join(", ")}`);
+                addMessage('Game', `Burnt items: ${burntItems.join(", ")}`);
+                console.log
+            } else {
+                addMessage('Game', "You have nothing raw to cook.");
+            }
+        }
+
+        function fish() {
+            if (playerObj.skills.agility <= 1 || playerObj.skills.strength <= 1) {
+                addMessage('Game', "You're too exhausted to keep fishing. Rest to recover.");
+                playerObj.startRegeneration("agility");
+                playerObj.startRegeneration("strength");
+                return;
+            }
+
+            console.log(playerObj);
+
+            const virginiaFish = ["Largemouth Bass", "Bluegill", "Brook Trout", "Channel Catfish", "Smallmouth Bass", "American Shad", "Longnose Gar"];
+
+            const baseRate = 5; // Base seconds per catch
+            const agilityFactor = Math.max(1, 10 - Math.floor(playerObj.skills.agility.currLevel / 20)); // Faster with higher agility
+            const strengthFactor = Math.max(1, 10 - Math.floor(playerObj.skills.strength.currLevel / 20)); // Faster with higher strength
+            const fishingSpeed = Math.max(1, baseRate - Math.floor((agilityFactor + strengthFactor) / 2)); // Balanced rate
+            addMessage('Game', `Casting line...`);
+
+            let fishingInterval = setInterval(() => {
+                if (playerObj.skills.agility.currLevel <= 0 || playerObj.skills.strength.currLevel <= 0) {
+                    addMessage('Game', "You're too exhausted to keep fishing. Rest to recover.");
+                    clearInterval(fishingInterval);
+                    playerObj.startRegeneration("agility");
+                    playerObj.startRegeneration("strength");
+                    return;
+                }
+
+                let caughtFish = virginiaFish[Math.floor(Math.random() * virginiaFish.length)];
+                addToInventory({ name: caughtFish, quantity: 1, pickupable: true, cookable: true, raw: true });
+                addMessage('Game', `You caught a ${caughtFish}!`);
+
+                playerObj.drainStat("agility", 3);
+                playerObj.drainStat("strength", 3);
+
+                playerObj.updateExperience("agility", 75);
+                playerObj.updateExperience("strength", 75);
+
+                // drainAgility();
+                // drain strength
+                // playerStats.strength = Math.max(0, playerStats.strength - 2);
+
+            }, fishingSpeed * 1000);
+        }
+
+        // Function to simulate mining ore
+        function mineOre(mine) {
+            // if (!playerHasPickaxe()) {
+            //     console.log("You need a pickaxe to mine!");
+            //     return;
+            // }
+
+            // Start mining interval
+            let miningInterval = setInterval(() => {
+                // Stop mining if agility is 0 or max experience is reached
+                if (playerObj.skills.agility.currLevel === 0) {
+                    addMessage("Game", "You have run out of agility and can no longer mine.");
+                    clearInterval(miningInterval);
+                    playerObj.startRegeneration('agility');
+
+                    if (playerObj.skills.strength.currLevel === 0) {
+                        addMessage("Game", "You have run out of strength and can no longer mine.");
+                        playerObj.startRegeneration('strength');
+                    }
+                    if (hasMaxExperience()) {
+                        addMessage("Game", "You have reached max experience!");
+                    }
+                    return;
+                }
+
+                // Simulate mining
+                addToInventory({ name: mine.type });
+
+                addMessage("Game", `Mined a ${mine.type}!`);
+
+                // Drain agility after each mining action
+                playerObj.drainStat("agility", 7);
+                playerObj.drainStat("strength", 4);
+
+                // Increment experience after each ore mined (you can customize how much experience is gained)
+                playerObj.updateExperience("strength", 4);
+                playerObj.updateExperience("agility", 7);
+            }, calculateMiningSpeed()); // Uses calculated mining speed based on player stats
+        }
+
+        function createMineGround(position, size) {
+            const mineGroundGeometry = new THREE.PlaneGeometry(size.width, size.height, 8, 8);
+            const mineGroundMaterial = new THREE.MeshStandardMaterial({
+                color: "#4F4F4F", // Dark gray for a rocky ground
+                side: THREE.DoubleSide
+            });
+
+            const mineGround = new THREE.Mesh(mineGroundGeometry, mineGroundMaterial);
+            mineGround.rotation.x = -Math.PI / 2;
+            mineGround.position.set(position.x, position.y + 0.01, position.z); // Slightly below the mine
+
+            scene.add(mineGround);
+            return mineGround;
+        }
+
+        document.addEventListener("click", (event) => {
+            if (!event.target.userData || !event.target.userData.isMine) {
+                playerIsMining = false;
+            }
+        });
+
+        let bankStorage = {}; // Stores banked items
+
+        let banking = false;
+
+        // Opens Bank UI
+        function openBank() {
+            document.getElementById("bankUI").style.display = "block";
+            document.getElementById("popup").style.display = "block";
+            updateBankDisplay();
+            banking = true;
+        }
+
+        // Closes Bank UI
+        function closeBank() {
+            document.getElementById("bankUI").style.display = "none";
+            document.getElementById("popup").style.display = "none";
+            banking = false;
+        }
+
+        // Getter for bank storage
+        function getBankStorage(itemName) {
+            return bankStorage[itemName] || null;
+        }
+
+        // Setter for bank storage (handles stacking properly)
+        function setBankStorage(itemName, quantity, withdraw = false) {
+            if (bankStorage[itemName]) {
+                if (withdraw) {
+                    bankStorage[itemName].quantity -= quantity;
+                } else {
+                    bankStorage[itemName].quantity += quantity;
+                }
+            } else {
+                bankStorage[itemName] = { name: itemName, quantity: quantity };
+            }
+        }
+
+        // Deposits an item into the bank
+        function depositItem(quantity) {
+            console.log(5);
+            console.log(quantity);
+            if (!currentBankingItem) {
+                console.log(`Not enough ${currentBankingItem.name} to deposit.`);
+                return;
+            }
+
+            // Handle "all" case and ensure we don’t overdraw
+            if (quantity === "all" || quantity >= currentBankingItem.quantity) {
+                quantity = currentBankingItem.quantity;
+            }
+
+            // Remove from inventory first
+            removeFromInventory(currentBankingItem, quantity);
+
+            // Use setter to update bank storage
+            setBankStorage(currentBankingItem.name, quantity);
+
+            updateBankDisplay();
+            updateInventoryUI();
+        }
+
+
+        // Withdraws an item from the bank
+        function withdrawItem(itemName, quantity) {
+            let bankedItem = getBankStorage(itemName);
+
+            if (!bankedItem) {
+                console.log(`Not enough ${itemName} in the bank.`);
+                return;
+            }
+
+
+            // Handle "all" case and ensure we don’t overdraw
+            if (quantity === "all" || quantity > bankedItem.quantity) {
+                quantity = bankedItem.quantity;
+            }
+
+            setBankStorage(itemName, quantity, true); // Update storage
+
+            // Add the item to the player's inventory
+            addToInventory({ ...bankedItem, quantity });
+            updateBankDisplay();
+            updateInventoryUI();
+        }
+
+
+        // Updates the bank UI
+        function updateBankDisplay() {
+            let bankUI = document.getElementById("bankItems");
+            bankUI.innerHTML = "";
+
+            console.log(bankStorage);
+
+            for (let item in bankStorage) {
+                console.log(item);
+                let itemElement = document.createElement("div");
+                itemElement.className = "bank-item";
+                itemElement.innerHTML = `<img src="spell-icon.png"> ${bankStorage[item].name} x${bankStorage[item].quantity}`;
+
+                itemElement.addEventListener("click", () => withdrawItem(item, bankStorage[item].quantity)); // Left-click withdraw all
+                itemElement.addEventListener("contextmenu", (e) => {
+                    e.preventDefault();
+                    openContextMenu(e, item, "withdraw");
+                });
+
+                bankUI.appendChild(itemElement);
+            }
+        }
+
+        // Updates the inventory UI
+        function updateInventoryDisplay() {
+            let inventoryUI = document.getElementById("inventoryItems");
+            inventoryUI.innerHTML = "";
+
+            for (let item in player.inventory) {
+                let itemElement = document.createElement("div");
+                itemElement.className = "inventory-item";
+                itemElement.innerHTML = `<img src="spell-icon.png"> ${item} x${player.inventory[item]}`;
+
+                itemElement.addEventListen
+
+                er("click", () => depositItem(item, player.inventory[item])); // Left-click deposit all
+                itemElement.addEventListener("contextmenu", (e) => {
+                    e.preventDefault();
+                    openContextMenu(e, item, "deposit");
+                });
+
+                inventoryUI.appendChild(itemElement);
+            }
+        }
+
+        // Opens right-click menu for Deposit/Withdraw options
+        function openContextMenu(event, item, withdrawing = false) {
+            let contextMenu = document.getElementById("context-menu");
+            let contextMenuOptions = document.getElementById("context-menu-options");
+            currentBankingItem = item;
+
+            console.log(item);
+
+            // Clear previous options
+
+            if (banking) {
+                if (withdrawing) {
+                    // Banking mode - Show deposit options
+                    contextMenu.innerHTML = `
+            <li onclick="withdrawItem('${item}', 1)">Withdraw-1</li>
+            <li onclick="withdrawItem('${item}', 5)">Withdraw-5</li>
+            <li onclick="withdrawItem('${item}', 10)">Withdraw-10</li>
+            <li onclick="withdrawItem('${item}', 'all')">Withdraw-All</li>
+        `;
+                } else {
+                    // Banking mode - Show deposit options
+                    contextMenu.innerHTML = `
+            <li onclick="depositItem(1)">Deposit-1</li>
+            <li onclick="depositItem(5)">Deposit-5</li>
+            <li onclick="depositItem(10)">Deposit-10</li>
+            <li onclick="depositItem('all')">Deposit-All</li>
+        `;
+                }
+            } else {
+                // Normal mode - Show drop option
+                contextMenu.innerHTML = `
+            <li onclick="dropItem('${item}')">Drop Item</li>
+        `;
+            }
+
+            // Position and show the menu
+            contextMenu.style.top = `${event.clientY}px`;
+            contextMenu.style.left = `${event.clientX}px`;
+            contextMenu.style.display = "block";
+        }
+
+        // Opens a prompt for user to input a custom deposit/withdraw amount
+        function promptCustomAmount(item, actionType) {
+            let amount = parseInt(prompt(`Enter amount to ${actionType}:`));
+            if (!isNaN(amount) && amount > 0) {
+                actionType === "deposit" ? depositItem(item, amount) : withdrawItem(item, amount);
+            }
+        }
+
+        // const socket = io("http://localhost:3000"); // Connect to the server
+        const messagesDiv = document.getElementById("messages");
+        const messageInput = document.getElementById("messageInput");
+
+        const username = "kyte9934"; // Default username
+
+        // Receive messages from the server
+        // socket.on("message", ({ username, message }) => {
+        //     addMessage(username, message);
+        //     displayAboveCharacter(username, message); // Show above character
+        // });
+
+        // Send a message to the server
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                // socket.emit("message", { username, message });
+                // addMessage(playerObj.username || username, message);
+                // Broadcast the message to all OTHER clients (except the sender)
+                const data = { username: playerObj.username, message, type: 'chat_message' };
+                console.log(socket);
+                socket.emit("message", data);
+                // displayAboveCharacter(username, message, player);
+                messageInput.value = "";
+            }
+        }
+
+        // Add message to the chatbox
+        function addMessage(username, message) {
+            const msgElement = document.createElement("div");
+            msgElement.classList.add("message");
+            msgElement.innerHTML = `<span class="username">${username}:</span> ${message}`;
+            messagesDiv.prepend(msgElement);
+        }
+
+        function displayAboveCharacter(username, message, character) {
+            console.log(character);
+            if (!character) return console.warn("Character model not found");
+
+            console.log("Displaying text above character"); // Debugging
+
+            // Create a canvas for the text
+            const canvas = document.createElement("canvas");
+            canvas.backgroundColor = "transparent";
+            const ctx = canvas.getContext("2d");
+
+            const width = 256, height = 64;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Style the text
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = "white";
+            ctx.font = "24px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(`${username}: ${message}`, width / 2, height / 2);
+
+            // Convert canvas to a Three.js texture
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+
+            const textMaterial = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true
+            });
+
+            const textSprite = new THREE.Sprite(textMaterial);
+            textSprite.scale.set(8, 5, 5); // Adjust size for visibility
+
+            // Position the text slightly above the character
+            textSprite.position.set(character.position.x, 1, character.position.y);
+
+            // Ensure it renders on top of other objects
+            textSprite.renderOrder = 999;
+            textSprite.material.depthTest = false;
+
+            // Attach to the character model
+            scene.add(textSprite);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                scene.remove(textSprite);
+            }, 2000);
+        }
+
+
+        function createTextCanvas(text) {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = 256;
+            canvas.height = 128;
+
+            // ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "24px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+            return canvas;
+        }
+
+
+        // Send message on Enter key press
+        messageInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            movePlayer();
+            updateCameraPosition();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 

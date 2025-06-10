@@ -22,18 +22,19 @@ if (!fs.existsSync(uploadDir)) {
 
 async function copy_text_from_image(filepath) {
   console.log(filepath);
-  return "Hello world.";
   // Creates a client
-  // const client = new vision.ImageAnnotatorClient();
+  const client = new vision.ImageAnnotatorClient({ apiKey: "" });
 
-  // // Performs text detection on the local file
-  // const [result] = await client.textDetection(filepath);
-  // const detections = result.textAnnotations;
-  // console.log("Text:");
-  // detections.forEach((text) => console.log(text));
-  // let str = "";
-  // detections.map((text) => (str += text));
-  // return str;
+  // Performs text detection on the local file
+  const [result] = await client.textDetection(filepath);
+  const detections = result.textAnnotations;
+  console.log("Text:");
+  detections.forEach((text) => console.log(text));
+  console.log(detections);
+  let str = "";
+  detections.map((text) => (str += text));
+  console.log(str);
+  return str;
 }
 
 function detectLanguage(text) {
@@ -273,38 +274,38 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  if (
-    req.method === "POST" &&
-    req.headers["content-type"].includes("multipart/form-data") &&
-    req.url === "/api/image"
-  ) {
-    const boundary = getBoundary(req.headers["content-type"]);
+  // if (
+  //   req.method === "POST" &&
+  //   req.headers["content-type"].includes("multipart/form-data") &&
+  //   req.url === "/api/image"
+  // ) {
+  //   const boundary = getBoundary(req.headers["content-type"]);
 
-    if (!boundary) {
-      res.writeHead(400, { "Content-Type": "text/plain" });
-      res.end("Bad Request: No boundary in multipart/form-data");
-      return;
-    }
+  //   if (!boundary) {
+  //     res.writeHead(400, { "Content-Type": "text/plain" });
+  //     res.end("Bad Request: No boundary in multipart/form-data");
+  //     return;
+  //   }
 
-    try {
-      // Parse and save the file
-      const filePath = await parseFormData(req, boundary);
+  //   try {
+  //     // Parse and save the file
+  //     const filePath = await parseFormData(req, boundary);
 
-      const text = copy_text_from_image(filePath);
+  //     const text = copy_text_from_image(filePath);
 
-      // Respond with success and file path
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          text,
-          language: detectLanguage(text),
-        })
-      );
-    } catch (error) {
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "File upload failed" }));
-    }
-  }
+  //     // Respond with success and file path
+  //     res.writeHead(200, { "Content-Type": "application/json" });
+  //     res.end(
+  //       JSON.stringify({
+  //         text,
+  //         language: detectLanguage(text),
+  //       })
+  //     );
+  //   } catch (error) {
+  //     res.writeHead(500, { "Content-Type": "application/json" });
+  //     res.end(JSON.stringify({ error: "File upload failed" }));
+  //   }
+  // }
 
   let pathname = url.parse(req.url).pathname;
 
@@ -363,7 +364,7 @@ const server = http.createServer(async (req, res) => {
           fs.readFile(pathname.slice(1), (err, content) => {
             if (err) {
               // File not found, return 404
-              res.writeHead(404);
+              // res.writeHead(404);
               res.end("404 Not Found");
             } else {
               // Serve the file with appropriate content type
