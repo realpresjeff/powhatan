@@ -28,6 +28,10 @@ export class Engine {
 
     renderer = new THREE.WebGLRenderer();
 
+    // Click-to-move setup (for player movement)
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+
     constructor() {
         this.setup_scene();
         this.setup_lighting();
@@ -37,7 +41,7 @@ export class Engine {
         this.setup_keyboard_inputs();
         this.scroll_to_zoom();
         this.click_to_move();
-        this.movePlayer();
+        this.move_player();
         this.animate();
         this.handle_window_resizing();
     }
@@ -110,24 +114,21 @@ export class Engine {
     scroll_to_zoom() {
         // Mouse input for zooming (scrolling to zoom)
         document.addEventListener('wheel', (event) => {
-            this.cameraDistance += even             // addToInventory(object);t.deltaY * 0.05; // Adjust zoom speed (now modifies distance from player)
+            // this.cameraDistance += even             // addToInventory(object);t.deltaY * 0.05; // Adjust zoom speed (now modifies distance from player)
+            this.cameraDistance += event.deltaY * 0.05; // Adjust zoom speed (now modifies distance from player)
             this.cameraDistance = Math.max(5, Math.min(this.cameraDistance, 30)); // Limiting zoom in and out range
             this.update_camera_position();
         });
 
     }
 
-    click_to_move(onItemFound = (item) => { }) {
-        // Click-to-move setup (for player movement)
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-
+    click_to_move(onItemFound = (item: any) => { }) {
         document.addEventListener('click', (event) => {
             if (event.button === 0) { // Left-click to move
-                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-                raycaster.setFromCamera(mouse, this.camera);
-                const intersects = raycaster.intersectObjects([this.ground]);
+                this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const intersects = this.raycaster.intersectObjects([this.ground]);
 
                 if (intersects.length > 0) {
                     this.targetPosition = intersects[0].point;
@@ -135,7 +136,7 @@ export class Engine {
                     this.isMoving = true;
                 }
 
-                const itemintersections = raycaster.intersectObjects(this.scene.children);
+                const itemintersections = this.raycaster.intersectObjects(this.scene.children);
 
                 if (itemintersections.length > 1) {
                     const object = itemintersections[0].object;
@@ -151,7 +152,7 @@ export class Engine {
     }
 
     // Smooth movement function (player movement)
-    movePlayer() {
+    move_player() {
         if (this.isMoving) {
             this.player.position.lerp(this.targetPosition, this.moveSpeed);
             if (this.player.position.distanceTo(this.targetPosition) < 0.1) {
@@ -162,8 +163,8 @@ export class Engine {
 
     // Animation loop
     animate() {
-        requestAnimationFrame(this.animate);
-        this.movePlayer();
+        // requestAnimationFrame(this.animate);
+        this.move_player();
         this.update_camera_position();
         this.renderer.render(this.scene, this.camera);
     }

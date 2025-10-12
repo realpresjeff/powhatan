@@ -9,6 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.174.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script type="module" src="./compiled_game_classes/main.js"></script>
+    <script type="module" src="./compiled_game_classes/engine.js"></script>
+    <script type="module" src="./compiled_game_classes/inventory.js"></script>
     <style>
         body {
             margin: 0;
@@ -666,7 +669,7 @@
         </div>
     </div>
 
-    <script>
+    <!-- <script>
         const socket = io("https://ec2-18-205-27-62.compute-1.amazonaws.com:4000"); // Replace with your server URL
 
         socket.on("connect", () => {
@@ -4163,7 +4166,8 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-    </script>
+    </script> -->
+
 </body>
 
 </html>
