@@ -5,6 +5,8 @@ export interface InventoryProps {
     player: THREE.Mesh;
     camera: THREE.Camera;
     mouse: any;
+    raycaster: any;
+    showContextMenu: Function;
 }
 
 export class Inventory {
@@ -13,34 +15,38 @@ export class Inventory {
     player = null;
     camera = null;
     mouse = null;
+    raycaster = null;
+    showContextMenu;
 
-    constructor({ scene, player, camera, mouse }: InventoryProps) {
-        this.updateInventoryUI();
+    constructor({ scene, player, camera, mouse, raycaster, showContextMenu }: InventoryProps) {
         this.scene = scene;
         this.player = player;
         this.camera = camera;
         this.mouse = mouse;
+        this.raycaster = raycaster;
+        this.showContextMenu = showContextMenu;
+        this.update_inventory_UI();
     }
 
     // Function to add an item to the inventory
-    addToInventory(item) {
+    add_to_inventory(item) {
         this.inventory.push(item); // Add item to inventory array
-        this.updateInventoryUI(); // Update UI display
+        this.update_inventory_UI(); // Update UI display
     }
 
     enable_left_click_interaction() {
         document.addEventListener('click', (event) => {
             if (event.button === 0) { // Left-click to interact
-                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-                raycaster.setFromCamera(mouse, this.camera);
-                const intersects = raycaster.intersectObjects(this.scene.children);
+                this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const intersects = this.raycaster.intersectObjects(this.scene.children);
 
                 if (intersects.length > 1) {
                     const object = intersects[0].object;
                     // Check if the object is a "dropped item"
                     if (object.userData) {
-                        this.addToInventory(object.userData);
+                        this.add_to_inventory(object.userData);
                         this.scene && this.scene.remove(object);
                     }
                 }
@@ -49,7 +55,7 @@ export class Inventory {
     }
 
     // Function to update the popup menu with inventory items onInit
-    updateInventoryUI() {
+    update_inventory_UI() {
         const menuItems = document.getElementById("menu-items");
         menuItems.innerHTML = ""; // Clear existing items
 
@@ -58,12 +64,12 @@ export class Inventory {
             li.classList.add("menu-item");
             li.textContent = item.name;
             li.style.backgroundColor = `#${item.color}`;
-            li.oncontextmenu = (event) => showContextMenu(event, item);
+            li.oncontextmenu = (event) => this.showContextMenu(event, item);
             menuItems.appendChild(li);
         });
     }
 
-    dropItem() {
+    drop_item() {
         const contextMenu = document.getElementById('context-menu');
 
         // Get the selected item
@@ -87,7 +93,7 @@ export class Inventory {
 
         // Hide the context menu after the item is dropped
         contextMenu.style.display = 'none';
-        this.updateInventoryUI();
+        this.update_inventory_UI();
     }
 }
 

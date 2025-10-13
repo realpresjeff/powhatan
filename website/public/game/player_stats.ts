@@ -1,9 +1,9 @@
 export class PlayerStats {
-    showStats() {
+    show_stats() {
         document.getElementById("statsPopup").style.display = "block";
     }
 
-    closeStats() {
+    close_stats() {
         document.getElementById("statsPopup").style.display = "none";
     }
 }

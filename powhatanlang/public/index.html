@@ -195,12 +195,20 @@
 
   <script>
     let dictionary = {};
+    let kanji = {};
 
     // Fetch the dictionary data from JSON
     fetch("./dictionary.json")
       .then((response) => response.json())
       .then((data) => {
         dictionary = data;
+      })
+      .catch((error) => console.error("Error loading dictionary:", error));
+
+    fetch("./jmdict-eng-3.6.1.json")
+      .then((response) => response.json())
+      .then((data) => {
+        kanji = data;
       })
       .catch((error) => console.error("Error loading dictionary:", error));
 
