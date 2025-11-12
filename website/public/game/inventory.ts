@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 export interface InventoryProps {
     scene: THREE.Scene;
     player: THREE.Mesh;

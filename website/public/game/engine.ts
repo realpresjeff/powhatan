@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import { Character } from './player_character.js';
 
 export class Engine {
     // Camera settings
@@ -13,9 +13,10 @@ export class Engine {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     // Player character (simple cube)
+    character = new Character();
     playerGeometry = new THREE.BoxGeometry(1, 2, 1);
     playerMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
-    player = new THREE.Mesh(this.playerGeometry, this.playerMaterial);
+    player = this.character.draw_character();
 
     // Ground (map)
     groundGeometry = new THREE.PlaneGeometry(100, 100);
@@ -24,7 +25,7 @@ export class Engine {
 
     isMoving = false;
     targetPosition = this.player.position.clone();
-    moveSpeed = 0.1;
+    moveSpeed = 0.5;
 
     renderer = new THREE.WebGLRenderer();
 
@@ -67,7 +68,7 @@ export class Engine {
 
     create_player() {
         // Player character (simple cube)
-        this.player.position.y = 1;
+        this.player.position.y = 5;
         this.scene.add(this.player);
     }
 
@@ -98,13 +99,17 @@ export class Engine {
             const verticalSpeed = 0.1; // Increased vertical speed to match horizontal speed
             if (event.key === "ArrowLeft") {
                 this.cameraAngle -= rotationSpeed; // Reverse the direction: Rotate right
+                this.animate();
             } else if (event.key === "ArrowRight") {
                 this.cameraAngle += rotationSpeed; // Reverse the direction: Rotate left
+                this.animate();
             } else if (event.key === "ArrowUp") {
                 this.cameraVerticalOffset += verticalSpeed; // Increased vertical panning speed
+                this.animate();
             } else if (event.key === "ArrowDown") {
                 if (this.camera.position.y > this.minCameraHeight) {
                     this.cameraVerticalOffset -= verticalSpeed; // Increased vertical panning speed
+                    this.animate();
                 }
             }
             this.update_camera_position();
@@ -118,6 +123,7 @@ export class Engine {
             this.cameraDistance += event.deltaY * 0.05; // Adjust zoom speed (now modifies distance from player)
             this.cameraDistance = Math.max(5, Math.min(this.cameraDistance, 30)); // Limiting zoom in and out range
             this.update_camera_position();
+            this.animate();
         });
 
     }
@@ -133,7 +139,12 @@ export class Engine {
                 if (intersects.length > 0) {
                     this.targetPosition = intersects[0].point;
                     this.targetPosition.y = this.player.position.y; // Keep player on ground level
+                    this.character.targetPosition = this.targetPosition;
+                    this.player.rotation.y = this.character.currentRotation;
+                    this.character.positionX = this.player.position.x;
+                    this.character.positionZ = this.player.position.z;
                     this.isMoving = true;
+                    this.animate();
                 }
 
                 const itemintersections = this.raycaster.intersectObjects(this.scene.children);
@@ -155,6 +166,7 @@ export class Engine {
     move_player() {
         if (this.isMoving) {
             this.player.position.lerp(this.targetPosition, this.moveSpeed);
+            this.character.walk();
             if (this.player.position.distanceTo(this.targetPosition) < 0.1) {
                 this.isMoving = false;
             }
@@ -175,6 +187,7 @@ export class Engine {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.animate(); // *added 11/12/25
         });
 
     }
