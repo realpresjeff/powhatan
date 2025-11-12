@@ -1,4 +1,6 @@
 import { Character } from './player_character.js';
+import { Tree } from './tree.js';
+import { Monster } from './monster.js';
 
 export class Engine {
     // Camera settings
@@ -45,6 +47,7 @@ export class Engine {
         this.move_player();
         this.animate();
         this.handle_window_resizing();
+        this.handle_right_click();
     }
 
     setup_scene() {
@@ -64,6 +67,10 @@ export class Engine {
         // Create Ground
         this.ground.rotation.x = -Math.PI / 2;
         this.scene.add(this.ground);
+        new Tree('pine', { x: 30, y: 0, z: 0 }, true, this.scene);
+
+        // Initialize a deer
+        const deer = new Monster({ x: 5, y: 0, z: -5 }, this.scene, 'DEER');
     }
 
     create_player() {
@@ -190,5 +197,163 @@ export class Engine {
             this.animate(); // *added 11/12/25
         });
 
+    }
+
+    handle_right_click() {
+        document.addEventListener("contextmenu", (event) => {
+            if (event.target.closest(".popup")) return; // Allow default context menu for popups
+
+            event.preventDefault(); // Prevent browser context menu
+
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            const intersects = this.raycaster.intersectObjects(this.scene.children);
+
+            if (intersects.length > 0) {
+                const selectedObject = intersects[0].object;
+                console.log(intersects)
+                console.log("Right-clicked on:", selectedObject);
+
+                const menuOptions = [{ label: 'Cancel', action: () => document.getElementById("contextMenu").style.display = "none" }];
+
+                // If object has 'attackable' property
+                if (selectedObject.userData.attackable) {
+                    menuOptions.unshift({
+                        label: `Attack ${selectedObject.userData.name || "Enemy"}`,
+                        action: () => playerObj.attack(deer),
+                    });
+                }
+
+                // If object has 'pickupable' property
+                if (selectedObject.userData.pickupable === true && selectedObject.userData.name) {
+                    menuOptions.unshift({
+                        label: `Pick up ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            addToInventory(selectedObject.userData);
+                            scene.remove(selectedObject);
+                        }
+                    });
+                }
+
+                // If object has 'pickupable' property
+                if (selectedObject.userData.isOre) {
+                    menuOptions.unshift({
+                        label: `Mine ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            mineOre(selectedObject.userData);
+                            scene.remove(selectedObject);
+                        }
+                    });
+                }
+
+                if (selectedObject.userData.bank) {
+                    menuOptions.unshift({
+                        label: "Bank",
+                        action: () => {
+                            openBank(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'isFire' property
+                if (selectedObject.userData.isSmelt) {
+                    menuOptions.unshift({
+                        label: `Smelt ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            smelt(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'isFire' property
+                if (selectedObject.userData.isFishingSpot) {
+                    menuOptions.unshift({
+                        label: `Fish the ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            fish(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'isFire' property
+                if (selectedObject.userData.isFire || selectedObject.userData.isOven || selectedObject.userData.name === "Object_3") {
+                    menuOptions.unshift({
+                        label: `Cook`,
+                        action: () => {
+                            cook(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'isFire' property
+                if (selectedObject.userData.isAnvil || selectedObject.userData.name === "Object_2") {
+                    menuOptions.unshift({
+                        label: `Smith`,
+                        action: () => {
+                            smith(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has 'fletch' property
+                if (selectedObject.userData.fletch) {
+                    menuOptions.unshift({
+                        label: `Fletch ${selectedObject.userData.name}`,
+                        action: () => {
+                            fletch(selectedObject.userData);
+                        }
+                    });
+                }
+
+                // If object has a custom button label (dynamic)
+                if (selectedObject.userData.customActionLabel && selectedObject.userData.customAction) {
+                    menuOptions.unshift({
+                        label: selectedObject.userData.customActionLabel,
+                        action: selectedObject.userData.customAction,
+                    });
+                }
+
+                // If object has a custom button label (dynamic)
+                if (selectedObject.userData.isTree) {
+                    menuOptions.unshift({
+                        label: `Cut down ${selectedObject.userData.name}`,
+                        action: () => {
+                            cutTree(selectedObject.userData)
+                        },
+                    });
+                }
+
+                if (selectedObject.userData.smelt) {
+                    menuOptions.push({
+                        label: `Smelt`,
+                        action: () => smelt(selectedObject.userData),
+                    });
+                }
+
+                this.showContextMenu(event.clientX, event.clientY, menuOptions);
+            }
+        });
+    }
+
+    showContextMenu(x, y, options) {
+        const menu = document.getElementById("contextMenu");
+        menu.innerHTML = ""; // Clear previous menu items
+
+        options.forEach(({ label, action }) => {
+            const menuItem = document.createElement("div");
+            menuItem.className = "context-menu-item";
+            menuItem.textContent = label;
+            menuItem.onclick = () => {
+                action();
+                menu.style.display = "none";
+            };
+            menu.appendChild(menuItem);
+        });
+
+        menu.style.top = `${y}px`;
+        menu.style.left = `${x}px`;
+        menu.style.display = "block";
     }
 }
