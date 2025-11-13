@@ -1,3 +1,5 @@
+import { calculateMiningSpeed, calculateCuttingSpeed } from './calcs.js';
+
 export class Tree {
     type: any;
     position: any;
@@ -17,7 +19,7 @@ export class Tree {
         this.treeParent = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ visible: false }));
 
         // Tree data
-        const data = { isTree: true, type: type, name: type.charAt(0).toUpperCase() + type.slice(1) };
+        const data = { isTree: true, type: type, name: type.charAt(0).toUpperCase() + type.slice(1), cut: this.cutTree };
         this.treeParent.userData = data;
 
         // Materials
@@ -97,5 +99,52 @@ export class Tree {
 
     onClick() {
         alert('Tree clicked!');
+    }
+
+    cutTree(character, notification_bus) {
+        console.log(character);
+        const cost = 8;
+        // if (!playerHasAxe()) {
+        //     console.log("You need an axe to cut down the tree!");
+        //     return;
+        // }
+
+        // Calculate cutting speed based on player's strength and agility
+        const cuttingSpeed = calculateCuttingSpeed(character.getLevelFromXP(character.skills.agility), character.getLevelFromXP(character.skills.strength)); // This will be similar to calculateMiningSpeed
+
+        let cuttingInterval = setInterval(() => {
+            // Stop mining if agility is 0 or max experience is reached
+            if (character.skills.agility.total_points_available < cost || character.inventory.inventory.length >= character.inventory.inventoryLimit) {
+                clearInterval(cuttingInterval);
+                addMessage("Game", "You have run out of agility and can no longer cut.");
+                if (character.skills.agility.total_points_available < cost || character.skills.strength.total_points_available < cost) {
+                    addMessage("Game", "You have run out of strength and can no longer cut.");
+                    character.regenerateStat('agility'); // Start the agility regeneration process
+                    character.regenerateStat('strength');
+                }
+                return;
+            }
+
+            // Calculate the log based on the tree type
+            const log = this.type; // Use the tree's name (type) as the log's name
+
+            // Add the log to the inventory
+            character.inventory.add_to_inventory({ name: `${log} Log`, fletch: true, type: log, flammable: true });
+            console.log(character.inventory);
+            // addToInventory({ name: `${log} Log`, fletch: true, type: log, flammable: true });
+
+            // createPopup('Inventory');
+
+            // Drain agility after each mining action
+            character.drainStat('agility', cost);
+            character.drainStat('strength', cost);
+
+            addMessage("Game", `Cut down a ${tree.name} tree and got a ${log} log!`);
+
+            // Increment experience after each ore mined (you can customize how much experience is gained)
+            character.addExperience('agility', cost / 2);
+            character.addExperience('strength', cost / 2);
+            character.addExperience('woodcutting', cost / 2);
+        }, calculateMiningSpeed(character.getLevelFromXP(character.skills.agility), character.getLevelFromXP(character.skills.strength)));  // Speed based on player stats
     }
 }

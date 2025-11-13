@@ -1,6 +1,7 @@
 import { Character } from './player_character.js';
 import { Tree } from './tree.js';
 import { Monster } from './monster.js';
+import { Notifications } from './notifications.js';
 
 export class Engine {
     // Camera settings
@@ -15,7 +16,7 @@ export class Engine {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     // Player character (simple cube)
-    character = new Character();
+    character = new Character(this.scene);
     playerGeometry = new THREE.BoxGeometry(1, 2, 1);
     playerMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
     player = this.character.draw_character();
@@ -34,6 +35,8 @@ export class Engine {
     // Click-to-move setup (for player movement)
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();
+
+    notification_bus = new Notifications();
 
     constructor() {
         this.setup_scene();
@@ -203,7 +206,7 @@ export class Engine {
         document.addEventListener("contextmenu", (event) => {
             if (event.target.closest(".popup")) return; // Allow default context menu for popups
 
-            event.preventDefault(); // Prevent browser context menu
+            // event.preventDefault(); // Prevent browser context menu
 
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -320,7 +323,7 @@ export class Engine {
                     menuOptions.unshift({
                         label: `Cut down ${selectedObject.userData.name}`,
                         action: () => {
-                            cutTree(selectedObject.userData)
+                            selectedObject.userData.cut(this.character, this.notification_bus)
                         },
                     });
                 }
