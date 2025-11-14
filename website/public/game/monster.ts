@@ -14,6 +14,7 @@ export class Monster {
     aggressionInterval: NodeJS.Timeout;
     scene: any;
     monster: string;
+    inCombat = false;
 
     constructor(position, scene, monster) {
         this.stats.hp = 20;
@@ -73,7 +74,7 @@ export class Monster {
 
     createModel() {
         const deerGroup = new THREE.Mesh();
-        const deerData = { attackable: true, name: "Deer", stats: this.stats }
+        const deerData = { attackable: true, name: "Deer", stats: this.stats, takeDamage: this.takeDamage, monster: this }
         deerGroup.userData = deerData
 
         // Body (Simplified)
@@ -103,26 +104,27 @@ export class Monster {
     }
 
     takeDamage(damage, attacker) {
-        console.log(attacker);
         if (!this.alive) return;
         this.stats.hp -= damage;
-        addMessage('Game', `Deer takes ${damage} damage!`);
-        this.attack(attacker);
+
         if (this.stats.hp <= 0) {
-            this.die();
+            return this.die();
         }
+
+        // addMessage('Game', `Deer takes ${damage} damage!`);
+        this.attack(attacker);
     }
 
     attack(target) {
         if (!this.alive) return;
-        console.log(target);
-        const damage = Math.max(1, this.stats.strength - target.defense.level); // Basic attack formula
-        addMessage('Game', `Deer attacks player for ${damage} damage!`);
+        const damage = Math.max(1, this.stats.strength - target.getLevelFromXP(target.skills.defense.experience_points)); // Basic attack formula
+        // addMessage('Game', `Deer attacks player for ${damage} damage!`);
         target.takeDamage(damage, this);
     }
 
 
     die() {
+        console.log('dying!');
         this.alive = false;
         this.scene.remove(this.model);
         this.drop();

@@ -2,6 +2,7 @@ import { Character } from './player_character.js';
 import { Tree } from './tree.js';
 import { Monster } from './monster.js';
 import { Notifications } from './notifications.js';
+import { CombatManager } from "./combat_manager.js";
 
 export class Engine {
     // Camera settings
@@ -71,7 +72,6 @@ export class Engine {
         this.ground.rotation.x = -Math.PI / 2;
         this.scene.add(this.ground);
         new Tree('pine', { x: 30, y: 0, z: 0 }, true, this.scene);
-
         // Initialize a deer
         const deer = new Monster({ x: 5, y: 0, z: -5 }, this.scene, 'DEER');
     }
@@ -206,7 +206,7 @@ export class Engine {
         document.addEventListener("contextmenu", (event) => {
             if (event.target.closest(".popup")) return; // Allow default context menu for popups
 
-            // event.preventDefault(); // Prevent browser context menu
+            event.preventDefault(); // Prevent browser context menu
 
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -225,7 +225,7 @@ export class Engine {
                 if (selectedObject.userData.attackable) {
                     menuOptions.unshift({
                         label: `Attack ${selectedObject.userData.name || "Enemy"}`,
-                        action: () => playerObj.attack(deer),
+                        action: () => this.character.attack(selectedObject.userData.monster),
                     });
                 }
 

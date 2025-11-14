@@ -2,6 +2,7 @@ import { axe, bow, sword } from './weapons/index.js';
 import { Inventory } from './inventory.js';
 
 type Skills = {
+    hp: { experience_points: number, total_points_available: number };
     strength: { experience_points: number, total_points_available: number };
     defense: { experience_points: number, total_points_available: number };
     mage: { experience_points: number, total_points_available: number };
@@ -52,6 +53,7 @@ export class Character {
     inventory = new Inventory({ scene: this.scene, showContextMenu: () => { } });
 
     skills: Skills = {
+        hp: { experience_points: 10000, total_points_available: 10000 },
         strength: { experience_points: 10000, total_points_available: 10000 },
         defense: { experience_points: 10000, total_points_available: 10000 },
         craft: { experience_points: 10000, total_points_available: 10000 },
@@ -60,6 +62,11 @@ export class Character {
         agility: { experience_points: 10000, total_points_available: 10000 },
         woodcutting: { experience_points: 10000, total_points_available: 10000 } // 🪓 new skill
     };
+
+    inCombat: boolean = false;
+    alive: boolean = true;
+
+    name: string;
 
     constructor(scene) {
         this.scene = scene;
@@ -583,6 +590,53 @@ export class Character {
             delete skill.regenerationIntervals[skill]; // Clean up the interval reference
             console.log(`Stopped regeneration for ${skill}`);
         }
+    }
+
+    takeDamage(damage, attacker) {
+        if (!this.alive) return;
+        this.skills.hp.experience_points -= this.getLevelFromXP(this.skills.hp.experience_points) - damage;
+        // addMessage('Game', `${this.name} takes ${damage} damage!`);
+        this.attack(attacker);
+        if (this.getLevelFromXP(this.skills.hp.experience_points) <= 0) {
+            this.die();
+        }
+    }
+
+    attack(target) {
+        if (!this.alive) return;
+        const damage = Math.max(1, this.getLevelFromXP(this.skills.strength.experience_points) - target.stats.defense); // Basic attack formula
+        // addMessage('Game', `${this.name} attacks player for ${damage} damage!`);
+        target.takeDamage(damage, this);
+    }
+
+
+    die() {
+        this.alive = false;
+        this.scene.remove(this.model);
+        this.drop();
+        setTimeout(() => this.respawn(), 5000); // Respawns after 50 seconds
+    }
+
+    respawn() {
+        this.stats.hp = this.maxHp;
+        this.alive = true;
+        this.model = this.createModel();
+        this.scene.add(this.model);
+    }
+
+    drop() {
+        const drops = {
+            "Coins": 100,
+            "Bones": 1,
+            "Deer Hide": 1,
+            "Deer Meat": 1
+        };
+
+        Object.keys(drops).forEach(item => {
+            this.spawnLoot(item, drops[item]);
+        });
+
+        console.log("Deer dropped loot on the ground!");
     }
 }
 
