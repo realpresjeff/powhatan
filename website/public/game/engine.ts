@@ -206,7 +206,7 @@ export class Engine {
         document.addEventListener("contextmenu", (event) => {
             if (event.target.closest(".popup")) return; // Allow default context menu for popups
 
-            event.preventDefault(); // Prevent browser context menu
+            // event.preventDefault(); // Prevent browser context menu
 
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -234,8 +234,8 @@ export class Engine {
                     menuOptions.unshift({
                         label: `Pick up ${selectedObject.userData.name || "Item"}`,
                         action: () => {
-                            addToInventory(selectedObject.userData);
-                            scene.remove(selectedObject);
+                            this.character.inventory.add_to_inventory(selectedObject.userData);
+                            this.scene.remove(selectedObject);
                         }
                     });
                 }
