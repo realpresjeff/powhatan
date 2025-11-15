@@ -90,7 +90,7 @@ export class Tree {
             );
 
             fruit.position.set(this.position.x + randomizedX - weight, 0, this.position.z + randomizedZ - weight);
-            fruit.userData = { isFruit: true, tree: this.treeParent, name: "Persimmon" };
+            fruit.userData = { isFruit: true, tree: this.treeParent, name: "Persimmon", pickupable: true };
 
             this.scene.add(fruit);
             fruits.push(fruit);

@@ -503,7 +503,6 @@ export class Character {
         return level - 1;
     }
 
-
     addExperience(skillName, amount) {
         const skill = this.skills[skillName];
         if (!skill) return;
@@ -609,7 +608,6 @@ export class Character {
         target.takeDamage(damage, this);
     }
 
-
     die() {
         this.alive = false;
         this.scene.remove(this.model);
@@ -638,5 +636,57 @@ export class Character {
 
         console.log("Deer dropped loot on the ground!");
     }
+
+    fish(source) {
+        if (this.inventory.inventory.length < 28) {
+            console.log(source);
+            if (this.getLevelFromXP(this.skills.agility.experience_points) <= 1 || this.getLevelFromXP(this.skills.strength.experience_points) <= 1) {
+                // addMessage('Game', "You're too exhausted to keep fishing. Rest to recover.");
+                this.startRegeneration("agility");
+                this.startRegeneration("strength");
+                return;
+            }
+
+            const virginiaFish = ["Largemouth Bass", "Bluegill", "Brook Trout", "Channel Catfish", "Smallmouth Bass", "American Shad", "Longnose Gar"];
+            const baseRate = 5; // Base seconds per catch
+            const agilityFactor = Math.max(1, 10 - Math.floor(this.getLevelFromXP(this.skills.agility.experience_points) / 20)); // Faster with higher agility
+            const strengthFactor = Math.max(1, 10 - Math.floor(this.getLevelFromXP(this.skills.strength.experience_points) / 20)); // Faster with higher strength
+            const fishingSpeed = Math.max(1, baseRate - Math.floor((agilityFactor + strengthFactor) / 2)); // Balanced rate
+            // addMessage('Game', `Casting line...`);
+
+            let fishingInterval = setInterval(() => {
+                if (this.getLevelFromXP(this.skills.agility.experience_points) <= 0 || this.getLevelFromXP(this.skills.strength.experience_points) <= 0) {
+                    // addMessage('Game', "You're too exhausted to keep fishing. Rest to recover.");
+                    clearInterval(fishingInterval);
+                    this.startRegeneration("agility");
+                    this.startRegeneration("strength");
+                    return;
+                }
+
+                let caughtFish = virginiaFish[Math.floor(Math.random() * virginiaFish.length)];
+                this.inventory.add_to_inventory({ name: caughtFish, quantity: 1, pickupable: true, cookable: true, raw: true });
+                // addMessage('Game', `You caught a ${caughtFish}!`);
+
+                this.drainStat("agility", 3);
+                this.drainStat("strength", 3);
+
+                this.addExperience("agility", 75);
+                this.addExperience("strength", 75);
+
+                console.log(this.inventory.inventory);
+
+                // drainAgility();
+                // drain strength
+                // playerStats.strength = Math.max(0, playerStats.strength - 2);
+
+                if (this.inventory.inventory.length === 28) {
+                    clearInterval(fishingInterval); // Terminate the interval
+                    // Optional: Perform any cleanup or final actions here
+                }
+
+            }, fishingSpeed * 1000);
+        }
+    }
+
 }
 

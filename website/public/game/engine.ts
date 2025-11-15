@@ -49,9 +49,11 @@ export class Engine {
         this.scroll_to_zoom();
         this.click_to_move();
         this.move_player();
-        this.animate();
         this.handle_window_resizing();
         this.handle_right_click();
+        this.createWater({ x: 25, y: 0, z: 10 }, { width: 50, height: 10 });
+        this.createFishingSpot({ x: 10, y: 0, z: 14 });
+        this.animate();
     }
 
     setup_scene() {
@@ -206,7 +208,7 @@ export class Engine {
         document.addEventListener("contextmenu", (event) => {
             if (event.target.closest(".popup")) return; // Allow default context menu for popups
 
-            // event.preventDefault(); // Prevent browser context menu
+            event.preventDefault(); // Prevent browser context menu
 
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -275,7 +277,7 @@ export class Engine {
                     menuOptions.unshift({
                         label: `Fish the ${selectedObject.userData.name || "Item"}`,
                         action: () => {
-                            fish(selectedObject.userData);
+                            this.character.fish(selectedObject.userData);
                         }
                     });
                 }
@@ -359,4 +361,62 @@ export class Engine {
         menu.style.left = `${x}px`;
         menu.style.display = "block";
     }
+
+    createWater(position, size) {
+        const waterGeometry = new THREE.PlaneGeometry(size.width, size.height, 32, 32);
+        const waterMaterial = new THREE.MeshStandardMaterial({
+            color: "#1E90FF", // Deep Blue
+            transparent: true,  // Allow light to pass through
+            opacity: 0.8,  // Slight transparency for a more natural look
+            side: THREE.DoubleSide
+        });
+
+        const water = new THREE.Mesh(waterGeometry, waterMaterial);
+        water.rotation.x = -Math.PI / 2; // Make it horizontal
+        water.position.set(position.x, position.y + 0.01, position.z); // Lift slightly above ground
+
+        water.receiveShadow = true; // Make it interact better with light
+        water.userData = { isWater: true };
+
+        this.scene.add(water);
+        return water;
+    }
+
+    createFishingSpot(position) {
+        const bubbles = new THREE.Mesh();
+        const data = { isFishingSpot: true, fish: true, name: "Chesapeake Bay" };
+
+        for (let i = 0; i < 5; i++) {
+            const bubble = new THREE.Mesh(
+                new THREE.SphereGeometry(0.2, 8, 8),
+                new THREE.MeshStandardMaterial({ color: "white", transparent: true, opacity: 0.8 })
+            );
+
+            bubble.userData = { isFishingSpot: true, fish: true, name: "Chesapeake Bay" };
+
+            bubble.position.set(
+                position.x + (Math.random() - 0.5) * 0.5,
+                position.y + Math.random() * 0.5,
+                position.z + (Math.random() - 0.5) * 0.5
+            );
+
+            bubbles.add(bubble);
+        }
+
+        bubbles.userData = data;
+        this.scene.add(bubbles);
+
+        // Animate bubbles
+        function animateBubbles() {
+            bubbles.children.forEach((bubble, index) => {
+                bubble.position.y += Math.sin(performance.now() / 1000 + index) * 0.005;
+            });
+            requestAnimationFrame(animateBubbles);
+        }
+
+        animateBubbles();
+
+        return bubbles;
+    }
+
 }

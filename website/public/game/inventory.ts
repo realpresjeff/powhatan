@@ -20,7 +20,7 @@ export class Inventory {
         if (this.inventory.length < this.inventoryLimit) {
             this.inventory.push(item); // Add item to inventory array
             this.update_inventory_UI(); // Update UI display
-        }
+        } else return false;
     }
 
     // Function to update the popup menu with inventory items onInit
