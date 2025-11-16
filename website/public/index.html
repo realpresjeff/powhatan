@@ -1,107 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="style.css" />
-    <title>神は民</title>
-  </head>
-  <body>
-    <!-- Top Navigation Bar -->
-    <top-bar class="top-bar"></top-bar>
 
-    <img
-      src="powhatan.png"
-      style="margin-bottom: 20px"
-      title="The Powhatan Confederacy"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <title>神は民</title>
+</head>
 
-    <span class="sm">The Powhatan Confederacy</span>
-    <h1>神は民</h1>
-    <p>仗三战逆英殖民地はVirginia,</p>
-    <p>效果:奴役。</p>
-    <p>咱们比美国早215岁。</p>
-    <p>我们史は寿命 从 1561 到 2024。</p>
-    <p>以多463年们は文历史。</p>
+<body>
+  <!-- Top Navigation Bar -->
+  <top-bar class="top-bar"></top-bar>
 
-    <span>
-      <a href="https://www.patreon.com/collection/761441"
-        >www.patreon.com/collection/761441</a
-      >
-    </span>
-  </body>
+  <img src="powhatan_2.png" style="margin-bottom: 20px" title="The Powhatan Confederacy" />
 
-  <script src="main.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      // Get all imgs
-      const inviteImages = document.querySelectorAll("img");
+  <span class="sm">The Powhatan Confederacy</span>
+  <h1>神は民</h1>
+  <p>仗三战逆英殖民地はVirginia,</p>
+  <p>效果:奴役。</p>
+  <p>咱们比美国早215岁。</p>
+  <p>我们史は寿命 从 1561 到 2024。</p>
+  <p>以多463年们は文历史。</p>
 
-      inviteImages.forEach((image) => {
-        image.addEventListener("click", function () {
-          // Check if the image is already expanded
-          if (image.classList.contains("expanded")) {
-            collapseImage(image); // Collapse if it's already expanded
-          } else {
-            // Add overlay background
-            const overlay = document.createElement("div");
-            overlay.classList.add("overlay");
-            document.body.appendChild(overlay);
+  <span>
+    <a href="https://www.patreon.com/collection/761441">www.patreon.com/collection/761441</a>
+  </span>
 
-            // Expand the image and scale to fit the screen
-            scaleToFitScreen(image);
+  <iframe src="The Powhatan Confederacy Petition.pdf" width="100%" height="600px" style="border:none;">
+  </iframe>
+</body>
 
-            // Remove expansion when clicking on the overlay
-            overlay.addEventListener("click", function () {
-              collapseImage(image);
-              overlay.remove(); // Remove the overlay when collapsing
-            });
-          }
-        });
-      });
+<script src="main.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Get all imgs
+    const inviteImages = document.querySelectorAll("img");
 
-      // Function to scale the image to fit the screen
-      function scaleToFitScreen(image) {
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
-        const imageAspectRatio = image.naturalWidth / image.naturalHeight;
-
-        // Calculate the new width and height for the image to fit within the screen
-        let newWidth, newHeight;
-
-        if (screenWidth / screenHeight > imageAspectRatio) {
-          // Screen is wider than image aspect ratio, limit by height
-          newHeight = screenHeight * 0.9; // Use 90% of screen height
-          newWidth = newHeight * imageAspectRatio;
+    inviteImages.forEach((image) => {
+      image.addEventListener("click", function () {
+        // Check if the image is already expanded
+        if (image.classList.contains("expanded")) {
+          collapseImage(image); // Collapse if it's already expanded
         } else {
-          // Screen is narrower than image aspect ratio, limit by width
-          newWidth = screenWidth * 0.9; // Use 90% of screen width
-          newHeight = newWidth / imageAspectRatio;
+          // Add overlay background
+          const overlay = document.createElement("div");
+          overlay.classList.add("overlay");
+          document.body.appendChild(overlay);
+
+          // Expand the image and scale to fit the screen
+          scaleToFitScreen(image);
+
+          // Remove expansion when clicking on the overlay
+          overlay.addEventListener("click", function () {
+            collapseImage(image);
+            overlay.remove(); // Remove the overlay when collapsing
+          });
         }
-
-        // Apply expanded class and set dynamic size
-        image.classList.add("expanded");
-        image.style.width = `${newWidth}px`;
-        image.style.height = `${newHeight}px`;
-        image.style.top = `50%`;
-        image.style.left = `50%`;
-        image.style.position = `fixed`;
-        image.style.zIndex = `1000`;
-        image.style.transform = `translate(-50%, -50%)`;
-      }
-
-      // Function to collapse the image back to its original state
-      function collapseImage(image) {
-        // Remove the expanded class and reset inline styles
-        image.classList.remove("expanded");
-        image.style.width = "";
-        image.style.height = "";
-        image.style.top = "";
-        image.style.left = "";
-        image.style.position = "";
-        image.style.zIndex = "";
-        image.style.transform = "";
-      }
+      });
     });
-  </script>
+
+    // Function to scale the image to fit the screen
+    function scaleToFitScreen(image) {
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const imageAspectRatio = image.naturalWidth / image.naturalHeight;
+
+      // Calculate the new width and height for the image to fit within the screen
+      let newWidth, newHeight;
+
+      if (screenWidth / screenHeight > imageAspectRatio) {
+        // Screen is wider than image aspect ratio, limit by height
+        newHeight = screenHeight * 0.9; // Use 90% of screen height
+        newWidth = newHeight * imageAspectRatio;
+      } else {
+        // Screen is narrower than image aspect ratio, limit by width
+        newWidth = screenWidth * 0.9; // Use 90% of screen width
+        newHeight = newWidth / imageAspectRatio;
+      }
+
+      // Apply expanded class and set dynamic size
+      image.classList.add("expanded");
+      image.style.width = `${newWidth}px`;
+      image.style.height = `${newHeight}px`;
+      image.style.top = `50%`;
+      image.style.left = `50%`;
+      image.style.position = `fixed`;
+      image.style.zIndex = `1000`;
+      image.style.transform = `translate(-50%, -50%)`;
+    }
+
+    // Function to collapse the image back to its original state
+    function collapseImage(image) {
+      // Remove the expanded class and reset inline styles
+      image.classList.remove("expanded");
+      image.style.width = "";
+      image.style.height = "";
+      image.style.top = "";
+      image.style.left = "";
+      image.style.position = "";
+      image.style.zIndex = "";
+      image.style.transform = "";
+    }
+  });
+</script>
+
 </html>

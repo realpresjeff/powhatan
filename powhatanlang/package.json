@@ -9,5 +9,6 @@
     "publish": "./publish.sh"
   },
   "author": "Ashton James Snow Jefferson",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {}
 }
