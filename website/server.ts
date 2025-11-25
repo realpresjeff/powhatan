@@ -38,6 +38,10 @@ const server = http.createServer((req, res) => {
     case ".ico":
       contentType = "image/x-icon";
       break;
+    case ".pdf":
+      contentType = "application/pdf";
+      break;
+
   }
 
   // Check if file exists in the public directory
@@ -60,6 +64,7 @@ const server = http.createServer((req, res) => {
           // Serve the file by pathname
           fs.readFile(pathname.slice(1), (err, content) => {
             if (err) {
+              console.log(err);
               // File not found, return 404
               res.writeHead(404);
               res.end("404 Not Found");
