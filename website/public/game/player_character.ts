@@ -391,14 +391,14 @@ export class Character {
         this.targetRotation = Math.atan2(dx, dz);
         this.currentRotation += (this.targetRotation - this.currentRotation) * 0.5;
 
-        this.walkCycle += 0.25; // ⬅️ increased from 0.1 to 0.25
+        this.walkCycle += 2; // ⬅️ increased from 0.1 to 0.25
 
         // Legs
-        this.leftLeg.rotation.x = Math.sin(this.walkCycle) * 0.5;
-        this.rightLeg.rotation.x = Math.sin(this.walkCycle + Math.PI) * 0.5;
+        this.leftLeg.rotation.x = Math.sin(this.walkCycle) * 0.1;
+        this.rightLeg.rotation.x = Math.sin(this.walkCycle + Math.PI) * 0.1;
 
         // Forward movement
-        this.base.position.z -= 0.05;
+        this.base.position.z -= 0.10;
     }
 
     run() {

@@ -121,17 +121,17 @@ export class Engine {
             const verticalSpeed = 0.1; // Increased vertical speed to match horizontal speed
             if (event.key === "ArrowLeft") {
                 this.cameraAngle -= rotationSpeed; // Reverse the direction: Rotate right
-                this.animate();
+                // this.animate();
             } else if (event.key === "ArrowRight") {
                 this.cameraAngle += rotationSpeed; // Reverse the direction: Rotate left
-                this.animate();
+                // this.animate();
             } else if (event.key === "ArrowUp") {
                 this.cameraVerticalOffset += verticalSpeed; // Increased vertical panning speed
-                this.animate();
+                // this.animate();
             } else if (event.key === "ArrowDown") {
                 if (this.camera.position.y > this.minCameraHeight) {
                     this.cameraVerticalOffset -= verticalSpeed; // Increased vertical panning speed
-                    this.animate();
+                    // this.animate();
                 }
             }
             this.update_camera_position();
@@ -145,7 +145,7 @@ export class Engine {
             this.cameraDistance += event.deltaY * 0.05; // Adjust zoom speed (now modifies distance from player)
             this.cameraDistance = Math.max(5, Math.min(this.cameraDistance, 30)); // Limiting zoom in and out range
             this.update_camera_position();
-            this.animate();
+            // this.animate();
         });
 
     }
@@ -166,7 +166,7 @@ export class Engine {
                     this.character.positionX = this.player.position.x;
                     this.character.positionZ = this.player.position.z;
                     this.isMoving = true;
-                    this.animate();
+                    this.move_player();
                 }
 
                 const itemintersections = this.raycaster.intersectObjects(this.scene.children);
@@ -196,9 +196,9 @@ export class Engine {
     }
 
     // Animation loop
-    animate() {
-        // requestAnimationFrame(this.animate);
-        this.move_player();
+    animate = () => {
+        requestAnimationFrame(this.animate);
+        // this.move_player();
         this.update_camera_position();
         this.renderer.render(this.scene, this.camera);
     }
@@ -218,7 +218,7 @@ export class Engine {
         document.addEventListener("contextmenu", (event) => {
             if (event.target.closest(".popup")) return; // Allow default context menu for popups
 
-            event.preventDefault(); // Prevent browser context menu
+            // event.preventDefault(); // Prevent browser context menu
 
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -645,7 +645,7 @@ export class Engine {
         this.createMineGround(position, { height: 15, width: 15 })
 
         // ⛏️ Coal Deposits inside the mine
-        function spawnCoal() {
+        function spawnCoal(scene) {
             const coal = new THREE.Mesh(
                 new THREE.SphereGeometry(0.5, 8, 8),
                 new THREE.MeshStandardMaterial({ color: "#222222" }) // Pure black for coal
@@ -656,14 +656,14 @@ export class Engine {
             coal.position.set(position.x + offsetX, position.y + 1, position.z + offsetZ);
 
             coal.userData = { isOre: true, type: "coal", name: "Coal Deposit" };
-            this.scene.add(coal);
+            scene.add(coal);
 
             return coal;
         }
 
         let coalDeposits = [];
         for (let i = 0; i < 4; i++) {
-            coalDeposits.push(spawnCoal());
+            coalDeposits.push(spawnCoal(this.scene));
         }
 
         // 🌱 Coal Respawn Mechanic

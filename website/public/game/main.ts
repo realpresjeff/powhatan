@@ -2,6 +2,7 @@ import { Engine } from './engine.js';
 import { Inventory } from './inventory.js';
 
 const engine = new Engine();
+engine.animate();
 
 // Pass shared objects to Inventory
 const inventory = new Inventory({
