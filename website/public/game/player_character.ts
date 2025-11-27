@@ -688,5 +688,62 @@ export class Character {
         }
     }
 
+    // Function to simulate mining ore
+    mineOre(mine) {
+        // if (!playerHasPickaxe()) {
+        //     console.log("You need a pickaxe to mine!");
+        //     return;
+        // }
+
+        // Start mining interval
+        let miningInterval = setInterval(() => {
+            // Stop mining if agility is 0 or max experience is reached
+            if (this.skills.agility.total_points_available === 0) {
+                // addMessage("Game", "You have run out of agility and can no longer mine.");
+                clearInterval(miningInterval);
+                this.startRegeneration('agility');
+
+                if (this.skills.strength.total_points_available === 0) {
+                    // addMessage("Game", "You have run out of strength and can no longer mine.");
+                    this.startRegeneration('strength');
+                }
+
+                // if (hasMaxExperience()) {
+                //     addMessage("Game", "You have reached max experience!");
+                // }
+                return;
+            }
+
+            // Simulate mining
+            this.inventory.add_to_inventory({ name: mine.type });
+
+            // addMessage("Game", `Mined a ${mine.type}!`);
+
+            // Drain agility after each mining action
+            this.drainStat("agility", 7);
+            this.drainStat("strength", 4);
+
+            // Increment experience after each ore mined (you can customize how much experience is gained)
+            this.addExperience("strength", 4);
+            this.addExperience("agility", 7);
+
+        }, this.calculateActivitySpeed()); // Uses calculated mining speed based on player stats
+    }
+
+    // Helper function to calculate activity speed
+    calculateActivitySpeed() {
+        const baseSpeed = 1000;  // Base speed of 1 second per activity action
+        const agilityFactor = 0.05;  // Agility impact on speed
+        const strengthFactor = 0.03;  // Strength impact on speed
+
+        // Calculate activity speed where higher agility and strength reduce the time between actions
+        let activitySpeed = baseSpeed - (this.skills.agility.experience_points * agilityFactor * baseSpeed) - (this.skills.strength.experience_points * strengthFactor * baseSpeed);
+
+        // Ensure activity speed doesn't go below a minimum threshold (e.g., 200ms)
+        activitySpeed = Math.max(activitySpeed, 200); // Minimum speed (200ms)
+
+        return activitySpeed;
+    }
+
 }
 

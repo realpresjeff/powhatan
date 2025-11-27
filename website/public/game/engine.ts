@@ -260,8 +260,8 @@ export class Engine {
                     menuOptions.unshift({
                         label: `Mine ${selectedObject.userData.name || "Item"}`,
                         action: () => {
-                            mineOre(selectedObject.userData);
-                            scene.remove(selectedObject);
+                            this.character.mineOre(selectedObject.userData);
+                            // scene.remove(selectedObject);
                         }
                     });
                 }
