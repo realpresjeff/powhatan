@@ -221,7 +221,7 @@ export class Engine {
         document.addEventListener("contextmenu", (event) => {
             if (event.target.closest(".popup")) return; // Allow default context menu for popups
 
-            // event.preventDefault(); // Prevent browser context menu
+            event.preventDefault(); // Prevent browser context menu
 
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;

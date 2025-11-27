@@ -1,28 +1,6 @@
-import { spells } from './spells';
+import { ToolBarButton } from './toolbar_button.js';
 
-class ToolBarIcon {
-    buttonId;
-    popupId;
-
-    constructor(buttonId, popupId) {
-        this.buttonId = buttonId;
-        this.popupId = popupId;
-    }
-
-    attachListener = (document) => {
-        document.getElementById(`${this.buttonId}`).addEventListener('click', () => {
-            this.togglePopup(document);
-        })
-    }
-
-    togglePopup = (document) => {
-        console.log(this.popupId);
-        const popup = document.getElementById(`${this.popupId}`);
-        popup.style.display = popup.style.display === "block" ? "none" : "block";
-    }
-}
-
-export class Spellbook extends ToolBarIcon {
+export class Spellbook extends ToolBarButton {
     spells = [
         {
             name: "Cursed Flame",
@@ -80,6 +58,7 @@ export class Spellbook extends ToolBarIcon {
 
     constructor() {
         super('spells', 'spellbookOverlay');
+        // this.fetchSpells(character.id);
         this.attachListener(document);
         this.renderSpells();
     }

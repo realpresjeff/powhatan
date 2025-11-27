@@ -106,11 +106,12 @@
         .popup-content {
             padding: 20px;
             border-radius: 8px;
-            width: 70%;
             /* Adjust width as needed */
             max-width: 600px;
             /* position: relative; */
             overflow-x: scroll;
+            height: 100%;
+            width: 100%;
         }
 
         /* Close button */
@@ -156,12 +157,19 @@
         #menu-items {
             list-style-type: none;
             padding: 0;
+            display: flex;
         }
 
         .menu-item {
             padding: 10px;
-            border: 1px solid #ddd;
+            border: none;
             cursor: pointer;
+            height: 35px;
+            width: 35px;
+        }
+
+        .menu-item img {
+            height: 100%;
         }
 
         .menu-item:hover {
@@ -181,8 +189,8 @@
             cursor: pointer;
             padding: 10px;
             margin: 5px 0;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
+            background-color: transparent;
+            border: none;
             border-radius: 5px;
             transition: background-color 0.3s;
         }

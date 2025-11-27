@@ -140,10 +140,10 @@ export class Monster {
 
     drop() {
         const drops = {
-            "Coins": 100,
-            "Bones": 1,
-            "Deer Hide": 1,
-            "Deer Meat": 1
+            "coins": 100,
+            "bones": 1,
+            "deer fur": 1,
+            // "Deer Meat": 1
         };
 
         Object.keys(drops).forEach(item => {

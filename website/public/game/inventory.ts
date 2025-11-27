@@ -31,8 +31,10 @@ export class Inventory {
         this.inventory.forEach((item) => {
             const li = document.createElement("li");
             li.classList.add("menu-item");
-            li.textContent = item.name;
-            li.style.backgroundColor = `#${item.color}`;
+            const icon = document.createElement("img");
+            icon.src = `./assets/items/${item.name}.png`
+            li.appendChild(icon)
+            // li.style.backgroundColor = `#${item.color}`;
             li.oncontextmenu = (event) => this.showContextMenu(event, item);
             menuItems.appendChild(li);
         });
