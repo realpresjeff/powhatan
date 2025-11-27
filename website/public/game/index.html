@@ -28,7 +28,7 @@
             position: absolute;
             z-index: 10;
             /* Make sure it's above the canvas */
-            background: rgba(0, 0, 0, 0.5);
+            background: transparent;
             padding: 10px;
             border-radius: 5px;
             color: white;
@@ -39,7 +39,7 @@
 
         #toolbar button {
             margin: 5px;
-            padding: 10px;
+            padding: 5px;
             background-color: #444;
             color: white;
             border: none;
@@ -538,11 +538,11 @@
 
 <body>
     <div id="toolbar" onclick="event.stopPropagation();">
-        <button id="inventory">Items</button>
-        <button id="spells">Magic</button>
-        <button id="stats">Stats</button>
-        <button id="open-worn-items">Worn</button>
-        <button id="open-combat-settings">Settings</button>
+        <button id="inventory"><img src="./assets/bag.png" /></button>
+        <button id="spells"><img src="./assets/Wizard.png" /></button>
+        <button id="stats"><img src="./assets/Look.png" /></button>
+        <button id="open-worn-items"><img src="./assets/Swords.png" /></button>
+        <button id="open-combat-settings"><img src="./assets/Lock.png" /></button>
     </div>
 
     <!-- Popup container (hidden initially) -->
