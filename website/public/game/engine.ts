@@ -3,6 +3,7 @@ import { Tree } from './tree.js';
 import { Monster } from './monster.js';
 import { Notifications } from './notifications.js';
 import { CombatManager } from "./combat_manager.js";
+import { Spellbook } from './spellbook.js';
 
 export class Engine {
     // Camera settings
@@ -38,6 +39,8 @@ export class Engine {
     mouse = new THREE.Vector2();
 
     notification_bus = new Notifications();
+
+    spellbook = new Spellbook();
 
     constructor() {
         this.setup_scene();
@@ -428,7 +431,6 @@ export class Engine {
 
         return bubbles;
     }
-
 
     createBuilding(position, length = 20, width = 10, height = 8, hasCircularWalls = false, hasTriangularRoof = false) {
         const longhouse = new THREE.Group();

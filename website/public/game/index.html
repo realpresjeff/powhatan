@@ -312,13 +312,13 @@
         /* Spells Grid Layout */
         .spells-container {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(4, .5fr);
+            gap: 5px;
             justify-items: center;
             overflow: scroll;
-            margin: 0;
-            padding: 0;
-            width: 90%;
+            margin: 0px;
+            padding: 20px;
+            width: 100%;
         }
 
         /* Spell Item */
@@ -671,9 +671,6 @@
     </div>
 
     <script>
-        document.getElementById('spells').addEventListener('click', () => {
-            togglePopup('spellbookOverlay');
-        });
         document.getElementById('inventory').addEventListener('click', () => {
             togglePopup('inventoryPopup');
         });
