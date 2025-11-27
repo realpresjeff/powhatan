@@ -74,7 +74,7 @@ export class Monster {
 
     createModel() {
         const deerGroup = new THREE.Mesh();
-        const deerData = { attackable: true, name: "Deer", stats: this.stats, takeDamage: this.takeDamage, monster: this }
+        const deerData = { attackable: true, name: "Magic Toy Deer", stats: this.stats, takeDamage: this.takeDamage, monster: this }
         deerGroup.userData = deerData
 
         // Body (Simplified)

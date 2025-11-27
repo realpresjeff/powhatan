@@ -28,11 +28,36 @@ export class Inventory {
         const menuItems = document.getElementById("menu-items");
         menuItems.innerHTML = ""; // Clear existing items
 
+        const fishNames = [
+            "american shad",
+            "longnose gar",
+            "channel catfish",
+            "bluegill",
+            "brook trout",
+            "smallmouth bass",
+            "largemouth bass",
+        ];
+
         this.inventory.forEach((item) => {
             const li = document.createElement("li");
             li.classList.add("menu-item");
             const icon = document.createElement("img");
-            icon.src = `./assets/items/${item.name}.png`
+
+            // Normalize for comparison
+            const nameLower = item.name.toLowerCase();
+
+            // If the item is one of the fish types → use fish.png
+            let fileName;
+            if (fishNames.includes(nameLower)) {
+                fileName = "fish";
+            } else if (nameLower.includes("log")) {
+                fileName = "logs"
+            } else {
+                // Otherwise replace spaces with underscores
+                fileName = item.name.replace(/\s+/g, "_");
+            }
+
+            icon.src = `./assets/items/${fileName}.png`;
             li.appendChild(icon)
             // li.style.backgroundColor = `#${item.color}`;
             li.oncontextmenu = (event) => this.showContextMenu(event, item);
