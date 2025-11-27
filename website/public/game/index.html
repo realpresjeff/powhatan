@@ -45,6 +45,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            border: 2px solid gray;
         }
 
         #toolbar button:hover {
@@ -546,7 +547,7 @@
     </div>
 
     <!-- Popup container (hidden initially) -->
-    <div id="popup" class="popup-overlay-clear" style="display: none;">
+    <div id="inventoryPopup" class="popup-overlay-clear" style="display: none;">
         <div class="popup">
             <div class="popup-content">
                 <button id="popup-close" class="close-button">✖</button>
@@ -613,7 +614,7 @@
     <!-- Spellbook Overlay (Hidden Initially) -->
     <div class="popup-overlay-clear" id="spellbookOverlay" onclick="event.stopPropagation();">
         <div class="popup">
-            <button id="close-spellbook" class="close-button" onclick="toggleSpellbook()">✖</button>
+            <button id="close-spellbook" class="close-button" onclick="togglePopup('spellbookOverlay');">✖</button>
             <ul class="spells-container" id="spellList">
             </ul>
         </div>
@@ -668,6 +669,29 @@
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
+
+    <script>
+        document.getElementById('spells').addEventListener('click', () => {
+            togglePopup('spellbookOverlay');
+        });
+        document.getElementById('inventory').addEventListener('click', () => {
+            togglePopup('inventoryPopup');
+        });
+        document.getElementById('stats').addEventListener('click', () => {
+            togglePopup('statsPopup');
+        });
+        document.getElementById('open-worn-items').addEventListener('click', () => {
+            togglePopup('wornPopup');
+        });
+        document.getElementById('open-combat-settings').addEventListener('click', () => {
+            togglePopup('combatPopup');
+        });
+
+        function togglePopup(name) {
+            const popup = document.getElementById(`${name}`);
+            popup.style.display = popup.style.display === "block" ? "none" : "block";
+        }
+    </script>
 
     <!-- <script>
         const socket = io("https://ec2-18-205-27-62.compute-1.amazonaws.com:4000"); // Replace with your server URL
