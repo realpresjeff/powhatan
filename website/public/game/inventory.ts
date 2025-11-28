@@ -61,8 +61,15 @@ export class Inventory {
             } else if (nameLower.includes("log")) {
                 fileName = "logs"
             } else {
-                // Otherwise replace spaces with underscores
-                fileName = item.name.replace(/\s+/g, "_");
+                if (nameLower.includes("burnt")) {
+                    fileName = "burnt_fish"
+                } else if (nameLower.includes("cooked")) {
+                    fileName = "cooked_fish"
+                } else {
+
+                    // Otherwise replace spaces with underscores
+                    fileName = item.name.replace(/\s+/g, "_");
+                }
             }
 
             icon.src = `./assets/items/${fileName}.png`;
