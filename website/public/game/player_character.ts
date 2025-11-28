@@ -832,5 +832,48 @@ export class Character {
         this.scene.add(fireGroup);
         return fireGroup;
     }
+
+    cook(cookingMethod) {
+        console.log(cookingMethod);
+        let cookedItems = [];
+        let burntItems = [];
+        let craftExpDrain = 500; // Craft XP drains per cook attempt
+        let baseSuccessRate = Math.min(95, Math.max(30, this.skills.craft.total_points_available / 1000000)); // 30% min, 95% max
+
+        this.inventory.inventory.forEach(item => {
+            if (item.raw && item.cookable) {
+                let successRate = Math.max(10, baseSuccessRate - (5000000 / (this.skills.craft.total_points_available + 1))); // XP drain affects success
+                let success = Math.random() * 100 < successRate;
+
+                let cookedItem = {
+                    name: success ? `Cooked ${item.name}` : `Burnt ${item.name}`,
+                    raw: false,
+                    pickupable: true,
+                    cookable: success && item.cookable // Cooked items might stay cookable
+                };
+
+                this.inventory.removeFromInventory(item, 1);
+                this.inventory.add_to_inventory(cookedItem);
+
+                if (success) {
+                    cookedItems.push(cookedItem.name);
+                    this.addExperience("craft", 10);
+                } else {
+                    burntItems.push(cookedItem.name);
+                    this.addExperience("craft", 1);
+                }
+            }
+        });
+
+        if (cookedItems.length > 0 || burntItems.length > 0) {
+            // addMessage('Game', `Using ${cookingMethod.name}, you cooked: ${cookedItems.join(", ")}`);
+            // addMessage('Game', `Burnt items: ${burntItems.join(", ")}`);
+            // console.log
+        } else {
+            // addMessage('Game', "You have nothing raw to cook.");
+        }
+
+        return String;
+    }
 }
 

@@ -307,7 +307,7 @@ export class Engine {
                     menuOptions.unshift({
                         label: `Cook`,
                         action: () => {
-                            cook(selectedObject.userData);
+                            this.character.cook(selectedObject.userData);
                         }
                     });
                 }
