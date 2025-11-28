@@ -18,9 +18,9 @@ export class Engine {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     // Player character (simple cube)
-    character = new Character(this.scene);
     playerGeometry = new THREE.BoxGeometry(1, 2, 1);
     playerMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+    character = new Character(this.scene);
     player = this.character.draw_character();
 
     // Ground (map)
@@ -350,10 +350,10 @@ export class Engine {
                     });
                 }
 
-                if (selectedObject.userData.smelt) {
+                if (selectedObject.userData.flammable) {
                     menuOptions.push({
-                        label: `Smelt`,
-                        action: () => smelt(selectedObject.userData),
+                        label: `Start Fire`,
+                        action: () => this.character.createOpenLogFire(selectedObject.userData),
                     });
                 }
 

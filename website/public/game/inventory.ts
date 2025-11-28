@@ -1,6 +1,8 @@
 export interface InventoryProps {
     scene: THREE.Scene;
     showContextMenu: Function;
+    character;
+    player;
 }
 
 export class Inventory {
@@ -8,10 +10,14 @@ export class Inventory {
     scene = null;
     showContextMenu;
     inventoryLimit = 28;
+    character = null;
+    player = null;
 
-    constructor({ scene, showContextMenu }: InventoryProps) {
+    constructor({ scene, showContextMenu, character, player }: InventoryProps) {
         this.scene = scene;
         this.showContextMenu = showContextMenu;
+        this.character = character;
+        this.player = player;
         console.log(scene);
         // this.update_inventory_UI();
     }
@@ -98,7 +104,8 @@ export class Inventory {
             const startFireOption = document.createElement("div");
             startFireOption.textContent = `Start fire`;
             startFireOption.className = "context-menu-item";
-            startFireOption.onclick = () => this.startFire(player.position, item, 1);
+            console.log(this.player);
+            startFireOption.onclick = () => this.startFire(this.player.position, item, 1);
             contextMenu.appendChild(startFireOption);
         }
 
@@ -124,8 +131,16 @@ export class Inventory {
         contextMenu.addEventListener("click", this.closeContextMenu);
     }
 
+    startFire(position, selectedWood, cost) {
+        this.character.createOpenLogFire({ x: position.x, y: 1, z: position.z });
+        this.character.addExperience('craft', cost * 4);
+        this.removeFromInventory(selectedWood, cost);
+        this.update_inventory_UI()
+        this.closeContextMenu();
+    }
+
     // Function to close the context menu
-    closeContextMenu(event) {
+    closeContextMenu() {
         const contextMenu = document.getElementById('context-menu');
 
         // Check if the click was inside the menu
@@ -148,14 +163,6 @@ export class Inventory {
         // Hide the menu after selection
         contextMenu.style.display = "none";
         document.removeEventListener("click", this.closeContextMenu);
-    }
-
-    startFire(position, selectedWood, cost) {
-        // this.createOpenLogFire({ x: position.x, y: position.y, z: position.z });
-        // playerObj.updateExperience('craft', cost * 4);
-        this.removeFromInventory(selectedWood, cost);
-        // this.update_inventory_UI()
-        // this.hidePopup();
     }
 
     drop_item() {
