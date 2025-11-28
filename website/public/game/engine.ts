@@ -67,6 +67,11 @@ export class Engine {
         // this.createAnvil({ x: 15, y: 0, z: -40 });
         this.createSmelt({ x: 25, y: 0, z: -43 })
         this.createCoalMine({ x: 42.5, y: 0, z: -10 });
+        this.fetch_player_items();
+    }
+
+    fetch_player_items = () => {
+        this.character.inventory.add_to_inventory({ name: "pickaxe", pickupable: true });
     }
 
     setup_scene() {
@@ -249,13 +254,14 @@ export class Engine {
                     menuOptions.unshift({
                         label: `Pick up ${selectedObject.userData.name || "Item"}`,
                         action: () => {
-                            this.character.inventory.add_to_inventory(selectedObject.userData);
+                            console.log(selectedObject);
                             this.scene.remove(selectedObject);
+                            this.character.inventory.add_to_inventory({ ...selectedObject.userData });
+                            console.log(this.character.inventory);
                         }
                     });
                 }
 
-                // If object has 'pickupable' property
                 if (selectedObject.userData.isOre) {
                     menuOptions.unshift({
                         label: `Mine ${selectedObject.userData.name || "Item"}`,

@@ -49,8 +49,7 @@ export class Character {
     targetPosition;
 
     scene = null;
-
-    inventory = new Inventory({ scene: this.scene, showContextMenu: () => { } });
+    inventory = null;
 
     skills: Skills = {
         hp: { experience_points: 10000, total_points_available: 10000 },
@@ -70,6 +69,7 @@ export class Character {
 
     constructor(scene) {
         this.scene = scene;
+        this.inventory = new Inventory({ scene, showContextMenu: () => { } });
     }
 
     // Functions

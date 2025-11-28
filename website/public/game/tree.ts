@@ -116,9 +116,9 @@ export class Tree {
             // Stop mining if agility is 0 or max experience is reached
             if (character.skills.agility.total_points_available < cost || character.inventory.inventory.length >= character.inventory.inventoryLimit) {
                 clearInterval(cuttingInterval);
-                addMessage("Game", "You have run out of agility and can no longer cut.");
+                // addMessage("Game", "You have run out of agility and can no longer cut.");
                 if (character.skills.agility.total_points_available < cost || character.skills.strength.total_points_available < cost) {
-                    addMessage("Game", "You have run out of strength and can no longer cut.");
+                    // addMessage("Game", "You have run out of strength and can no longer cut.");
                     character.regenerateStat('agility'); // Start the agility regeneration process
                     character.regenerateStat('strength');
                 }
@@ -139,7 +139,7 @@ export class Tree {
             character.drainStat('agility', cost);
             character.drainStat('strength', cost);
 
-            addMessage("Game", `Cut down a ${tree.name} tree and got a ${log} log!`);
+            // addMessage("Game", `Cut down a ${tree.name} tree and got a ${log} log!`);
 
             // Increment experience after each ore mined (you can customize how much experience is gained)
             character.addExperience('agility', cost / 2);
