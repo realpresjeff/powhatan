@@ -72,6 +72,7 @@ export class Engine {
 
     fetch_player_items = () => {
         this.character.inventory.add_to_inventory({ name: "pickaxe", pickupable: true });
+        this.character.inventory.add_to_inventory({ name: "iron ore", pickupable: true });
     }
 
     setup_scene() {
@@ -286,7 +287,7 @@ export class Engine {
                     menuOptions.unshift({
                         label: `Smelt ${selectedObject.userData.name || "Item"}`,
                         action: () => {
-                            smelt(selectedObject.userData);
+                            this.character.smelt(selectedObject.userData);
                         }
                     });
                 }

@@ -745,5 +745,27 @@ export class Character {
         return activitySpeed;
     }
 
+    smelt() {
+        let smeltedItems = [];
+
+        this.inventory.inventory.forEach((item, index) => {
+            if (item.name.includes("ore")) {
+                let barType = item.name.replace("ore", "bar").trim(); // Convert "iron ore" → "iron bar"
+
+                setTimeout(() => {
+                    if (!this.inventory[index]) {
+                        this.inventory.removeFromInventory(item, 1);
+                        this.inventory.add_to_inventory({ ...item, name: barType, quantity: 1, type: barType });
+
+                        smeltedItems.push({ ...item, name: barType });
+                        console.log(`Smelted 1 ${item.name} → ${barType}`);
+                        this.addExperience("craft", 10);
+                    }
+                }, this.calculateActivitySpeed() * index); // Delay increases per item
+            }
+        });
+
+        return smeltedItems;
+    }
 }
 
