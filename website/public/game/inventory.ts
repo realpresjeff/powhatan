@@ -65,8 +65,17 @@ export class Inventory {
                     fileName = "burnt_fish"
                 } else if (nameLower.includes("cooked")) {
                     fileName = "cooked_fish"
+                } else if (nameLower.includes("shortbow")) {
+                    fileName = "shortbow"
+                } else if (nameLower.includes("longbow")) {
+                    fileName = "longbow"
+                } else if (nameLower.includes("shaft")) {
+                    fileName = "arrow_shafts"
+                } else if (nameLower.includes("arrow")) {
+                    fileName = "arrows"
+                } else if (nameLower.includes("crossbow")) {
+                    fileName = "crossbow"
                 } else {
-
                     // Otherwise replace spaces with underscores
                     fileName = item.name.replace(/\s+/g, "_");
                 }
@@ -103,7 +112,7 @@ export class Inventory {
             const fletchOption = document.createElement("div");
             fletchOption.textContent = `Fletch ${item.name}`;
             fletchOption.className = "context-menu-item";
-            fletchOption.onclick = () => this.fletch(item);
+            fletchOption.onclick = () => this.character.fletch(item);
             contextMenu.appendChild(fletchOption);
         }
 

@@ -327,7 +327,7 @@ export class Engine {
                     menuOptions.unshift({
                         label: `Fletch ${selectedObject.userData.name}`,
                         action: () => {
-                            fletch(selectedObject.userData);
+                            this.character.fletch(selectedObject.userData);
                         }
                     });
                 }
