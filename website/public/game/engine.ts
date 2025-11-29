@@ -317,7 +317,7 @@ export class Engine {
                     menuOptions.unshift({
                         label: `Smith`,
                         action: () => {
-                            smith(selectedObject.userData);
+                            this.character.smith(selectedObject.userData);
                         }
                     });
                 }
@@ -732,14 +732,9 @@ export class Engine {
         const topGeo = new THREE.BoxGeometry(2 * scale, 0.3 * scale, 0.7 * scale);
         const topMesh = new THREE.Mesh(topGeo, metalMaterial);
         topMesh.position.set(0, 0.2 * scale + 0.6 * scale + 0.15 * scale, 0);
+        topMesh.userData = { isAnvil: true }
         anvil.add(topMesh);
 
-        // Horn (front)
-        // const hornGeo = new THREE.ConeGeometry(0.2 * scale, 0.8 * scale, 8);
-        // const hornMesh = new THREE.Mesh(hornGeo, metalMaterial);
-        // hornMesh.rotation.z = -Math.PI / 2;
-        // hornMesh.position.set(1 * scale, topMesh.position.y + 0.05 * scale, 0);
-        // anvil.add(hornMesh);
 
         // Back block extension
         const backGeo = new THREE.BoxGeometry(0.6 * scale, 0.2 * scale, 0.5 * scale);
@@ -757,7 +752,7 @@ export class Engine {
 
         anvil.position.copy(position);
 
-        anvil.scale.set(4, 4, 4);
+        anvil.scale.set(3, 3, 3);
 
         this.scene.add(anvil);
 

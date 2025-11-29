@@ -925,8 +925,8 @@ export class Character {
         fletchUI.style.display = (fletchUI.style.display === "block") ? "none" : "block";
     }
 
-    fletchItem(itemName, material, secondary, cost, type, inventory) {
-        function getInventoryItemByMaterial(material) {
+    fletchItem(itemName, material, secondary, cost, type) {
+        function getInventoryItemByMaterial(material, inventory) {
             let foundItem = 0; // Default to 0 if no match is found
 
             inventory.forEach(item => {
@@ -938,8 +938,8 @@ export class Character {
             return foundItem;
         }
 
-        const inventoryItem = getInventoryItemByMaterial(material);
-        const secondaryItem = getInventoryItemByMaterial(secondary);
+        const inventoryItem = getInventoryItemByMaterial(material, this.inventory.inventory);
+        const secondaryItem = getInventoryItemByMaterial(secondary, this.inventory.inventory);
 
         // Check if player has enough primary material
         if (!inventoryItem) {
@@ -963,7 +963,64 @@ export class Character {
             this.inventory.update_inventory_UI();
         }
 
-        this.toggleFletchUI();
+        if (inventoryItem.type.includes("iron")) {
+            this.toggleSmithUI()
+        } else this.toggleFletchUI();
     }
+
+    // Opens the Smithing UI
+    smith() {
+        const smithUI = document.getElementById("smithUI");
+        const smithItemsContainer = document.getElementById("smithItems");
+        smithItemsContainer.innerHTML = ""; // Clear previous items
+
+        // List of smithable items
+        const smithableItems = [
+            { name: "Arrow Heads", material: "bar", cost: 1 },
+            { name: "Platelegs", material: "bar", cost: 3 },
+            { name: "Chestplate", material: "bar", cost: 5 },
+            { name: "Boots", material: "bar", cost: 2 },
+            { name: "Gloves", material: "bar", cost: 1 },
+            { name: "Sword", material: "bar", cost: 3 },
+            { name: "Shield", material: "bar", cost: 4 },
+            { name: "Helmet", material: "bar", cost: 3 }
+        ];
+
+        // Generate item grid
+        smithableItems.forEach(item => {
+            const itemElement = document.createElement("div");
+            itemElement.classList.add("smith-item");
+
+            // Add item name
+            const nameDiv = document.createElement("div");
+            nameDiv.classList.add("smith-item-name");
+            nameDiv.textContent = item.name;
+
+            // Create the button
+            const button = document.createElement("button");
+            button.textContent = "Smith";
+
+            // Properly bind class methods
+            button.addEventListener("click", () => {
+                this.fletchItem(item.name, item.material, item.secondary || "", item.cost);
+                this.addExperience("craft", 10);
+            });
+
+            // Assemble UI
+            itemElement.appendChild(nameDiv);
+            itemElement.appendChild(button);
+            smithItemsContainer.appendChild(itemElement);
+        })
+
+        // Show the smithing UI
+        this.toggleSmithUI();
+    }
+
+    // Toggles the smith UI
+    toggleSmithUI() {
+        const smithUI = document.getElementById("smithUI");
+        smithUI.style.display = (smithUI.style.display === "block") ? "none" : "block";
+    }
+
 }
 
