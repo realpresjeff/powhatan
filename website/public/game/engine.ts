@@ -64,7 +64,7 @@ export class Engine {
         // createBrickOven({ x: -35, y: 0, z: 0 });
         // createBank({ x: -45, y: 0, z: -10 });
         const smithshop = this.createLonghouse({ x: 20, y: 0, z: -40 }, 20, 15, 5); // 30ft long, 15ft wide, 10ft tall
-        // this.createAnvil({ x: 15, y: 0, z: -40 });
+        this.createAnvil({ x: 15, y: 0, z: -40 });
         this.createSmelt({ x: 25, y: 0, z: -43 })
         this.createCoalMine({ x: 42.5, y: 0, z: -10 });
         this.fetch_player_items();
@@ -602,22 +602,22 @@ export class Engine {
         return smelt;
     }
 
-    createAnvil(position) {
-        const anvil = new THREE.Group();
-        anvil.userData = { isAnvil: true }
+    // createAnvil(position) {
+    //     const anvil = new THREE.Group();
+    //     anvil.userData = { isAnvil: true }
 
-        anvil.position.set(position.x, position.y, position.z);
+    //     anvil.position.set(position.x, position.y, position.z);
 
-        const loader = new THREE.GLTFLoader();
-        loader.load('assets/anvil_three.glb', function (gltf) {
-            anvil.add(gltf.scene);
-        }, undefined, function (error) {
-            console.error("Error loading model:", error);
-        });
+    //     const loader = new THREE.GLTFLoader();
+    //     loader.load('assets/anvil_three.glb', function (gltf) {
+    //         anvil.add(gltf.scene);
+    //     }, undefined, function (error) {
+    //         console.error("Error loading model:", error);
+    //     });
 
-        this.scene.add(anvil);
-        return anvil;
-    }
+    //     this.scene.add(anvil);
+    //     return anvil;
+    // }
 
     createCoalMine(position) {
         const mine = new THREE.Mesh();
@@ -704,4 +704,64 @@ export class Engine {
         this.scene.add(mineGround);
         return mineGround;
     }
+
+    // Assumes THREE is already imported and you have a scene + lights set up
+
+    createAnvil(position = new THREE.Vector3(0, 0, 0), scale = 1) {
+        const anvil = new THREE.Group();
+
+        const metalMaterial = new THREE.MeshStandardMaterial({
+            color: 0x555555,   // dark metal
+            metalness: 0.8,
+            roughness: 0.3
+        });
+
+        // Base
+        const baseGeo = new THREE.BoxGeometry(2 * scale, 0.4 * scale, 1 * scale);
+        const baseMesh = new THREE.Mesh(baseGeo, metalMaterial);
+        baseMesh.position.set(0, 0.2 * scale, 0);
+        anvil.add(baseMesh);
+
+        // Pedestal
+        const pedestalGeo = new THREE.BoxGeometry(1 * scale, 0.6 * scale, 0.6 * scale);
+        const pedestalMesh = new THREE.Mesh(pedestalGeo, metalMaterial);
+        pedestalMesh.position.set(0, 0.2 * scale + 0.3 * scale, 0);
+        anvil.add(pedestalMesh);
+
+        // Top block
+        const topGeo = new THREE.BoxGeometry(2 * scale, 0.3 * scale, 0.7 * scale);
+        const topMesh = new THREE.Mesh(topGeo, metalMaterial);
+        topMesh.position.set(0, 0.2 * scale + 0.6 * scale + 0.15 * scale, 0);
+        anvil.add(topMesh);
+
+        // Horn (front)
+        // const hornGeo = new THREE.ConeGeometry(0.2 * scale, 0.8 * scale, 8);
+        // const hornMesh = new THREE.Mesh(hornGeo, metalMaterial);
+        // hornMesh.rotation.z = -Math.PI / 2;
+        // hornMesh.position.set(1 * scale, topMesh.position.y + 0.05 * scale, 0);
+        // anvil.add(hornMesh);
+
+        // Back block extension
+        const backGeo = new THREE.BoxGeometry(0.6 * scale, 0.2 * scale, 0.5 * scale);
+        const backMesh = new THREE.Mesh(backGeo, metalMaterial);
+        backMesh.position.set(-1.1 * scale, topMesh.position.y, 0);
+        anvil.add(backMesh);
+
+        // Optional: make it cast/receive shadows
+        anvil.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+
+        anvil.position.copy(position);
+
+        anvil.scale.set(4, 4, 4);
+
+        this.scene.add(anvil);
+
+        return anvil;
+    }
+
 }
