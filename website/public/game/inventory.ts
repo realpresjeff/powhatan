@@ -77,7 +77,7 @@ export class Inventory {
                     fileName = "crossbow"
                 } else {
                     // Otherwise replace spaces with underscores
-                    fileName = item.name.replace(/\s+/g, "_");
+                    fileName = nameLower.replace(/\s+/g, "_");
                 }
             }
 

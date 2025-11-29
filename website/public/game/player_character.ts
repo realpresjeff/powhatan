@@ -959,7 +959,13 @@ export class Character {
             }
 
             // Add the fletched item
-            this.inventory.add_to_inventory({ name: `${type && type || ""} ${inventoryItem.type} ${itemName}`, type: inventoryItem.type, equipable: true, equipType: 'both_hands', pickupable: true })
+            const line = `${type && type || ""} ${inventoryItem.type}`;
+            const cleaned = line
+                .replace(/\bbar\b/gi, "")
+                .replace(/\s+/g, " ")
+                .trim();
+
+            this.inventory.add_to_inventory({ name: `${cleaned} ${itemName}`, type: inventoryItem.type, equipable: true, equipType: 'both_hands', pickupable: true })
             this.inventory.update_inventory_UI();
         }
 
@@ -978,7 +984,7 @@ export class Character {
         const smithableItems = [
             { name: "Arrow Heads", material: "bar", cost: 1 },
             { name: "Platelegs", material: "bar", cost: 3 },
-            { name: "Chestplate", material: "bar", cost: 5 },
+            { name: "Platebody", material: "bar", cost: 5 },
             { name: "Boots", material: "bar", cost: 2 },
             { name: "Gloves", material: "bar", cost: 1 },
             { name: "Sword", material: "bar", cost: 3 },
