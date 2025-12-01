@@ -278,7 +278,7 @@ export class Engine {
                     menuOptions.unshift({
                         label: "Bank",
                         action: () => {
-                            openBank(selectedObject.userData);
+                            this.character.openBank(selectedObject.userData);
                         }
                     });
                 }

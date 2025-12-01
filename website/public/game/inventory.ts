@@ -104,8 +104,8 @@ export class Inventory {
             contextMenu.appendChild(equipOption);
         }
 
-        // if (banking) {
-        //     openContextMenu(event, item);
+        // if (this.banking) {
+        //     this.openContextMenu(event, item);
         // }
 
         if (item.fletch) {
@@ -125,12 +125,32 @@ export class Inventory {
             contextMenu.appendChild(startFireOption);
         }
 
-        // Drop option (always available)
-        const dropOption = document.createElement("div");
-        dropOption.textContent = `Drop ${item.name}`;
-        dropOption.className = "context-menu-item";
-        dropOption.onclick = () => this.drop_item(item);
-        contextMenu.appendChild(dropOption);
+        if (this.character.banking) {
+            if (this.character.withdrawing) {
+                // Banking mode - Show deposit options
+                contextMenu.innerHTML = `
+            <li onclick="withdrawItem('${item}', 1)">Withdraw-1</li>
+            <li onclick="withdrawItem('${item}', 5)">Withdraw-5</li>
+            <li onclick="withdrawItem('${item}', 10)">Withdraw-10</li>
+            <li onclick="withdrawItem('${item}', 'all')">Withdraw-All</li>
+        `;
+            } else {
+                // Drop option (always available)
+                const dropOption = document.createElement("div");
+                dropOption.textContent = `Deposit ${item.name}`;
+                dropOption.className = "context-menu-item";
+                this.character.currentBankingItem = item;
+                dropOption.onclick = () => this.character.depositItem(item.quantity || 1);
+                contextMenu.appendChild(dropOption);
+            }
+        } else {
+            // Drop option (always available)
+            const dropOption = document.createElement("div");
+            dropOption.textContent = `Drop ${item.name}`;
+            dropOption.className = "context-menu-item";
+            dropOption.onclick = () => this.drop_item(item);
+            contextMenu.appendChild(dropOption);
+        }
 
         // Position and show menu
         contextMenu.style.display = "block";
