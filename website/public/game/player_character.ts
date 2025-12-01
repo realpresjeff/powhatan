@@ -1105,10 +1105,15 @@ export class Character {
             return;
         }
 
-
         // Handle "all" case and ensure we don’t overdraw
         if (quantity === "all" || quantity > bankedItem.quantity) {
             quantity = bankedItem.quantity;
+        }
+
+        this.withdrawing = false;
+
+        if (bankedItem.quantity < 1) {
+            return;
         }
 
         this.setBankStorage(itemName, quantity, true); // Update storage
@@ -1116,7 +1121,6 @@ export class Character {
         // Add the item to the player's inventory
         this.inventory.add_to_inventory({ ...bankedItem, quantity });
         this.updateBankDisplay();
-        this.withdrawing = false;
         this.inventory.updateInventoryUI();
     }
 
