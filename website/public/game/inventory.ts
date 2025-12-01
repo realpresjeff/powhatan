@@ -128,12 +128,24 @@ export class Inventory {
         if (this.character.banking) {
             if (this.character.withdrawing) {
                 // Banking mode - Show deposit options
-                contextMenu.innerHTML = `
-            <li onclick="withdrawItem('${item}', 1)">Withdraw-1</li>
-            <li onclick="withdrawItem('${item}', 5)">Withdraw-5</li>
-            <li onclick="withdrawItem('${item}', 10)">Withdraw-10</li>
-            <li onclick="withdrawItem('${item}', 'all')">Withdraw-All</li>
-        `;
+                // Clear previous menu
+                contextMenu.innerHTML = "";
+
+                // Create a helper function
+                function buildOption(label, amount) {
+                    const li = document.createElement("li");
+                    li.textContent = label;
+                    li.addEventListener("click", () => {
+                        this.character.withdrawItem(item, amount);
+                    });
+                    return li;
+                }
+
+                // Add menu options
+                contextMenu.appendChild(buildOption.call(this, "Withdraw-1", 1));
+                contextMenu.appendChild(buildOption.call(this, "Withdraw-5", 5));
+                contextMenu.appendChild(buildOption.call(this, "Withdraw-10", 10));
+                contextMenu.appendChild(buildOption.call(this, "Withdraw-All", "all"));
             } else {
                 // Drop option (always available)
                 const dropOption = document.createElement("div");

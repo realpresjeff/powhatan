@@ -1053,6 +1053,8 @@ export class Character {
 
     // Getter for bank storage
     getBankStorage(itemName) {
+        console.log(this.bankStorage);
+        console.log(itemName);
         return this.bankStorage[itemName] || null;
     }
 
@@ -1112,8 +1114,9 @@ export class Character {
         this.setBankStorage(itemName, quantity, true); // Update storage
 
         // Add the item to the player's inventory
-        this.inventory.addToInventory({ ...bankedItem, quantity });
+        this.inventory.add_to_inventory({ ...bankedItem, quantity });
         this.updateBankDisplay();
+        this.withdrawing = false;
         this.inventory.updateInventoryUI();
     }
 
@@ -1135,7 +1138,7 @@ export class Character {
             itemElement.addEventListener("contextmenu", (e) => {
                 e.preventDefault();
                 this.withdrawing = true;
-                this.inventory.openContextMenu(e, item, "withdraw");
+                this.inventory.showInventoryContextMenu(e, item, "withdraw");
             });
 
             bankUI.appendChild(itemElement);
