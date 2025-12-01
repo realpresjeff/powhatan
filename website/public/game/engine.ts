@@ -68,6 +68,7 @@ export class Engine {
         this.createSmelt({ x: 25, y: 0, z: -43 })
         this.createCoalMine({ x: 42.5, y: 0, z: -10 });
         this.fetch_player_items();
+        this.createBank({ x: -45, y: 0, z: -10 });
     }
 
     fetch_player_items = () => {
@@ -759,4 +760,52 @@ export class Engine {
         return anvil;
     }
 
+    createBank(position) {
+        const bag = new THREE.Group();
+        bag.userData = { bank: true };
+
+        // **Bag Body**
+        const bagGeometry = new THREE.CylinderGeometry(2, 2.5, 5, 16); // Tapered shape
+        bagGeometry.userData = { bank: true };
+        const bagTexture = new THREE.TextureLoader().load('textures/burlap.jpg');
+        bagTexture.wrapS = bagTexture.wrapT = THREE.RepeatWrapping;
+        bagTexture.repeat.set(2, 2);
+        const bagMaterial = new THREE.MeshStandardMaterial({
+            map: bagTexture,
+            color: "#C2A878",
+            roughness: 1,
+        });
+        const bagBody = new THREE.Mesh(bagGeometry, bagMaterial);
+        bagBody.userData = { bank: true }
+        bagBody.position.set(0, 2.5, 0);
+        bag.add(bagBody);
+
+        // **Bag Top (Tied Look)**
+        const topGeometry = new THREE.SphereGeometry(1.5, 16, 12);
+        topGeometry.userData = { bank: true };
+        topGeometry.scale(1, 0.7, 1); // Squashed for tied look
+        const topMaterial = new THREE.MeshStandardMaterial({
+            color: "#9C6B30",
+            roughness: 1,
+        });
+        const bagTop = new THREE.Mesh(topGeometry, topMaterial);
+        bagTop.userData = { bank: true }
+        bagTop.position.set(0, 5, 0);
+        bag.add(bagTop);
+
+        // **Rope Tie**
+        const ropeGeometry = new THREE.TorusGeometry(1.6, 0.1, 8, 16);
+        ropeGeometry.userData = { bank: true };
+        const ropeMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B", roughness: 0.9 });
+        const rope = new THREE.Mesh(ropeGeometry, ropeMaterial);
+        rope.rotation.x = Math.PI / 2;
+        rope.position.set(0, 4.7, 0);
+        bag.add(rope);
+
+        // **Positioning Fix**
+        bag.position.set(position.x, position.y, position.z);
+        this.scene.add(bag);
+
+        return bag;
+    }
 }
