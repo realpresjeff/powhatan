@@ -1053,8 +1053,6 @@ export class Character {
 
     // Getter for bank storage
     getBankStorage(itemName) {
-        console.log(this.bankStorage);
-        console.log(itemName);
         return this.bankStorage[itemName] || null;
     }
 
@@ -1073,8 +1071,6 @@ export class Character {
 
     // Deposits an item into the bank
     depositItem(quantity) {
-        console.log(5);
-        console.log(quantity);
         if (!this.currentBankingItem) {
             console.log(`Not enough ${this.currentBankingItem.name} to deposit.`);
             return;
@@ -1092,7 +1088,6 @@ export class Character {
         this.setBankStorage(this.currentBankingItem.name, quantity);
 
         this.updateBankDisplay();
-        this.inventory.updateInventoryUI();
     }
 
 
@@ -1121,7 +1116,6 @@ export class Character {
         // Add the item to the player's inventory
         this.inventory.add_to_inventory({ ...bankedItem, quantity });
         this.updateBankDisplay();
-        this.inventory.updateInventoryUI();
     }
 
 
@@ -1130,13 +1124,10 @@ export class Character {
         let bankUI = document.getElementById("bankItems");
         bankUI.innerHTML = "";
 
-        console.log(this.bankStorage);
-
         for (let item in this.bankStorage) {
-            console.log(item);
             let itemElement = document.createElement("div");
             itemElement.className = "bank-item";
-            itemElement.innerHTML = `<img src="spell-icon.png"> ${this.bankStorage[item].name} x${this.bankStorage[item].quantity}`;
+            itemElement.innerHTML = `<img src="./assets/items/${this.inventory.grab_item_image(this.bankStorage[item].name)}.png"> ${this.bankStorage[item].name} x${this.bankStorage[item].quantity}`;
 
             itemElement.addEventListener("click", () => this.withdrawItem(item, this.bankStorage[item].quantity)); // Left-click withdraw all
             itemElement.addEventListener("contextmenu", (e) => {
@@ -1148,6 +1139,5 @@ export class Character {
             bankUI.appendChild(itemElement);
         }
     }
-
 }
 

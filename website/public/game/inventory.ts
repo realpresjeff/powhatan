@@ -31,10 +31,9 @@ export class Inventory {
         } else return false;
     }
 
-    // Function to update the popup menu with inventory items onInit
-    update_inventory_UI() {
-        const menuItems = document.getElementById("menu-items");
-        menuItems.innerHTML = ""; // Clear existing items
+    grab_item_image(itemName) {
+        // Normalize for comparison
+        const nameLower = itemName.toLowerCase();
 
         const fishNames = [
             "american shad",
@@ -46,40 +45,48 @@ export class Inventory {
             "largemouth bass",
         ];
 
+        let fileName;
+
+        // If the item is one of the fish types → use fish.png
+        if (fishNames.includes(nameLower)) {
+            fileName = "fish";
+        } else if (nameLower.includes("log")) {
+            fileName = "logs"
+        } else {
+            if (nameLower.includes("burnt")) {
+                fileName = "burnt_fish"
+            } else if (nameLower.includes("cooked")) {
+                fileName = "cooked_fish"
+            } else if (nameLower.includes("shortbow")) {
+                fileName = "shortbow"
+            } else if (nameLower.includes("longbow")) {
+                fileName = "longbow"
+            } else if (nameLower.includes("shaft")) {
+                fileName = "arrow_shafts"
+            } else if (nameLower.includes("arrow")) {
+                fileName = "arrows"
+            } else if (nameLower.includes("crossbow")) {
+                fileName = "crossbow"
+            } else {
+                // Otherwise replace spaces with underscores
+                fileName = nameLower.replace(/\s+/g, "_");
+            }
+        }
+
+        return fileName;
+    }
+
+    // Function to update the popup menu with inventory items onInit
+    update_inventory_UI() {
+        const menuItems = document.getElementById("menu-items");
+        menuItems.innerHTML = ""; // Clear existing items
+
         this.inventory.forEach((item) => {
             const li = document.createElement("li");
             li.classList.add("menu-item");
             const icon = document.createElement("img");
 
-            // Normalize for comparison
-            const nameLower = item.name.toLowerCase();
-
-            // If the item is one of the fish types → use fish.png
-            let fileName;
-            if (fishNames.includes(nameLower)) {
-                fileName = "fish";
-            } else if (nameLower.includes("log")) {
-                fileName = "logs"
-            } else {
-                if (nameLower.includes("burnt")) {
-                    fileName = "burnt_fish"
-                } else if (nameLower.includes("cooked")) {
-                    fileName = "cooked_fish"
-                } else if (nameLower.includes("shortbow")) {
-                    fileName = "shortbow"
-                } else if (nameLower.includes("longbow")) {
-                    fileName = "longbow"
-                } else if (nameLower.includes("shaft")) {
-                    fileName = "arrow_shafts"
-                } else if (nameLower.includes("arrow")) {
-                    fileName = "arrows"
-                } else if (nameLower.includes("crossbow")) {
-                    fileName = "crossbow"
-                } else {
-                    // Otherwise replace spaces with underscores
-                    fileName = nameLower.replace(/\s+/g, "_");
-                }
-            }
+            const fileName = this.grab_item_image(item.name);
 
             icon.src = `./assets/items/${fileName}.png`;
             li.appendChild(icon)
