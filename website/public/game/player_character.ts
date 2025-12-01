@@ -1039,7 +1039,7 @@ export class Character {
     // Opens Bank UI
     openBank() {
         document.getElementById("bankUI").style.display = "block";
-        // document.getElementById("popup").style.display = "block";
+        document.getElementById("bank-close-button").addEventListener("click", () => this.closeBank())
         this.updateBankDisplay();
         this.banking = true;
     }
