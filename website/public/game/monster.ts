@@ -1,3 +1,5 @@
+import { createHorseModel } from './animals/horse.js';
+
 export class Monster {
     stats = {
         hp: 0,
@@ -100,7 +102,8 @@ export class Monster {
         }
 
         deerGroup.position.set(this.position.x, this.position.y, this.position.z);
-        return deerGroup;
+        // return deerGroup;
+        return createHorseModel();
     }
 
     takeDamage(damage, attacker) {
