@@ -1,4 +1,4 @@
-import { createHorseModel } from './animals/horse.js';
+import { createGrayAlienModel } from './animals/alien.js';
 
 export class Monster {
     stats = {
@@ -103,7 +103,7 @@ export class Monster {
 
         deerGroup.position.set(this.position.x, this.position.y, this.position.z);
         // return deerGroup;
-        return createHorseModel();
+        return createGrayAlienModel();
     }
 
     takeDamage(damage, attacker) {
