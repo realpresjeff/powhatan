@@ -1,4 +1,4 @@
-import { createGrayAlienModel } from './animals/alien.js';
+import { createDragonModel } from './animals/dragon.js';
 
 export class Monster {
     stats = {
@@ -103,7 +103,7 @@ export class Monster {
 
         deerGroup.position.set(this.position.x, this.position.y, this.position.z);
         // return deerGroup;
-        return createGrayAlienModel();
+        return createDragonModel();
     }
 
     takeDamage(damage, attacker) {

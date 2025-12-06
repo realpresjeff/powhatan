@@ -145,9 +145,6 @@ export function createGrayAlienModel(options: {
     alien.add(makeLeg(1));
     alien.add(makeLeg(-1));
 
-    // ------------------------------------------------------------
-    // FINAL TRANSFORM – no sneaky rotations, just uniform scale
-    // ------------------------------------------------------------
     alien.scale.set(scale, scale, scale);
 
     return alien;
