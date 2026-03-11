@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/png" href="./powhatan_3.png">
+
+  <meta property="og:title" content="The Powhatan Confederacy">
+  <meta property="og:description"
+    content="The Native American tribe of Pocahontas, led by the grandchildren of President Thomas Jefferson.">
+  <meta property="og:image" content="powhatan_3.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://realpresjeff.github.io">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Powhatan Confederacy">
+  <meta name="twitter:description"
+    content="The Native American tribe of Pocahontas, led by the grandchildren of President Thomas Jefferson.">
+  <meta name="twitter:image" content="powhatan_3.png">
+
+  <title>神は民</title>
+</head>
+
+<body>
+  <!-- Top Navigation Bar -->
+  <top-bar class="top-bar"></top-bar>
+
+  <img src="powhatan_3.png" style="margin-bottom: 20px" title="The Powhatan Confederacy" />
+
+  <span class="sm">The Powhatan Confederacy</span>
+  <h1>神は民</h1>
+  <p>仗三战逆英殖民地はVirginia,</p>
+  <p>效果:奴役。</p>
+  <p>咱们比美国早215岁。</p>
+  <p>我们史は寿命 从 1561 到 2024。</p>
+  <p>以多463年们は文历史。</p>
+
+  <span>
+    <a href="https://www.patreon.com/collection/761441">patreon</a>
+    <a href="https://www.facebook.com/profile.php?id=61565740623097">facebook</a>
+    <a href="https://www.youtube.com/@powhatanrez">youtube</a>
+    <a href="https://ashton-j-jefferson.medium.com/list/powhatan-cb3dd4579a29">medium</a>
+  </span>
+
+  <embed src="./The Powhatan Confederacy Petition for Tribal Recognition.pdf" type="application/pdf" width="100%"
+    height="600px" />
+
+</body>
+
+<script src="main.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Get all imgs
+    const inviteImages = document.querySelectorAll("img");
+
+    inviteImages.forEach((image) => {
+      image.addEventListener("click", function () {
+        // Check if the image is already expanded
+        if (image.classList.contains("expanded")) {
+          collapseImage(image); // Collapse if it's already expanded
+        } else {
+          // Add overlay background
+          const overlay = document.createElement("div");
+          overlay.classList.add("overlay");
+          document.body.appendChild(overlay);
+
+          // Expand the image and scale to fit the screen
+          scaleToFitScreen(image);
+
+          // Remove expansion when clicking on the overlay
+          overlay.addEventListener("click", function () {
+            collapseImage(image);
+            overlay.remove(); // Remove the overlay when collapsing
+          });
+        }
+      });
+    });
+
+    // Function to scale the image to fit the screen
+    function scaleToFitScreen(image) {
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const imageAspectRatio = image.naturalWidth / image.naturalHeight;
+
+      // Calculate the new width and height for the image to fit within the screen
+      let newWidth, newHeight;
+
+      if (screenWidth / screenHeight > imageAspectRatio) {
+        // Screen is wider than image aspect ratio, limit by height
+        newHeight = screenHeight * 0.9; // Use 90% of screen height
+        newWidth = newHeight * imageAspectRatio;
+      } else {
+        // Screen is narrower than image aspect ratio, limit by width
+        newWidth = screenWidth * 0.9; // Use 90% of screen width
+        newHeight = newWidth / imageAspectRatio;
+      }
+
+      // Apply expanded class and set dynamic size
+      image.classList.add("expanded");
+      image.style.width = `${newWidth}px`;
+      image.style.height = `${newHeight}px`;
+      image.style.top = `50%`;
+      image.style.left = `50%`;
+      image.style.position = `fixed`;
+      image.style.zIndex = `1000`;
+      image.style.transform = `translate(-50%, -50%)`;
+    }
+
+    // Function to collapse the image back to its original state
+    function collapseImage(image) {
+      // Remove the expanded class and reset inline styles
+      image.classList.remove("expanded");
+      image.style.width = "";
+      image.style.height = "";
+      image.style.top = "";
+      image.style.left = "";
+      image.style.position = "";
+      image.style.zIndex = "";
+      image.style.transform = "";
+    }
+  });
+</script>
+
+</html>
