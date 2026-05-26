@@ -335,7 +335,7 @@ const players = new Map();
 const droppedItems = new Map();
 const activeTrades = new Map();
 const monsters = new Map();
-const monsterId = crypto.randomUUID()
+const monsterId = crypto.randomUUID();
 monsters.set(monsterId, {
   position: { x: 5, y: 0, z: -5 },
   name: 'Jersey Devil',
