@@ -1,9 +1,9 @@
-import { bow, sword, axe, wizardWand } from './weapons/index.js';
+import { bow, sword, axe } from './weapons/index.js';
 import { Inventory } from './inventory.js';
 import { createHealthBar3D, createDamageSplash } from './healthbar.js';
 import socket from './socket.js';
 import { Monster } from './monster.js';
-import { goldNecklace, bearClaws } from './clothing/index.js';
+import { bearClaws } from './clothing/index.js';
 function generateUniqueUsername(prefix = "Player") {
     const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
     const time = Date.now().toString(36).slice(-4).toUpperCase();
@@ -57,7 +57,7 @@ export class Character {
         this.legOptionsOpen = false;
         this.weaponOptionsOpen = false;
         this.applyedLeg = this.addRightLeg();
-        this.applyedWeapon = wizardWand();
+        this.applyedWeapon = null;
         this.currentRotation = 0;
         this.scene = null;
         this.inventory = null;
@@ -81,12 +81,12 @@ export class Character {
             [EquipType.helmet]: null,
             [EquipType.torso]: null,
             [EquipType.pants]: null,
-            [EquipType.left_hand]: { name: "iron sword", equipable: true, equipType: EquipType.left_hand },
+            [EquipType.left_hand]: null,
             [EquipType.right_hand]: null,
-            [EquipType.left_shoe]: { name: "leather boots", equipable: true, equipType: EquipType.left_shoe },
-            [EquipType.right_shoe]: { name: "leather boots", equipable: true, equipType: EquipType.right_shoe },
+            [EquipType.left_shoe]: null,
+            [EquipType.right_shoe]: null,
             [EquipType.ring]: null,
-            [EquipType.necklace]: { name: "gold necklace", equipable: true, equipType: EquipType.necklace },
+            [EquipType.necklace]: null,
             [EquipType.belt]: null,
             [EquipType.wings]: null,
         };
@@ -669,11 +669,14 @@ export class Character {
         this.weaponGroup = new THREE.Group(); // ← store reference
         this.weaponGroup.add(this.applyedWeapon);
         this.leftArm.forearm.add(this.weaponGroup);
-        this.weaponGroup.position.set(-1.8, 1.5, 0);
+        this.weaponGroup.position.set(-1.5, 0, -1.2);
         this.weaponGroup.rotation.y = Math.PI / 2;
-        this.weaponGroup.rotation.x = Math.PI / 12;
+        this.weaponGroup.rotation.x = Math.PI / -12;
     }
     removeWeapon() {
+        console.log(`removing weapon: ${this.weaponGroup}`);
+        console.log(this.weaponGroup);
+        console.log(this.base);
         if (this.weaponGroup) {
             this.base.remove(this.weaponGroup);
             this.weaponGroup = undefined;
@@ -726,11 +729,11 @@ export class Character {
         this.addBody(this.characterConfig.gender !== "male", this.characterConfig.gender !== "male");
         this.addLegs();
         this.addArms();
-        this.addWeapon();
+        // this.addWeapon();
         this.animate();
         // this.addWizardHat();
         // this.addEarMuffs();
-        goldNecklace(this.base);
+        // goldNecklace(this.base);
         // this.addMask();
         // this.shieldRightHand();
         // this.addWingCape();
@@ -1331,10 +1334,14 @@ export class Character {
                 if (success) {
                     cookedItems.push(cookedItem.name);
                     this.addExperience("craft", 10);
+                    this.drainStat("craft", 20);
+                    this.startRegeneration("craft");
                 }
                 else {
                     burntItems.push(cookedItem.name);
                     this.addExperience("craft", 1);
+                    this.drainStat("craft", 20);
+                    this.startRegeneration("craft");
                 }
             }
         });
@@ -1378,6 +1385,8 @@ export class Character {
                 console.log(item);
                 this.fletchItem(item.name, item.material, item.secondary || "", item.cost, undefined, this.inventory.inventory);
                 this.addExperience("craft", item.cost * 4);
+                this.drainStat("craft", 20);
+                this.startRegeneration("craft");
             });
             itemElement.appendChild(button);
             fletchItemsContainer.appendChild(itemElement);
@@ -1627,6 +1636,7 @@ export class Character {
     }
     equipItem(item) {
         console.log(`Equipping ${item.name} in slot: ${item.equipType}`);
+        this.removeWeapon();
         // update character model
         if (item.name.includes("sword")) {
             this.removeWeapon();
@@ -1778,22 +1788,6 @@ export class Character {
     eat(item) {
         this.inventory.removeFromInventory(item);
     }
-    // castSpell(caster, spellCost, spellDifficulty) {
-    //     if (caster.magicStamina < spellCost) {
-    //         console.log(`${caster.name} does not have enough magic stamina!`);
-    //         return;
-    //     }
-    //     if (this.calculateCastFailureRate(caster.magic, spellDifficulty)) {
-    //         console.log(`${caster.name} failed to cast the spell!`);
-    //         return;
-    //     }
-    //     caster.magicStamina = this.calculateMagicDrain(caster.magicStamina, spellCost);
-    //     console.log(`${caster.name} successfully casts the spell!`);
-    // }
-    // // **New: Magic Drain (Each spell uses up magic stamina, based on total XP)**
-    // calculateMagicDrain(totalMagicXP, spellCost) {
-    //     return Math.max(0, totalMagicXP - spellCost); // Ensures it doesn't go negative
-    // }
     // **New: Cast Failure Rate (Lower XP = More Failed Casts)**
     calculateCastFailureRate(magicLevel, spellDifficulty) {
         const successChance = Math.min(0.98, Math.max(0.2, magicLevel / (magicLevel + spellDifficulty + 50)));

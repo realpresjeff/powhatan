@@ -11,18 +11,18 @@ export function bow() {
     const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.1, 8, false);
     const bowMesh = new THREE.Mesh(tubeGeo, bowWood);
     // Bowstring
-    const stringGeo = new THREE.BufferGeometry();
-    const stringVertices = new Float32Array([
-        -2, 0, 0,
-        0, 2.3, 0,
-        2, 0, 0
-    ]);
-    stringGeo.setAttribute('position', new THREE.BufferAttribute(stringVertices, 3));
-    const stringLine = new THREE.Line(stringGeo, new THREE.LineBasicMaterial({ color: 0xffffff }));
+    // const stringGeo = new THREE.BufferGeometry();
+    // const stringVertices = new Float32Array([
+    //     -2, 0, 0,
+    //     0, 2.3, 0,
+    //     2, 0, 0
+    // ]);
+    // stringGeo.setAttribute('position', new THREE.BufferAttribute(stringVertices, 3));
+    // const stringLine = new THREE.Line(stringGeo, new THREE.LineBasicMaterial({ color: 0xffffff }));
     // Group
     const group = new THREE.Group();
     group.add(bowMesh);
-    group.add(stringLine);
+    // group.add(stringLine);
     // Optional handle wrap
     // const handleGeo = new THREE.BoxGeometry(0.3, 0.5, 0.3);
     // const handle = new THREE.Mesh(handleGeo, steelMaterial);
