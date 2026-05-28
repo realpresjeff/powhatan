@@ -12,9 +12,8 @@ export class Topbar extends HTMLElement {
       <div className="topbar">
         <a href="/powhatan">Home</a>
         <a href="/powhatan/reservation">Reservation</a>
-        <a href="/powhatan/usa">USA</a>
         <a href="/powhatan/game">Video Game</a>
-        <a href="/powhatan/japan">Japan</a>
+        <a href="/powhatan/japan">Japan & Korea</a>
         <a href="/powhatan/movie">Movie</a>
         <a href="/powhatan/dictionary">Powhatan Dictionary by William Strachey</a>
         <a href="/powhatan/dictionarysmith">Powhatan Dictionary by Captain John Smith</a>
