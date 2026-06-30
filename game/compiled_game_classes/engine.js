@@ -1,0 +1,898 @@
+import { Character, EquipType } from './player_character.js';
+import { Tree } from './tree.js';
+import { Monster } from './monster.js';
+import { Notifications } from './notifications.js';
+import { Spellbook } from './spellbook.js';
+import socket from './socket.js';
+export class Engine {
+    constructor() {
+        // Camera settings
+        this.cameraAngle = 0; // Angle around the player
+        this.cameraDistance = 15; // Camera distance from player
+        this.cameraHeight = 10;
+        this.cameraVerticalOffset = 0; // Vertical offset for panning up and down
+        this.minCameraHeight = 1; // Minimum height of the camera (stop panning down below this level)
+        // scene setup
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // Player character (simple cube)
+        this.playerGeometry = new THREE.BoxGeometry(1, 2, 1);
+        this.playerMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+        this.character = new Character(this.scene, true);
+        this.player = this.character.draw_character();
+        // Ground (map)
+        this.groundGeometry = new THREE.PlaneGeometry(100, 100);
+        this.groundMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+        this.ground = new THREE.Mesh(this.groundGeometry, this.groundMaterial);
+        this.isMoving = false;
+        this.targetPosition = this.player.position.clone();
+        this.moveSpeed = 0.5;
+        this.renderer = new THREE.WebGLRenderer();
+        // Click-to-move setup (for player movement)
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+        this.notification_bus = new Notifications(this.character.name, this.character.base);
+        this.spellbook = new Spellbook(this.character);
+        this.players = new Map();
+        this.droppedItems = new Map();
+        this.monsters = new Map();
+        // Animation loop
+        this.animate = () => {
+            requestAnimationFrame(this.animate);
+            // this.move_player();
+            this.update_camera_position();
+            this.renderer.render(this.scene, this.camera);
+        };
+        this.setup_scene();
+        this.setup_lighting();
+        this.create_ground();
+        this.create_player();
+        this.update_camera_position();
+        this.setup_keyboard_inputs();
+        this.scroll_to_zoom();
+        this.click_to_move();
+        this.move_player();
+        this.handle_window_resizing();
+        this.handle_right_click();
+        this.createWater({ x: 25, y: 0, z: 10 }, { width: 50, height: 10 });
+        this.createFishingSpot({ x: 10, y: 0, z: 14 });
+        this.animate();
+        // const teePee = this.createBuilding({ x: 0, y: 0, z: 40 }, 10, 8, 5, true, false);
+        // const europeanBuilding = this.createBuilding({ x: 40, y: 0, z: 40 }, 15, 20, 5, false, true);
+        // create a longhouse
+        const myLonghouse = this.createLonghouse({ x: -40, y: 0, z: 0 }, 20, 35, 10); // 30ft long, 15ft wide, 10ft tall
+        // createBrickOven({ x: -35, y: 0, z: 0 });
+        const smithshop = this.createLonghouse({ x: 20, y: 0, z: -40 }, 20, 15, 5); // 30ft long, 15ft wide, 10ft tall
+        this.createAnvil({ x: 15, y: 0, z: -40 });
+        this.createSmelt({ x: 25, y: 0, z: -43 });
+        this.createCoalMine({ x: 42.5, y: 0, z: -10 });
+        this.createBank({ x: -45, y: 0, z: -10 });
+        const login = socket.sendMessage('player_login', {
+            username: this.character.name,
+            position: this.character.base.position,
+            isMoving: this.character.isWalking,
+            type: "player_login"
+        });
+        this.players.set(socket.socket.id || this.character.playerId, {
+            character: this.character,
+            mesh: this.player
+        });
+    }
+    setup_scene() {
+        // Scene setup
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(this.renderer.domElement);
+    }
+    setup_lighting() {
+        // Lighting
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(10, 20, 10);
+        this.scene.add(light);
+    }
+    create_ground() {
+        // Create Ground
+        this.ground.rotation.x = -Math.PI / 2;
+        this.scene.add(this.ground);
+        new Tree('pine', { x: 30, y: 0, z: 0 }, true, this.scene);
+        // Initialize a deer
+        // if (!Array.from(this.monsters.values()).length) {
+        //     socket.sendMessage('monster:spawn', { position: { x: 5, y: 0, z: -5 }, name: 'Jersey Devil', data: null, stationary: false });
+        // }
+        const wizard = new Monster({ x: -10, y: 0, z: 10 }, this.scene, 'Wizard', false, {
+            attackable: false,
+            stats: null,
+            takeDamage: null,
+            sealable: false,
+            shop: true
+        }, true);
+        const JerseyDevil = new Monster({ x: -5, y: 0, z: 20 }, this.scene, 'Jersey Devil', false, {
+            attackable: true,
+            stats: {
+                hp: 50,
+                strength: 30,
+                defense: 200,
+                mage: 200,
+                archer: 200
+            },
+            sealable: true,
+        }, true);
+        // const cow = new Monster({ x: -15, y: 0, z: 15 }, this.scene, 'Cow', false, {
+        //     attackable: true,
+        //     sealable: true,
+        // }, true);
+    }
+    spawn_monster(position, name, data, stationary) {
+        return new Monster(position, this.scene, name, false, data, stationary);
+    }
+    create_player() {
+        // Player character (simple cube)
+        // this.player.position.y = 5;
+        this.scene.add(this.player);
+    }
+    // Update camera position to orbit around the player
+    update_camera_position() {
+        const offsetX = Math.sin(this.cameraAngle) * this.cameraDistance;
+        const offsetZ = Math.cos(this.cameraAngle) * this.cameraDistance;
+        this.camera.position.set(this.player.position.x + offsetX, this.player.position.y + this.cameraHeight + this.cameraVerticalOffset, this.player.position.z + offsetZ);
+        // Prevent camera from going below the ground
+        if (this.camera.position.y < this.minCameraHeight) {
+            this.camera.position.y = this.minCameraHeight; // Stop panning down
+            this.cameraVerticalOffset = 0; // Prevent further downward panning
+        }
+        this.camera.lookAt(this.player.position);
+    }
+    setup_keyboard_inputs() {
+        // Handle keyboard input for camera rotation
+        document.addEventListener("keydown", (event) => {
+            const rotationSpeed = 0.1; // Increased rotation speed
+            const verticalSpeed = 0.1; // Increased vertical speed to match horizontal speed
+            if (event.key === "ArrowLeft") {
+                this.cameraAngle -= rotationSpeed; // Reverse the direction: Rotate right
+                // this.animate();
+            }
+            else if (event.key === "ArrowRight") {
+                this.cameraAngle += rotationSpeed; // Reverse the direction: Rotate left
+                // this.animate();
+            }
+            else if (event.key === "ArrowUp") {
+                this.cameraVerticalOffset += verticalSpeed; // Increased vertical panning speed
+                // this.animate();
+            }
+            else if (event.key === "ArrowDown") {
+                if (this.camera.position.y > this.minCameraHeight) {
+                    this.cameraVerticalOffset -= verticalSpeed; // Increased vertical panning speed
+                    // this.animate();
+                }
+            }
+            this.update_camera_position();
+        });
+    }
+    scroll_to_zoom() {
+        // Mouse input for zooming (scrolling to zoom)
+        document.addEventListener('wheel', (event) => {
+            // this.cameraDistance += even             // addToInventory(object);t.deltaY * 0.05; // Adjust zoom speed (now modifies distance from player)
+            this.cameraDistance += event.deltaY * 0.05; // Adjust zoom speed (now modifies distance from player)
+            this.cameraDistance = Math.max(5, Math.min(this.cameraDistance, 30)); // Limiting zoom in and out range
+            this.update_camera_position();
+            // this.animate();
+        });
+    }
+    click_to_move(onItemFound = (item) => { }) {
+        document.addEventListener('click', (event) => {
+            if (event.button === 0) { // Left-click to move
+                this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const intersects = this.raycaster.intersectObjects([this.ground]);
+                if (intersects.length > 0) {
+                    this.targetPosition = intersects[0].point;
+                    this.targetPosition.y = this.player.position.y; // Keep player on ground level
+                    this.character.targetPosition = this.targetPosition;
+                    this.player.rotation.y = this.character.currentRotation;
+                    this.character.positionX = this.player.position.x;
+                    this.character.positionZ = this.player.position.z;
+                    this.isMoving = true;
+                    this.move_player();
+                }
+                const itemintersections = this.raycaster.intersectObjects(this.scene.children);
+                if (itemintersections.length > 1) {
+                    const object = itemintersections[0].object;
+                    if (object.userData.isRemovable) {
+                        onItemFound(object.userData);
+                        // addToInventory(object.userData);
+                        this.scene.remove(object);
+                    }
+                }
+            }
+        });
+    }
+    // Smooth movement function (player movement)
+    move_player() {
+        if (this.isMoving) {
+            this.player.position.lerp(this.targetPosition, this.moveSpeed);
+            this.character.walk();
+            if (this.player.position.distanceTo(this.targetPosition) < 0.1) {
+                this.isMoving = false;
+            }
+        }
+    }
+    handle_window_resizing() {
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.animate(); // *added 11/12/25
+        });
+    }
+    handle_right_click() {
+        document.addEventListener("contextmenu", (event) => {
+            if (event.target.closest(".popup"))
+                return; // Allow default context menu for popups
+            event.preventDefault(); // Prevent browser context menu
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            const intersects = this.raycaster.intersectObjects(this.scene.children);
+            if (intersects.length > 0) {
+                const selectedObject = intersects[0].object;
+                console.log(intersects);
+                console.log("Right-clicked on:", selectedObject);
+                console.log(selectedObject);
+                const menuOptions = [{ label: 'Cancel', action: () => document.getElementById("contextMenu").style.display = "none" }];
+                // If object has 'attackable' property
+                if (selectedObject.userData.attackable) {
+                    console.log(selectedObject.userData);
+                    menuOptions.unshift({
+                        label: `Attack ${selectedObject.userData.name || "Enemy"}`,
+                        action: () => this.character.attack(selectedObject.userData.monster || selectedObject.userData.newCharacter),
+                    });
+                }
+                if (selectedObject.userData.attackable && this.character.activeSummon) {
+                    console.log(selectedObject.userData);
+                    menuOptions.unshift({
+                        label: `Attack ${selectedObject.userData.name || "Enemy"} with ${this.character.activeSummon.monster.monster}`,
+                        action: () => {
+                            this.character.activeSummon.follow(selectedObject.userData.monster);
+                            this.character.activeSummon.attack(selectedObject.userData.monster || selectedObject.userData.newCharacter);
+                        },
+                    });
+                }
+                if (selectedObject.userData.sealable) {
+                    console.log(selectedObject.userData);
+                    menuOptions.unshift({
+                        label: `Seal ${selectedObject.userData.name || "Enemy"}`,
+                        action: () => this.character.sealMonster(selectedObject.userData.monster),
+                    });
+                }
+                if (selectedObject.userData.edible) {
+                    menuOptions.unshift({
+                        label: `Eat ${selectedObject.userData.name || "Food"}`,
+                        action: () => this.character.eat(selectedObject.userData),
+                    });
+                }
+                // If object has 'pickupable' property
+                // if (selectedObject.userData.pickupable === true && selectedObject.userData.name) {
+                //     menuOptions.unshift({
+                //         label: `Pick up ${selectedObject.userData.name || "Item"}`,
+                //         action: () => {
+                //             console.log(selectedObject);
+                //             this.scene.remove(selectedObject);
+                //             console.log(selectedObject);
+                //             this.character.inventory.add_to_inventory({ ...selectedObject.userData });
+                //             console.log(this.character.inventory);
+                //         }
+                //     });
+                // }
+                // If object has 'pickupable' property
+                if (selectedObject.userData.pickupable === true && selectedObject.userData.name) {
+                    menuOptions.unshift({
+                        label: `Pick up ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            if (selectedObject.userData.pickupable) {
+                                console.log(selectedObject);
+                                socket.sendMessage("pickup_item", {
+                                    id: selectedObject.userData.id
+                                });
+                            }
+                        }
+                    });
+                }
+                if (selectedObject.userData.isOre) {
+                    menuOptions.unshift({
+                        label: `Mine ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            this.character.mineOre(selectedObject.userData);
+                            // scene.remove(selectedObject);
+                        }
+                    });
+                }
+                if (selectedObject.userData.bank) {
+                    menuOptions.unshift({
+                        label: "Bank",
+                        action: () => {
+                            this.character.openBank(selectedObject.userData);
+                        }
+                    });
+                }
+                // If object has 'isFire' property
+                if (selectedObject.userData.isSmelt) {
+                    menuOptions.unshift({
+                        label: `Smelt ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            this.character.smelt(selectedObject.userData);
+                        }
+                    });
+                }
+                // If object has 'isFire' property
+                if (selectedObject.userData.isFishingSpot) {
+                    menuOptions.unshift({
+                        label: `Fish the ${selectedObject.userData.name || "Item"}`,
+                        action: () => {
+                            this.character.fish(selectedObject.userData);
+                        }
+                    });
+                }
+                // If object has 'isFire' property
+                if (selectedObject.userData.isFire || selectedObject.userData.isOven || selectedObject.userData.name === "Object_3") {
+                    menuOptions.unshift({
+                        label: `Cook`,
+                        action: () => {
+                            this.character.cook(selectedObject.userData);
+                        }
+                    });
+                }
+                // If object has 'isFire' property
+                if (selectedObject.userData.isAnvil || selectedObject.userData.name === "Object_2") {
+                    menuOptions.unshift({
+                        label: `Smith`,
+                        action: () => {
+                            this.character.smith(selectedObject.userData);
+                        }
+                    });
+                }
+                // If object has 'fletch' property
+                if (selectedObject.userData.fletch) {
+                    menuOptions.unshift({
+                        label: `Fletch ${selectedObject.userData.name}`,
+                        action: () => {
+                            this.character.fletch(selectedObject.userData);
+                        }
+                    });
+                }
+                // If object has a custom button label (dynamic)
+                if (selectedObject.userData.customActionLabel && selectedObject.userData.customAction) {
+                    menuOptions.unshift({
+                        label: selectedObject.userData.customActionLabel,
+                        action: selectedObject.userData.customAction,
+                    });
+                }
+                // If object has a custom button label (dynamic)
+                if (selectedObject.userData.isTree) {
+                    menuOptions.unshift({
+                        label: `Cut down ${selectedObject.userData.name}`,
+                        action: () => {
+                            selectedObject.userData.cut(this.character, this.notification_bus);
+                        },
+                    });
+                }
+                if (selectedObject.userData.flammable) {
+                    menuOptions.push({
+                        label: `Start Fire`,
+                        action: () => this.character.createOpenLogFire(selectedObject.userData),
+                    });
+                }
+                if (selectedObject.userData.followable) {
+                    menuOptions.unshift({
+                        label: `Follow ${selectedObject.userData.name || "Enemy"}`,
+                        action: () => this.character.follow(selectedObject.userData.newCharacter),
+                    });
+                }
+                if (selectedObject.userData.tradeable) {
+                    menuOptions.unshift({
+                        label: `Trade ${selectedObject.userData.name || "Enemy"}`,
+                        action: () => {
+                            console.log(selectedObject.userData);
+                            socket.sendMessage('trade_request', {
+                                currentTradeId: socket.socket.id,
+                                tradePartnerId: selectedObject.userData.playerId
+                            });
+                            return '';
+                        },
+                    });
+                }
+                if (selectedObject.userData.shop) {
+                    menuOptions.unshift({
+                        label: `Trade with ${selectedObject.userData.monster.monster}`,
+                        action: () => {
+                            this.openShop();
+                            return '';
+                        }
+                    });
+                }
+                this.showContextMenu(event.clientX, event.clientY, menuOptions);
+            }
+        });
+    }
+    showContextMenu(x, y, options) {
+        const menu = document.getElementById("contextMenu");
+        menu.innerHTML = ""; // Clear previous menu items
+        options.forEach(({ label, action }) => {
+            const menuItem = document.createElement("div");
+            menuItem.className = "context-menu-item";
+            menuItem.textContent = label;
+            menuItem.onclick = () => {
+                action();
+                menu.style.display = "none";
+            };
+            menu.appendChild(menuItem);
+        });
+        menu.style.top = `${y}px`;
+        menu.style.left = `${x}px`;
+        menu.style.display = "block";
+    }
+    createWater(position, size) {
+        const waterGeometry = new THREE.PlaneGeometry(size.width, size.height, 32, 32);
+        const waterMaterial = new THREE.MeshStandardMaterial({
+            color: "#1E90FF", // Deep Blue
+            transparent: true, // Allow light to pass through
+            opacity: 0.8, // Slight transparency for a more natural look
+            side: THREE.DoubleSide
+        });
+        const water = new THREE.Mesh(waterGeometry, waterMaterial);
+        water.rotation.x = -Math.PI / 2; // Make it horizontal
+        water.position.set(position.x, position.y + 0.01, position.z); // Lift slightly above ground
+        water.receiveShadow = true; // Make it interact better with light
+        water.userData = { isWater: true };
+        this.scene.add(water);
+        return water;
+    }
+    createFishingSpot(position) {
+        const bubbles = new THREE.Mesh();
+        const data = { isFishingSpot: true, fish: true, name: "Chesapeake Bay" };
+        for (let i = 0; i < 5; i++) {
+            const bubble = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshStandardMaterial({ color: "white", transparent: true, opacity: 0.8 }));
+            bubble.userData = { isFishingSpot: true, fish: true, name: "Chesapeake Bay" };
+            bubble.position.set(position.x + (Math.random() - 0.5) * 0.5, position.y + Math.random() * 0.5, position.z + (Math.random() - 0.5) * 0.5);
+            bubbles.add(bubble);
+        }
+        bubbles.userData = data;
+        this.scene.add(bubbles);
+        // Animate bubbles
+        function animateBubbles() {
+            bubbles.children.forEach((bubble, index) => {
+                bubble.position.y += Math.sin(performance.now() / 1000 + index) * 0.005;
+            });
+            requestAnimationFrame(animateBubbles);
+        }
+        animateBubbles();
+        return bubbles;
+    }
+    createBuilding(position, length = 20, width = 10, height = 8, hasCircularWalls = false, hasTriangularRoof = false) {
+        const longhouse = new THREE.Group();
+        // Wall Material
+        const wallMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Wooden brown
+        // Side Walls
+        const sideWallGeometry = new THREE.BoxGeometry(1, height, width);
+        const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+        leftWall.position.set(position.x - length / 2, position.y + height / 2, position.z);
+        longhouse.add(leftWall);
+        const rightWall = leftWall.clone();
+        rightWall.position.set(position.x + length / 2, position.y + height / 2, position.z);
+        longhouse.add(rightWall);
+        // Front & Back Walls (without door using separate parts)
+        const wallWidth = length / 2 - 2; // Leave space for a 4ft door
+        const frontLeftWall = new THREE.Mesh(new THREE.BoxGeometry(wallWidth, height, 1), wallMaterial);
+        frontLeftWall.position.set(position.x - wallWidth / 2 - 2, position.y + height / 2, position.z + width / 2);
+        longhouse.add(frontLeftWall);
+        const frontRightWall = frontLeftWall.clone();
+        frontRightWall.position.set(position.x + wallWidth / 2 + 2, position.y + height / 2, position.z + width / 2);
+        longhouse.add(frontRightWall);
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(length, height, 1), wallMaterial);
+        backWall.position.set(position.x, position.y + height / 2, position.z - width / 2);
+        longhouse.add(backWall);
+        // Floor (Dirt)
+        const floorMaterial = new THREE.MeshStandardMaterial({ color: "#8B4513" }); // Dirt brown
+        const floorGeometry = new THREE.PlaneGeometry(length, width);
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.set(position.x, position.y, position.z);
+        longhouse.add(floor);
+        const roofMaterial = new THREE.MeshStandardMaterial({ color: "#D2B48C", side: THREE.DoubleSide });
+        // Choose Roof Geometry Based on hasTriangularRoof
+        if (hasTriangularRoof) {
+            // Triangular Roof
+            const roofGeometry = new THREE.ConeGeometry(width / 2, height, 3); // Triangular roof (cone)
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.position.set(position.x, position.y + height * 0.8, position.z);
+            roof.userData = { isRoof: true };
+            longhouse.add(roof);
+            longhouse.userData = { isLonghouse: true, roof: roof };
+        }
+        else {
+            // Regular Roof (Thatch, fully covers structure)
+            const roofGeometry = new THREE.CylinderGeometry(width / 2 + 1, width / 2 + 1, length + 2, 8, 1, true, 0, Math.PI);
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.rotation.z = Math.PI / 2;
+            roof.position.set(position.x, position.y + height * 0.8, position.z);
+            roof.userData = { isRoof: true };
+            longhouse.add(roof);
+            longhouse.userData = { isLonghouse: true, roof: roof };
+        }
+        // Save references
+        this.scene.add(longhouse);
+        return longhouse;
+    }
+    createLonghouse(position, length = 20, width = 10, height = 8) {
+        const longhouse = new THREE.Group();
+        // Wall Material
+        const wallMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B" }); // Wooden brown
+        // Side Walls
+        const sideWallGeometry = new THREE.BoxGeometry(1, height, width);
+        const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+        leftWall.position.set(position.x - length / 2, position.y + height / 2, position.z);
+        longhouse.add(leftWall);
+        const rightWall = leftWall.clone();
+        rightWall.position.set(position.x + length / 2, position.y + height / 2, position.z);
+        longhouse.add(rightWall);
+        // Front & Back Walls (without door using separate parts)
+        const wallWidth = length / 2 - 2; // Leave space for a 4ft door
+        const frontLeftWall = new THREE.Mesh(new THREE.BoxGeometry(wallWidth, height, 1), wallMaterial);
+        frontLeftWall.position.set(position.x - wallWidth / 2 - 2, position.y + height / 2, position.z + width / 2);
+        longhouse.add(frontLeftWall);
+        const frontRightWall = frontLeftWall.clone();
+        frontRightWall.position.set(position.x + wallWidth / 2 + 2, position.y + height / 2, position.z + width / 2);
+        longhouse.add(frontRightWall);
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(length, height, 1), wallMaterial);
+        backWall.position.set(position.x, position.y + height / 2, position.z - width / 2);
+        longhouse.add(backWall);
+        // Floor (Dirt)
+        const floorMaterial = new THREE.MeshStandardMaterial({ color: "#8B4513" }); // Dirt brown
+        const floorGeometry = new THREE.PlaneGeometry(length, width);
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.set(position.x, position.y, position.z);
+        longhouse.add(floor);
+        // Roof (Thatch, fully covers structure)
+        const roofMaterial = new THREE.MeshStandardMaterial({ color: "#D2B48C", side: THREE.DoubleSide });
+        const roofGeometry = new THREE.CylinderGeometry(length / 2 + 1, length / 2 + 1, width + 2, 8, 1, true, 0, Math.PI);
+        const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+        roof.rotation.z = Math.PI / 2;
+        roof.position.set(position.x, position.y + height * .80, position.z); // Positioned to fully cover
+        roofGeometry.rotateX(THREE.MathUtils.degToRad(90)); // Rotate geometry, not the object
+        roof.userData = { isRoof: true };
+        longhouse.add(roof);
+        // Save references
+        longhouse.userData = { isLonghouse: true, roof: roof };
+        this.scene.add(longhouse);
+        return longhouse;
+    }
+    createSmelt(position) {
+        const smelt = new THREE.Mesh();
+        smelt.userData = { isSmelt: true };
+        // Furnace body (a tapered cylinder to resemble a clay/stone bloomery)
+        const furnaceGeometry = new THREE.CylinderGeometry(3, 4, 6, 16, 1);
+        furnaceGeometry.userData = { isSmelt: true };
+        const furnaceMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B", roughness: 0.8 }); // Clay/stone look
+        furnaceMaterial.userData = { isSmelt: true };
+        const furnace = new THREE.Mesh(furnaceGeometry, furnaceMaterial);
+        furnace.userData = { isSmelt: true };
+        furnace.position.set(0, 3, 0);
+        smelt.add(furnace);
+        // Furnace opening (arched door where iron/slag is extracted)
+        const openingGeometry = new THREE.BoxGeometry(1.5, 2, 0.5);
+        const openingMaterial = new THREE.MeshStandardMaterial({ color: "black", transparent: true, opacity: 0.5 });
+        const opening = new THREE.Mesh(openingGeometry, openingMaterial);
+        opening.position.set(0, 1.5, 2.01);
+        smelt.add(opening);
+        // Chimney hole at the top
+        const chimneyGeometry = new THREE.CylinderGeometry(1, 1, 1, 8);
+        const chimneyMaterial = new THREE.MeshStandardMaterial({ color: "black", roughness: 0.7 });
+        const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
+        chimney.position.set(0, 6.5, 0);
+        smelt.add(chimney);
+        // Charcoal/ore pile near furnace
+        const oreGeometry = new THREE.SphereGeometry(1, 8, 8);
+        const oreMaterial = new THREE.MeshStandardMaterial({ color: "#3B3B3B" });
+        const orePile = new THREE.Mesh(oreGeometry, oreMaterial);
+        orePile.position.set(2, 0.5, 2);
+        smelt.add(orePile);
+        smelt.position.set(position.x, position.y, position.z);
+        this.scene.add(smelt);
+        console.log(smelt);
+        return smelt;
+    }
+    // createGLBITEM(position) {
+    //     const anvil = new THREE.Group();
+    //     anvil.userData = { isAnvil: true }
+    //     anvil.position.set(position.x, position.y, position.z);
+    //     const loader = new THREE.GLTFLoader();
+    //     loader.load('assets/anvil_three.glb', function (gltf) {
+    //         anvil.add(gltf.scene);
+    //     }, undefined, function (error) {
+    //         console.error("Error loading model:", error);
+    //     });
+    //     this.scene.add(anvil);
+    //     return anvil;
+    // }
+    createCoalMine(position) {
+        const mine = new THREE.Mesh();
+        mine.userData = { isOre: true, type: "coal", name: "Coal" };
+        // 🪨 Base Rock Formation (Cave Walls)
+        for (let i = 0; i < 6; i++) {
+            const rock = new THREE.Mesh(new THREE.SphereGeometry(Math.random() * 2 + 1.5, 8, 8), new THREE.MeshStandardMaterial({ color: "#3A3A3A" }) // Dark gray coal rocks
+            );
+            const offsetX = (Math.random() - 0.5) * 6;
+            const offsetZ = (Math.random() - 0.5) * 6;
+            const offsetY = Math.random() * 3;
+            rock.position.set(position.x + offsetX, position.y + offsetY, position.z + offsetZ);
+            rock.rotation.y = Math.random() * Math.PI;
+            rock.userData = { isOre: true, name: "Coal", type: "coal" };
+            mine.add(rock);
+        }
+        // 🔽 Mine Entrance (A darker cave opening)
+        const entrance = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 3.5, 4, 8), new THREE.MeshStandardMaterial({ color: "#2C2C2C", side: THREE.DoubleSide }) // Even darker rock
+        );
+        entrance.position.set(position.x, position.y + 1, position.z);
+        entrance.rotation.x = Math.PI / 2;
+        entrance.userData = { isEntrance: true, type: "coal", name: "Coal Mine Entrance" };
+        mine.add(entrance);
+        this.createMineGround(position, { height: 15, width: 15 });
+        // ⛏️ Coal Deposits inside the mine
+        function spawnCoal(scene) {
+            const coal = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), new THREE.MeshStandardMaterial({ color: "#222222" }) // Pure black for coal
+            );
+            const offsetX = (Math.random() - 0.5) * 3;
+            const offsetZ = (Math.random() - 0.5) * 3;
+            coal.position.set(position.x + offsetX, position.y + 1, position.z + offsetZ);
+            coal.userData = { isOre: true, type: "coal", name: "Coal Deposit" };
+            scene.add(coal);
+            return coal;
+        }
+        let coalDeposits = [];
+        for (let i = 0; i < 4; i++) {
+            coalDeposits.push(spawnCoal(this.scene));
+        }
+        // 🌱 Coal Respawn Mechanic
+        function respawnCoal(coal) {
+            setTimeout(() => {
+                if (!scene.children.includes(coal)) {
+                    const newCoal = spawnCoal();
+                    coalDeposits.push(newCoal);
+                }
+            }, Math.random() * 120000 + 60000); // Respawn between 1-3 minutes
+        }
+        // 🏗️ Add to scene
+        this.scene.add(mine);
+        return mine;
+    }
+    createMineGround(position, size) {
+        const mineGroundGeometry = new THREE.PlaneGeometry(size.width, size.height, 8, 8);
+        const mineGroundMaterial = new THREE.MeshStandardMaterial({
+            color: "#4F4F4F", // Dark gray for a rocky ground
+            side: THREE.DoubleSide
+        });
+        const mineGround = new THREE.Mesh(mineGroundGeometry, mineGroundMaterial);
+        mineGround.rotation.x = -Math.PI / 2;
+        mineGround.position.set(position.x, position.y + 0.01, position.z); // Slightly below the mine
+        this.scene.add(mineGround);
+        return mineGround;
+    }
+    // Assumes THREE is already imported and you have a scene + lights set up
+    createAnvil(position = new THREE.Vector3(0, 0, 0), scale = 1) {
+        const anvil = new THREE.Group();
+        const metalMaterial = new THREE.MeshStandardMaterial({
+            color: 0x555555, // dark metal
+            metalness: 0.8,
+            roughness: 0.3
+        });
+        // Base
+        const baseGeo = new THREE.BoxGeometry(2 * scale, 0.4 * scale, 1 * scale);
+        const baseMesh = new THREE.Mesh(baseGeo, metalMaterial);
+        baseMesh.position.set(0, 0.2 * scale, 0);
+        anvil.add(baseMesh);
+        // Pedestal
+        const pedestalGeo = new THREE.BoxGeometry(1 * scale, 0.6 * scale, 0.6 * scale);
+        const pedestalMesh = new THREE.Mesh(pedestalGeo, metalMaterial);
+        pedestalMesh.position.set(0, 0.2 * scale + 0.3 * scale, 0);
+        anvil.add(pedestalMesh);
+        // Top block
+        const topGeo = new THREE.BoxGeometry(2 * scale, 0.3 * scale, 0.7 * scale);
+        const topMesh = new THREE.Mesh(topGeo, metalMaterial);
+        topMesh.position.set(0, 0.2 * scale + 0.6 * scale + 0.15 * scale, 0);
+        topMesh.userData = { isAnvil: true };
+        anvil.add(topMesh);
+        // Back block extension
+        const backGeo = new THREE.BoxGeometry(0.6 * scale, 0.2 * scale, 0.5 * scale);
+        const backMesh = new THREE.Mesh(backGeo, metalMaterial);
+        backMesh.position.set(-1.1 * scale, topMesh.position.y, 0);
+        anvil.add(backMesh);
+        // Optional: make it cast/receive shadows
+        anvil.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        anvil.position.copy(position);
+        anvil.scale.set(3, 3, 3);
+        this.scene.add(anvil);
+        return anvil;
+    }
+    createBank(position) {
+        const bag = new THREE.Group();
+        bag.userData = { bank: true };
+        // **Bag Body**
+        const bagGeometry = new THREE.CylinderGeometry(2, 2.5, 5, 16); // Tapered shape
+        bagGeometry.userData = { bank: true };
+        const bagTexture = new THREE.TextureLoader().load('textures/burlap.jpg');
+        bagTexture.wrapS = bagTexture.wrapT = THREE.RepeatWrapping;
+        bagTexture.repeat.set(2, 2);
+        const bagMaterial = new THREE.MeshStandardMaterial({
+            map: bagTexture,
+            color: "#C2A878",
+            roughness: 1,
+        });
+        const bagBody = new THREE.Mesh(bagGeometry, bagMaterial);
+        bagBody.userData = { bank: true };
+        bagBody.position.set(0, 2.5, 0);
+        bag.add(bagBody);
+        // **Bag Top (Tied Look)**
+        const topGeometry = new THREE.SphereGeometry(1.5, 16, 12);
+        topGeometry.userData = { bank: true };
+        topGeometry.scale(1, 0.7, 1); // Squashed for tied look
+        const topMaterial = new THREE.MeshStandardMaterial({
+            color: "#9C6B30",
+            roughness: 1,
+        });
+        const bagTop = new THREE.Mesh(topGeometry, topMaterial);
+        bagTop.userData = { bank: true };
+        bagTop.position.set(0, 5, 0);
+        bag.add(bagTop);
+        // **Rope Tie**
+        const ropeGeometry = new THREE.TorusGeometry(1.6, 0.1, 8, 16);
+        ropeGeometry.userData = { bank: true };
+        const ropeMaterial = new THREE.MeshStandardMaterial({ color: "#8B5A2B", roughness: 0.9 });
+        const rope = new THREE.Mesh(ropeGeometry, ropeMaterial);
+        rope.rotation.x = Math.PI / 2;
+        rope.position.set(0, 4.7, 0);
+        bag.add(rope);
+        // **Positioning Fix**
+        bag.position.set(position.x, position.y, position.z);
+        this.scene.add(bag);
+        return bag;
+    }
+    spawnPlayer(playerId, position, name) {
+        let newCharacter = new Character(this.scene, false, playerId);
+        let mesh = newCharacter.draw_character();
+        mesh.position.set(position.x, position.y, position.z);
+        // 🔗 IMPORTANT: attach gameplay hooks
+        let userData = {
+            type: "player",
+            playerId,
+            newCharacter,
+            attackable: true,
+            tradeable: true,
+            followable: true,
+            name,
+            attack: (attackerCharacter) => {
+                attackerCharacter.attack(character);
+            },
+            follow: (followerCharacter) => {
+                followerCharacter.follow(character);
+            },
+            trade: (initiatorCharacter) => {
+                initiatorCharacter.openTrade(character);
+            }
+        };
+        mesh.traverse(node => {
+            if (node.isMesh) {
+                node.userData = userData;
+            }
+        });
+        this.scene.add(mesh);
+        this.players.set(playerId, {
+            character: newCharacter,
+            mesh
+        });
+    }
+    create_dropped_item(itemData) {
+        const contextMenu = document.getElementById('context-menu');
+        if (itemData) {
+            console.log(this.character.inventory);
+            // Drop the item on the ground at a random position (keep y-axis at the ground level)
+            const itemGeometry = new THREE.BoxGeometry(1, 1, 1); // Simple item geometry (a cube)
+            const itemMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red color for the dropped item
+            const item = new THREE.Mesh(itemGeometry, itemMaterial);
+            // Set the position of the dropped item
+            // item.position.set(data.meshData.position.x, 0.5, data.meshData.position.z); // Adjust height to make sure it appears above the ground
+            item.userData = Object.assign(Object.assign({}, itemData.item), { id: itemData.id });
+            // items = { ...items, [item.uuid]: item }
+            // Position the item exactly where the player is standing
+            item.position.set(this.player.position.x, 0, // slightly above ground so it doesn't clip
+            this.player.position.z);
+            this.scene.add(item);
+            // socket.emit("message", { type: "item_mesh", meshData: { ...selectedItem, position: player.position } });
+            // Hide the context menu after the item is dropped
+            contextMenu.style.display = 'none';
+            // Remove the selected item from the inventory array
+            this.character.inventory.removeFromInventory(itemData, itemData.item.quantity);
+            return item;
+        }
+    }
+    openShop(items = [], shopName = "Shop") {
+        const inventory = this.character.inventory;
+        const wizardShopItems = [
+            {
+                id: "wizard_cape",
+                name: "Wizard Cape",
+                price: 100,
+                equipType: EquipType.cape,
+                description: "A flowing cape imbued with minor arcane energy.",
+                icon: "wizard_cape.png"
+            },
+            {
+                id: "wizard_wand",
+                name: "Wizard Wand",
+                price: 100,
+                equipType: EquipType.right_hand,
+                description: "A simple wand used by apprentice wizards.",
+                icon: "wizard_wand.png"
+            }
+        ];
+        items.length ? items = items : items = wizardShopItems;
+        const shopUI = document.getElementById("shopUI");
+        const shopItems = document.getElementById("shopItems");
+        const shopTitle = document.getElementById("shopTitle");
+        shopItems.innerHTML = "";
+        shopTitle.textContent = shopName;
+        items.forEach(item => {
+            const row = document.createElement("div");
+            row.className = "shop-item";
+            const label = document.createElement("span");
+            label.textContent = `${item.name} (${item.price}g)`;
+            // ICON
+            const icon = document.createElement("div");
+            icon.className = "shop-item-icon";
+            const img = document.createElement("img");
+            img.src = `assets/items/${item.icon}`;
+            img.alt = item.name;
+            img.height = 35;
+            img.width = 35;
+            img.draggable = false;
+            icon.appendChild(img);
+            const buyBtn = document.createElement("button");
+            buyBtn.textContent = "Buy";
+            buyBtn.addEventListener("click", () => {
+                // item = { id, name, price, equipType, description }
+                const coins = inventory.findItemByName("coins");
+                // ❌ Not enough money
+                if (!coins || coins.quantity < item.price) {
+                    console.log("Not enough coins");
+                    return;
+                }
+                // 💰 Remove coins
+                inventory.removeFromInventory(coins, item.price);
+                // 🎒 Add purchased item
+                inventory.add_to_inventory({
+                    name: item.name,
+                    type: item.id,
+                    equipable: true,
+                    equipType: item.equipType,
+                    pickupable: true,
+                    quantity: 1
+                });
+                inventory.update_inventory_UI();
+                console.log(`Purchased ${item.name} for ${item.price} coins`);
+            });
+            row.appendChild(label);
+            row.appendChild(buyBtn);
+            row.appendChild(icon);
+            shopItems.appendChild(row);
+        });
+        shopUI.classList.remove("hidden");
+        document.getElementById("closeShopBtn").onclick = () => {
+            shopUI.classList.add("hidden");
+        };
+    }
+}
