@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/png" href="../powhatan_3.png">
+
+    <meta property="og:title" content="The Powhatan Confederacy">
+    <meta property="og:description" content="Powhatan language flashcards">
+    <meta property="og:image" content="powhatan_3.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://realpresjeff.github.io/powhatan">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="The Powhatan Confederacy">
+    <meta name="twitter:description" content="Powhatan language flashcards">
+    <meta name="twitter:image" content="../powhatan_3.png">
+
+    <meta charset="UTF-8">
+    <title>Powhatan Vocabulary Flashcards</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .card {
+            width: 700px;
+            max-width: 95%;
+            min-height: 200px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, .2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            cursor: pointer;
+            padding: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1rem;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        .stats {
+            margin-top: 15px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Powhatan Vocabulary Flashcards</h1>
+
+    <div class="card" id="card">Click Start</div>
+
+    <div>
+        <button onclick="startQuiz()">Start</button>
+        <button onclick="flipCard()">Flip</button>
+        <button onclick="nextCard()">Next</button>
+    </div>
+
+    <div class="stats">
+        Card <span id="current">0</span> /
+        <span id="total">0</span>
+    </div>
+
+    <script>
+        const cards = [
+            { front: "Blue", back: "accoondews" },
+            { front: "Great / awesome", back: "Great / awesome" },
+            { front: "Other", back: "utta-san" },
+            { front: "Strange", back: "vttassantassowaih" },
+            { front: "Difficult", back: "esepannuhwh" },
+            { front: "Funny", back: "comico" },
+            { front: "Easy", back: "Easy" },
+            { front: "Impossible", back: "imposible" },
+            { front: "Young", back: "meroathachessum" },
+            { front: "Just / fair", back: "Just / fair" },
+            { front: "Free", back: "thaigwennummeran" },
+            { front: "Sick", back: "south" },
+            { front: "Same", back: "Same" },
+            { front: "Poor", back: "po" },
+            { front: "Possible", back: "Possible" },
+            { front: "Clean / own", back: "own" },
+            { front: "Red", back: "pohcoons" },
+            { front: "Dirty", back: "keshackaivwh" },
+            { front: "Simple", back: "Simple" },
+            { front: "Calm", back: "cohqwaivwh" },
+            { front: "Sad", back: "maskihaan" },
+            { front: "Empty", back: "Empty" },
+            { front: "Good (feminine)", back: "bon" },
+            { front: "All / whole / everything", back: "tutta" },
+            { front: "Soft / sweet", back: "cuttanimmons" },
+            { front: "False", back: "matah" },
+            { front: "Big / fat / tall", back: "quath" },
+            { front: "Happy / party / music", back: "cante-cante" },
+            { front: "Bad", back: "matah" },
+            { front: "Serious", back: "Serious" },
+
+            { front: "Old (male)", back: "rawerunnuwh" },
+            { front: "Old (female)", back: "tumpseis" },
+            { front: "Old (general)", back: "aroosise" },
+
+            { front: "True", back: "True" },
+            { front: "Ancient", back: "Ancient" },
+            { front: "Beautiful", back: "Beautiful" },
+            { front: "White", back: "coan" },
+            { front: "Certain / sure", back: "Certain / sure" },
+            { front: "Hot", back: "chingissum" },
+            { front: "Expensive / dear", back: "Expensive / dear" },
+            { front: "Clear", back: "sakahooke" },
+            { front: "Content / happy", back: "Content / happy" },
+            { front: "Last", back: "Last" },
+            { front: "Sorry", back: "Sorry" },
+            { front: "Different", back: "Different" },
+            { front: "Right / straight", back: "Right / straight" },
+
+            { front: "Whole / complete", back: "mamoindgakij" },
+            { front: "Whole / complete", back: "potterakai" },
+
+            { front: "Strong", back: "towh" },
+
+            { front: "Cold", back: "curcye" },
+            { front: "I am cold", back: "curcye neire" },
+
+            { front: "Kind", back: "Kind" },
+            { front: "Human", back: "mon" },
+            { front: "Important", back: "Important" },
+            { front: "Pretty", back: "cutte" },
+            { front: "Light", back: "Light" },
+            { front: "Long", back: "cunnaiuwh" },
+            { front: "Better / best", back: "Better / best" },
+            { front: "Dead", back: "tsepaih" },
+            { front: "Black", back: "mahcatawaiuwh" },
+            { front: "New", back: "New" },
+            { front: "Small", back: "tanx" },
+            { front: "Full", back: "geispun" },
+            { front: "First", back: "necut" },
+            { front: "Ready", back: "Ready" },
+            { front: "Next", back: "utakijk" },
+            { front: "What", back: "que" },
+            { front: "Alone", back: "apopaqwatecus" },
+            { front: "Green", back: "cushaw" },
+            { front: "Alive", back: "kekewh" },
+            { front: "Dirty", back: "moieh" },
+            { front: "Heavy", back: "Heavy" },
+            { front: "Smooth", back: "ourrita" },
+            { front: "Uuneind", back: "this is" },
+            { front: "Help", back: "Help" },
+            { front: "Chief", back: "weroance" },
+            { front: "Child / kid / baby", back: "nechan" },
+            { front: "Left", back: "Left" },
+            { front: "Gesture", back: "Gesture" },
+            { front: "Book", back: "Book" },
+            { front: "Thanks", back: "netab" },
+            { front: "Death", back: "tsepaih" },
+            { front: "Shadow", back: "Shadow" },
+            { front: "Part", back: "Part" },
+            { front: "Pocket", back: "Pocket" },
+            { front: "Teacher", back: "Teacher" },
+            { front: "Tower", back: "Tower" },
+            { front: "Time (occurrence)", back: "vez" },
+            { front: "Madam / lady / woman", back: "crenepo" },
+            { front: "Peace", back: "Peace" },
+            { front: "Voice", back: "Voice" },
+            { front: "Matter / business", back: "matter/business" },
+
+            { front: "Year", back: "cothtingo" },
+            { front: "Half year", back: "passica catton" },
+
+            { front: "Weapon", back: "piackickan" },
+            { front: "Army", back: "pachimoina" },
+            { front: "Attention", back: "Attention" },
+            { front: "Ball", back: "aitowh, alunse" },
+            { front: "Box", back: "assowpook" },
+            { front: "Mouth", back: "mettone" },
+            { front: "Card / map", back: "card" },
+            { front: "Cause", back: "Cause" },
+
+            { front: "house", back: "machacammac" },
+            { front: "Room / hall", back: "hall" },
+
+            { front: "Luck", back: "Luck" },
+            { front: "Thing", back: "thing/sun" },
+            { front: "Class", back: "class" },
+            { front: "Trust", back: "co" },
+            { front: "Color", back: "matassumitohook" },
+            { front: "Yard / patio", back: "Yard / patio" },
+            { front: "Kitchen", back: "Kitchen" },
+            { front: "Tooth", back: "mepit(s)" },
+            { front: "School", back: "School" },
+            { front: "Church", back: "Church" },
+            { front: "Desire", back: "Desire" },
+            { front: "Shoulder", back: "ahcohkinemun" },
+            { front: "Era", back: "era" },
+            { front: "Team", back: "team" },
+            { front: "Error", back: "error" },
+            { front: "Species / kind", back: "Species / kind" },
+            { front: "Face", back: "uscaentur" },
+            { front: "Way / manner", back: "way/manner" },
+
+            { front: "Hunger", back: "howghweyh takon neire" },
+            { front: "I am hungry", back: "howghweyh takon neire" },
+
+            { front: "Family", back: "Family" },
+            { front: "Fault", back: "Fault" },
+            { front: "Window", back: "Window" },
+            { front: "Girl", back: "usqwaseins" },
+            { front: "Flower", back: "muskaiuwh" },
+            { front: "Strength", back: "towawh" },
+            { front: "Form", back: "Form" },
+            { front: "War", back: "War" },
+            { front: "Habit", back: "Habit" },
+            { front: "Hour", back: "Hour" },
+            { front: "Story / history", back: "Story / history" },
+            { front: "Idea", back: "Idea" },
+            { front: "Image", back: "Image" },
+            { front: "Impression", back: "Impression" },
+            { front: "Leg", back: "meskott" },
+            { front: "Joy", back: "Joy" },
+
+            { front: "Day", back: "kiisku" },
+            { front: "Today", back: "kiisku" },
+            { front: "Sun (daytime)", back: "kiisku" },
+
+            { front: "Language", back: "Language" },
+            { front: "Letter", back: "Letter" },
+            { front: "Lip", back: "nusshaih" },
+            { front: "Line", back: "pemanataon" },
+            { front: "Hand", back: "meihtinge" },
+            { front: "House", back: "yeahaukan" },
+            { front: "Mom / mother", back: "kicke" },
+            { front: "Minute", back: "minute" },
+            { front: "Music", back: "cante-cante" },
+            { front: "Night", back: "reicawh" },
+            { front: "Smell", back: "nummeramen" },
+            { front: "Ear", back: "meihtawk" },
+            { front: "Speech", back: "kemantuun" },
+            { front: "Skin", back: "chase" },
+            { front: "Thought", back: "Thought" },
+            { front: "Person", back: "mon" },
+            { front: "Fear", back: "fear" },
+            { front: "Photo", back: "photo" },
+            { front: "Piece", back: "paangun" },
+            { front: "Stone", back: "mananst" },
+            { front: "Place", back: "weiskis" },
+            { front: "Police", back: "police" },
+            { front: "Door", back: "scunda" },
+            { front: "Presence", back: "ar" },
+            { front: "Prison", back: "prison" },
+            { front: "Bitch", back: "putain" },
+            { front: "Question", back: "Question" },
+            { front: "Reason", back: "Reason" },
+            { front: "Answer", back: "Answer" },
+            { front: "Dress", back: "mataheigh catommoik" },
+            { front: "Road / path", back: "aney" },
+            { front: "Stage", back: "scene/stage" },
+            { front: "Second", back: "second" },
+            { front: "Security", back: "security" },
+            { front: "Week", back: "kishquecon" },
+            { front: "Situation", back: "Situation" },
+            { front: "Sister", back: "cursine" },
+
+            { front: "Evening / party", back: "tapacoh" },
+            { front: "Evening / party", back: "reihcawh" },
+
+            { front: "Table", back: "Table" },
+            { front: "Earth / land", back: "chippsin" },
+            { front: "Head", back: "mendabuccah" },
+            { front: "Truth", back: "Truth" },
+
+            { front: "City", back: "mussaran" },
+            { front: "City", back: "arwaymouse" },
+
+            { front: "Car", back: "Car" },
+            { front: "Opinion", back: "Opinion" },
+            { front: "Wood", back: "muskeis" },
+            { front: "Arm", back: "meascoh" },
+            { front: "Choice", back: "choice" },
+            { front: "Body", back: "uatuhaape" },
+            { front: "Course", back: "course" },
+            { front: "Month", back: "kisho" },
+            { front: "Country", back: "nee tukona" },
+            { front: "Price", back: "price" },
+            { front: "Remarks", back: "comment" },
+            { front: "Time", back: "Time" },
+            { front: "Agreement", back: "agreement" },
+            { front: "Agent", back: "agent" },
+            { front: "Love", back: "mais" },
+            { front: "Call", back: "chamar" },
+            { front: "Tree", back: "eik" },
+            { front: "Money", back: "matassoon" },
+            { front: "Future", back: "future" },
+            { front: "Airplane", back: "airplane" },
+
+            { front: "Boat", back: "acomtan" },
+            { front: "Boat", back: "aointan" },
+
+            { front: "Need", back: "need" },
+
+            { front: "Happiness", back: "happiness" },
+            { front: "Happiness", back: "cante-cante" },
+
+            { front: "Hello", back: "chama" },
+            { front: "Border", back: "Border" },
+            { front: "Job / work", back: "Job / work" },
+            { front: "End", back: "mæætzi" },
+            { front: "Noise", back: "penim" },
+            { front: "Office", back: "Office" },
+            { front: "Coffee", back: "Coffee" },
+            { front: "Camp", back: "Camp" },
+            { front: "Cat", back: "attowrin" },
+            { front: "Horse", back: "kabay" },
+            { front: "Hair", back: "merersc" },
+
+            { front: "Dog", back: "attemous" },
+            { front: "Dog", back: "attomois" },
+
+            { front: "Sky", back: "arrokoth" },
+
+            { front: "Heart", back: "chitto" },
+            { front: "Heart", back: "kitte" },
+
+            { front: "Corner", back: "Corner" },
+            { front: "Account", back: "Account" },
+
+            { front: "Friend", back: "netab" },
+            { front: "Friend", back: "netah" },
+            { front: "Friend", back: "wingapo" },
+
+            { front: "Current", back: "Current" },
+            { front: "Beginning", back: "Beginning" },
+            { front: "Departure", back: "ireh uscoend" },
+            { front: "God", back: "rawottonemd" },
+            { front: "Doctor", back: "Doctor" },
+
+            { front: "Finger", back: "meteingeies" },
+            { front: "Finger", back: "lintshkaanil" },
+
+            { front: "Dollar", back: "matasoon" },
+            { front: "Law", back: "Law" },
+            { front: "Effect", back: "Effect" },
+            { front: "Enemy", back: "macherew" },
+            { front: "Stairs", back: "Stairs" },
+
+            { front: "Spirit / being", back: "netshetsunh" },
+            { front: "Spirit / being (devil)", back: "mannito" },
+
+            { front: "State", back: "State" },
+            { front: "Example", back: "Example" },
+            { front: "Fact", back: "Fact" },
+            { front: "Film", back: "Film" },
+            { front: "Brother", back: "kemotte" },
+            { front: "Front", back: "Front" },
+            { front: "General", back: "weroance" },
+            { front: "Type", back: "Type" },
+            { front: "Taste", back: "Taste" },
+            { front: "Government", back: "Government" },
+            { front: "Group", back: "Group" },
+            { front: "High", back: "High" },
+
+            { front: "Man", back: "nimatewh" },
+            { front: "Man", back: "mon" },
+
+            { front: "Honor", back: "Honor" },
+            { front: "Hotel", back: "Hotel" },
+            { front: "Moment", back: "Moment" },
+            { front: "Interest", back: "Interest" },
+            { front: "Inside", back: "Inside" },
+            { front: "Garden", back: "Garden" },
+            { front: "Newspaper", back: "Newspaper" },
+            { front: "Length", back: "Length" },
+            { front: "Master", back: "Master" },
+            { front: "Husband", back: "mitthurrus" },
+            { front: "Marriage", back: "Marriage" },
+            { front: "Meter", back: "Meter" },
+            { front: "Movement", back: "Movement" },
+            { front: "Means", back: "Means" },
+            { front: "Number", back: "Number" },
+            { front: "Eye", back: "muskiendguk" },
+            { front: "Bird", back: "cawahcheims" },
+            { front: "Uncle", back: "Uncle" },
+            { front: "Order", back: "Order" },
+            { front: "Dad / father", back: "pai" },
+            { front: "Paper", back: "Paper" },
+            { front: "Parent", back: "Parent" },
+            { front: "Passage", back: "Passage" },
+            { front: "Yesterday", back: "ohsaioh" },
+            { front: "Boss", back: "weroance" },
+            { front: "Small", back: "tanx" },
+            { front: "People", back: "ara" },
+            { front: "Foot", back: "messeate" },
+            { front: "Pleasure", back: "Pleasure" },
+            { front: "Plan", back: "Plan" },
+            { front: "Point", back: "Point" },
+            { front: "Power", back: "power" },
+            { front: "President", back: "President" },
+            { front: "Prince", back: "Prince" },
+            { front: "Problem", back: "Problem" },
+            { front: "Neighborhood", back: "Neighborhood" },
+            { front: "Report", back: "Report" },
+
+            { front: "Look", back: "perrmgqwak" },
+            { front: "Look", back: "permgwah" },
+
+            { front: "Delay", back: "Delay" },
+            { front: "Return", back: "Return" },
+            { front: "Dream", back: "Dream" },
+            { front: "Greeting", back: "chama" },
+            { front: "Blood", back: "Blood" },
+            { front: "Secret", back: "Secret" },
+            { front: "Lord", back: "weroance" },
+            { front: "Feeling", back: "Feeling" },
+            { front: "Service", back: "Service" },
+            { front: "Century", back: "Century" },
+            { front: "Sign", back: "Sign" },
+            { front: "Silence", back: "Silence" },
+            { front: "Soldier", back: "Soldier" },
+            { front: "Sun", back: "quechose" },
+            { front: "Smile", back: "Smile" },
+            { front: "Memory", back: "Memory" },
+            { front: "Subject", back: "Subject" },
+            { front: "Telephone", back: "Telephone" },
+            { front: "Train", back: "Train" },
+            { front: "Wind", back: "kikithamots" },
+            { front: "Stomach", back: "Stomach" },
+            { front: "Glass", back: "checonk" },
+            { front: "Village", back: "kaasun" },
+            { front: "Journey", back: "Journey" },
+            { front: "Son", back: "Son" },
+            { front: "Daughter", back: "amosens" },
+            { front: "Fish", back: "namaske" },
+            { front: "Fish", back: "nammais" },
+            { front: "Fish", back: "nameche" },
+            { front: "Milk", back: "nunakoon, nunackon" },
+            { front: "Pocohiquara", back: "walnut milk" },
+            { front: "Turtle", back: "commotins" },
+            { front: "Squirrel", back: "hannick" },
+            { front: "Turkey", back: "sickenom" },
+            { front: "Crab", back: "tuttaskuc" },
+
+            { front: "Where", back: "waam" },
+            { front: "Where have you been?", back: "tanaowaam" },
+
+            { front: "How many", back: "keis" },
+            { front: "How", back: "Keeko" },
+
+            { front: "Why", back: "paak" },
+            { front: "Why", back: "kotz" },
+
+            { front: "Because", back: "konna" },
+            { front: "For", back: "para" },
+
+            { front: "When", back: "gwen" },
+            { front: "When", back: "tschinge" },
+            { front: "When will you go?", back: "chingo ke matcha" },
+
+            { front: "This", back: "quoy" },
+            { front: "What is this?", back: "que quoy" },
+            { front: "Yes", back: "nim" },
+            { front: "No", back: "matah" },
+            { front: "[Negation]", back: "tah" },
+            { front: "Wink", back: "inspungwaren" },
+
+            { front: "To do", back: "utsseneind" },
+            { front: "To do", back: "noungat" },
+
+            { front: "Speak", back: "kemantuun" },
+            { front: "Speak", back: "memowchicktagwassan" },
+
+            { front: "Go", back: "ireh" },
+
+            { front: "I understand you now", back: "husquequenatora" },
+            { front: "I understand you not", back: "matagvenatoxoth" },
+            { front: "I understand you not", back: "mattaquenatorath" },
+            { front: "I understand well", back: "kennehautows" },
+            { front: "I understand not", back: "matakennowntorawh" },
+            { front: "I understand you a little but not much", back: "cussewh kenneaunten mata mochik" },
+
+            { front: "Become", back: "neind" },
+
+            { front: "Give", back: "patch-ah" },
+            { front: "Give", back: "pasa" },
+
+            { front: "Put", back: "put" },
+            { front: "Put on", back: "puttohiqwosur" },
+
+            { front: "Is/was", back: "is/was" },
+            { front: "Call", back: "chamar" },
+            { front: "Kiss", back: "kis" },
+
+            { front: "Love", back: "mais" },
+            { front: "You love", back: "comomais" },
+
+            { front: "Abandon", back: "Abandon" },
+            { front: "Accept", back: "Accept" },
+            { front: "Accompany", back: "Accompany" },
+            { front: "Buy", back: "Buy" },
+            { front: "Adore", back: "Adore" },
+            { front: "Act", back: "Act" },
+            { front: "Help", back: "Help" },
+            { front: "Add", back: "Add" },
+
+            { front: "Bring (someone)", back: "patow" },
+            { front: "Bring (someone)", back: "peach" },
+            { front: "Bring into the boat", back: "paaksetower" },
+
+            { front: "Amuse", back: "Amuse" },
+            { front: "Announce", back: "Announce" },
+            { front: "Notice / glimpse", back: "Notice / glimpse" },
+            { front: "Appear", back: "Appear" },
+            { front: "Bring", back: "Bring" },
+            { front: "Learn", back: "Learn" },
+            { front: "Approach", back: "Approach" },
+            { front: "Arrange", back: "Arrange" },
+            { front: "Stop", back: "Stop" },
+            { front: "Arrive", back: "Arrive" },
+
+            { front: "Sit", back: "nawpin" },
+
+            { front: "Ensure", back: "Ensure" },
+            { front: "Attack", back: "Attack" },
+            { front: "Reach", back: "Reach" },
+            { front: "Wait", back: "Wait" },
+            { front: "Advance", back: "Advance" },
+
+            { front: "Have", back: "tem" },
+
+            { front: "Lower", back: "Lower" },
+            { front: "Beat", back: "Beat" },
+            { front: "Drink", back: "Drink" },
+            { front: "Move", back: "Move" },
+            { front: "Burn", back: "Burn" },
+            { front: "Hide", back: "Hide" },
+            { front: "Calm", back: "Calm" },
+            { front: "Break", back: "Break" },
+            { front: "Change", back: "Change" },
+
+            { front: "Sing", back: "cante-cante" },
+
+            { front: "Load", back: "Load" },
+            { front: "Search", back: "Search" },
+            { front: "Choose", back: "Choose" },
+            { front: "Begin", back: "Begin" },
+            { front: "Count", back: "Count" },
+            { front: "Drive", back: "Drive" },
+            { front: "Know", back: "Know" },
+            { front: "Continue", back: "Continue" },
+            { front: "Lie down", back: "Lie down" },
+
+            { front: "Cut", back: "cut" },
+            { front: "Cut hair", back: "nummundgu" },
+
+            { front: "Run", back: "musken" },
+            { front: "Run", back: "musket" },
+
+            { front: "Cover", back: "cushe" },
+
+            { front: "Fear", back: "ne rune husco hwissase" },
+
+            { front: "Cry", back: "nummawh" },
+
+            { front: "Believe", back: "Believe" },
+
+            { front: "Dance", back: "cante-cante" },
+            { front: "Dance", back: "guiisnka" },
+
+            { front: "Decide", back: "Decide" },
+            { front: "Discover", back: "Discover" },
+            { front: "Clear", back: "Clear" },
+            { front: "Ask", back: "Ask" },
+
+            { front: "Go down", back: "ireh cuppeintanaan" },
+
+            { front: "Sadden", back: "Sadden" },
+            { front: "Hate", back: "Hate" },
+            { front: "Destroy", back: "Destroy" },
+            { front: "Guess", back: "Guess" },
+            { front: "Must", back: "Must" },
+
+            { front: "Say", back: "kemantuun" },
+            { front: "Say", back: "memo" },
+
+            { front: "Disappear", back: "Disappear" },
+
+            { front: "Sleep", back: "kawwin" },
+
+            { front: "Escape", back: "ireh asuminge" },
+
+            { front: "Listen", back: "Listen" },
+
+            { front: "Write", back: "sakahocan" },
+
+            { front: "Move away", back: "Move away" },
+            { front: "Take with", back: "Take with" },
+            { front: "Prevent", back: "Prevent" },
+            { front: "Carry away", back: "Carry away" },
+            { front: "Remove", back: "Remove" },
+            { front: "Hear", back: "Hear" },
+            { front: "Enter", back: "Enter" },
+            { front: "Send", back: "Send" },
+            { front: "Hope", back: "Hope" },
+            { front: "Try", back: "Try" },
+
+            { front: "Be", back: "ser" },
+            { front: "Be", back: "sein" },
+
+            { front: "Avoid", back: "Avoid" },
+            { front: "Excuse", back: "Excuse" },
+            { front: "Exist", back: "Exist" },
+            { front: "Explain", back: "Explain" },
+            { front: "Be necessary", back: "Be necessary" },
+            { front: "Close", back: "Close" },
+            { front: "Finish", back: "Finish" },
+            { front: "Hit", back: "Hit" },
+            { front: "Win", back: "Win" },
+            { front: "Keep", back: "Keep" },
+            { front: "Slip", back: "Slip" },
+            { front: "Live (somewhere)", back: "Live (somewhere)" },
+            { front: "Ignore", back: "Ignore" },
+            { front: "Imagine", back: "Imagine" },
+            { front: "Matter", back: "Matter" },
+            { front: "Worry", back: "Worry" },
+            { front: "Install", back: "Install" },
+            { front: "Interest", back: "Interest" },
+            { front: "Invite", back: "Invite" },
+
+            { front: "Throw", back: "apacet" },
+            { front: "Throw away", back: "apacet" },
+
+            { front: "Play", back: "terracan" },
+
+            { front: "Swear", back: "Swear" },
+
+            { front: "Let go", back: "ponih" },
+
+            { front: "Leave", back: "ireh" },
+
+            { front: "Lift", back: "udespunnemun" },
+
+            { front: "Read", back: "Read" },
+            { front: "Maintain", back: "Maintain" },
+
+            { front: "Eat", back: "mecher" },
+
+            { front: "Miss", back: "Miss" },
+
+            { front: "Walk", back: "buumska" },
+
+            { front: "Marry", back: "Marry" },
+            { front: "Lead", back: "Lead" },
+            { front: "Lie", back: "Lie" },
+            { front: "Go up", back: "Go up" },
+            { front: "Show", back: "Show" },
+
+            { front: "Die", back: "tsepaih" },
+
+            { front: "Entombing", back: "paihemasuwh" },
+
+            { front: "Be born", back: "paatch-ah keshawtewh" },
+
+            { front: "Oblige", back: "Oblige" },
+            { front: "Occupy", back: "Occupy" },
+            { front: "Offer", back: "Offer" },
+            { front: "Dare", back: "Dare" },
+            { front: "Forget", back: "Forget" },
+            { front: "Open", back: "Open" },
+            { front: "Seem", back: "Seem" },
+
+            { front: "Speak", back: "kemantuun" },
+            { front: "Speak (memo)", back: "memo" },
+
+            { front: "Pass", back: "pasar" },
+
+            { front: "Pay", back: "Pay" },
+            { front: "Think", back: "Think" },
+            { front: "Lose", back: "Lose" },
+            { front: "Allow", back: "Allow" },
+            { front: "Please", back: "Please" },
+
+            { front: "Carry", back: "necussagwns" },
+
+            { front: "Place", back: "putto" },
+
+            { front: "Push", back: "Push" },
+            { front: "Can", back: "Can" },
+            { front: "Prefer", back: "Prefer" },
+            { front: "Take", back: "Take" },
+            { front: "Prepare", back: "Prepare" },
+            { front: "Present", back: "Present" },
+            { front: "Warn", back: "Warn" },
+            { front: "Pray", back: "Pray" },
+            { front: "Promise", back: "Promise" },
+            { front: "Propose", back: "Propose" },
+            { front: "Protect", back: "Protect" },
+
+            { front: "Tell", back: "memo" },
+
+            { front: "Bring back", back: "Bring back" },
+            { front: "Remind", back: "Remind" },
+            { front: "Receive", back: "Receive" },
+            { front: "Recognize", back: "Recognize" },
+            { front: "Reflect", back: "Reflect" },
+            { front: "Refuse", back: "Refuse" },
+            { front: "Join", back: "Join" },
+            { front: "Put back", back: "Put back" },
+            { front: "Meet", back: "Meet" },
+            { front: "Give back", back: "Give back" },
+            { front: "Enter again", back: "Enter again" },
+            { front: "Repeat", back: "Repeat" },
+            { front: "Answer", back: "Answer" },
+            { front: "Rest", back: "machenecawwun" },
+            { front: "Take back", back: "Take back" },
+            { front: "Resemble", back: "Resemble" },
+            { front: "Stay", back: "Stay" },
+            { front: "Hold back", back: "Hold back" },
+            { front: "Find again", back: "Find again" },
+            { front: "Succeed", back: "Succeed" },
+            { front: "Wake up", back: "aumaumer" },
+            { front: "Come back", back: "Come back" },
+            { front: "Laugh", back: "kesshekissum" },
+            { front: "Laugh", back: "krickse" },
+            { front: "Risk", back: "Risk" },
+            { front: "Roll", back: "pegatwk" },
+            { front: "Jump", back: "bokokihaala" },
+            { front: "Save", back: "Save" },
+            { front: "Feel", back: "Feel" },
+            { front: "Separate", back: "Separate" },
+            { front: "Tighten", back: "Tighten" },
+            { front: "Serve", back: "Serve" },
+            { front: "Go out", back: "Go out" },
+            { front: "Suffer", back: "Suffer" },
+            { front: "Smile", back: "Smile" },
+            { front: "Remember", back: "Remember" },
+            { front: "Be enough", back: "Be enough" },
+            { front: "Follow", back: "Follow" },
+            { front: "Be silent", back: "Be silent" },
+            { front: "Stretch", back: "Stretch" },
+            { front: "Hold", back: "mammun" },
+            { front: "Hold aside", back: "hatacqwoear" },
+            { front: "Pull", back: "nummaumon" },
+            { front: "Fall", back: "adamoin" },
+            { front: "Fall", back: "adamosu" },
+            { front: "Touch", back: "Touch" },
+            { front: "Turn", back: "Turn" },
+            { front: "Drag", back: "Drag" },
+            { front: "Treat", back: "Treat" },
+            { front: "Work", back: "Work" },
+            { front: "Cross", back: "Cross" },
+            { front: "Trick", back: "Trick" },
+            { front: "Find", back: "Find" },
+            { front: "Kill", back: "nihiila" },
+            { front: "Pee", back: "mear" },
+            { front: "Use", back: "" },
+            { front: "Be worth", back: "Sickomeele" },
+            { front: "Sell", back: "mahal" },
+            { front: "Come", back: "Caumeir; Caumenaan; Caumorowath" },
+            { front: "Live", back: "nee weekin" },
+            { front: "See", back: "uunamun; binaaman; kee namen" },
+            { front: "Steal", back: "kamuta; Commotoouh" },
+            { front: "Want", back: "quier" },
+            { front: "To go after something", back: "attonamen" },
+        ];
+
+        let deck = [];
+        let currentIndex = 0;
+        let showingBack = false;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startQuiz() {
+            deck = [...cards];
+            shuffle(deck);
+            currentIndex = 0;
+            showingBack = false;
+
+            document.getElementById("total").textContent = deck.length;
+            showCard();
+        }
+
+        function showCard() {
+            if (currentIndex >= deck.length) {
+                document.getElementById("card").innerHTML =
+                    "Finished! 🎉";
+                return;
+            }
+
+            document.getElementById("current").textContent =
+                currentIndex + 1;
+
+            document.getElementById("card").innerHTML =
+                showingBack
+                    ? deck[currentIndex].back
+                    : deck[currentIndex].front;
+        }
+
+        function flipCard() {
+            if (deck.length === 0) return;
+            showingBack = !showingBack;
+            showCard();
+        }
+
+        function nextCard() {
+            if (deck.length === 0) return;
+            currentIndex++;
+            showingBack = false;
+            showCard();
+        }
+
+        document.getElementById("card").addEventListener("click", flipCard);
+
+    </script>
+</body>
+
+</html>
