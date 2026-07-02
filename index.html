@@ -27,6 +27,25 @@
 </head>
 
 <body>
+  <!-- 18+ Age Warning -->
+  <div id="ageWarning" class="age-warning">
+    <div class="age-warning-box">
+      <h2>Adults Only (18+)</h2>
+
+      <p>
+        This website contains historical topics, discussions of war,
+        colonization, slavery, and other material intended for adults.
+      </p>
+
+      <p><strong>You must be at least 18 years old to continue.</strong></p>
+
+      <div class="age-buttons">
+        <button id="enterSite">I am 18 or older</button>
+        <button id="leaveSite">Leave</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Top Navigation Bar -->
   <top-bar class="top-bar"></top-bar>
 
@@ -56,6 +75,22 @@
 
 <script src="main.js"></script>
 <script>
+  // Age verification
+  const ageWarning = document.getElementById("ageWarning");
+
+  if (localStorage.getItem("ageVerified") === "true") {
+    ageWarning.classList.add("hidden");
+  }
+
+  document.getElementById("enterSite").addEventListener("click", () => {
+    localStorage.setItem("ageVerified", "true");
+    ageWarning.classList.add("hidden");
+  });
+
+  document.getElementById("leaveSite").addEventListener("click", () => {
+    window.location.href = "https://www.google.com";
+  });
+
   document.addEventListener("DOMContentLoaded", function () {
     // Get all imgs
     const inviteImages = document.querySelectorAll("img");
