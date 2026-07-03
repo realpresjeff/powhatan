@@ -78,12 +78,7 @@
   // Age verification
   const ageWarning = document.getElementById("ageWarning");
 
-  if (localStorage.getItem("ageVerified") === "true") {
-    ageWarning.classList.add("hidden");
-  }
-
   document.getElementById("enterSite").addEventListener("click", () => {
-    localStorage.setItem("ageVerified", "true");
     ageWarning.classList.add("hidden");
   });
 
