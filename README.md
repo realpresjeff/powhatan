@@ -1,6 +1,4 @@
-![Kinich Ahau Powhatan](https://pbs.twimg.com/media/GU-56WcWQAAQdSH?format=jpg&name=900x900)
-
-## Kinich Ahau Powhatan
+## The Powhatan Confederacy
 
 The Powhatan Confederacy waged three wars against the British Crown, each echoing the scale and fervor of the Anglo-Scottish Wars. A battle for land and sovereignty that ended with the genocide and enslavement of the Powhatan people. [36]
 
